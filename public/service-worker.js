@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v1';
+const CACHE_NAME = 'triponext-cache-v2';
 const urlsToCache = [
   '/',
   '/login.html',
