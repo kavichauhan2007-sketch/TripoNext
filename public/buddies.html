@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Travel Buddies - TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .buddies-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .buddy-card {
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .buddy-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .buddy-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary) 0%, #eab308 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-details h4 {
+            margin: 0;
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        .user-details span {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        .trip-destination {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: white;
+            margin-top: 0.5rem;
+        }
+
+        .trip-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.9rem;
+            color: #cbd5e1;
+        }
+
+        .meta-item i {
+            width: 16px;
+            text-align: center;
+            color: var(--primary);
+        }
+
+        .seats-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+
+        .inclusions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .inclusion-tag {
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.08);
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            color: #e2e8f0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .join-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .join-btn:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Create Trip Button */
+        .create-trip-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .create-trip-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Minimal Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body class="explore-bg">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Dashboard</a>
+            <a href="explore.html">Explore</a>
+            <a href="mytrips.html">My Trips</a>
+            <a href="community.html">Community</a>
+            <a href="buddies.html" class="active">Find Buddies</a>
+        </div>
+        <div class="user-profile">
+            <!-- User name injected via script.js -->
+        </div>
+    </nav>
+
+    <main class="page-container" style="padding-top: 2rem; max-width: 1280px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem;">
+        
+        <div class="explore-hero-card" style="margin-bottom: 2rem; background: rgba(15, 23, 42, 0.4); padding: 2rem; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
+            <div class="page-header">
+                <div>
+                    <h1 style="font-size: 2.2rem; font-weight: 700; margin-bottom: 0.5rem; color: #f8fafc;">
+                        Find Travel Buddies
+                    </h1>
+                    <p style="color: #94a3b8; font-size: 1rem; margin: 0;">
+                        Join verified travelers on their upcoming trips and share the experience.
+                    </p>
+                </div>
+                <button class="create-trip-btn" onclick="openCreateTripModal()">
+                    <i class="fa-solid fa-plus"></i> Post a Trip
+                </button>
+            </div>
+            
+            <!-- Filters -->
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <input type="text" placeholder="Search destinations..." style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(15,23,42,0.6); color: white; flex: 1;">
+                <select style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(15,23,42,0.6); color: white;">
+                    <option>Any Month</option>
+                    <option>October 2026</option>
+                    <option>November 2026</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="buddies-grid" id="buddies-container">
+            <!-- Dynamic Cards Will Be Injected Here -->
+        </div>
+
+    </main>
+
+    <!-- Join Request Modal -->
+    <div id="join-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0; color:white;"><i class="fa-solid fa-handshake"></i> Send Join Request</h3>
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1.5rem;">Introduce yourself to the trip organizer.</p>
+            
+            <label style="color:white; display:block; margin-bottom:0.5rem;">Message</label>
+            <textarea id="join-message" rows="4" placeholder="Hi! I'm interested in joining your trip to Manali. I love road trips..." style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white; font-family: inherit; resize: vertical; margin-bottom: 1.5rem;"></textarea>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-small" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.8rem; border-radius: 8px; flex: 1; cursor: pointer;" onclick="closeJoinModal()">Cancel</button>
+                <button class="btn-small" style="background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer;" onclick="submitJoinRequest()">Send Request</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Trip Modal -->
+    <div id="create-trip-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0; color:white;"><i class="fa-solid fa-map-location-dot"></i> Post a Trip</h3>
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1.5rem;">Looking for travel buddies? Share your plan.</p>
+            
+            <input type="text" placeholder="Destination (e.g. Manali)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white; margin-bottom: 1rem;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <input type="text" placeholder="Start Date" onfocus="(this.type='date')" onblur="(this.type='text')" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+                <input type="text" placeholder="End Date" onfocus="(this.type='date')" onblur="(this.type='text')" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <input type="number" placeholder="Seats Available" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+                <input type="text" placeholder="Budget (e.g. ₹8,000/person)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn-small" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.8rem; border-radius: 8px; flex: 1; cursor: pointer;" onclick="closeCreateTripModal()">Cancel</button>
+                <button class="btn-small" style="background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer;" onclick="closeCreateTripModal()">Post Trip</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const trips = [
+            {
+                id: 1,
+                user: "Rahul S.",
+                verified: true,
+                destination: "Manali, Himachal",
+                dates: "15 Oct – 20 Oct",
+                seats: 2,
+                budget: "₹8,000 / person",
+                inclusions: ["🚗 Car", "🏨 Hotel"],
+                desc: "Planning a chill road trip to Manali. Driving down from Delhi. Looking for two cool people to split the fuel and hotel costs. We will cover Solang Valley and Sissu."
+            },
+            {
+                id: 2,
+                user: "Ananya D.",
+                verified: true,
+                destination: "Gokarna, Karnataka",
+                dates: "2 Nov – 6 Nov",
+                seats: 3,
+                budget: "₹12,000 / person",
+                inclusions: ["✈️ Flights", "🏕️ Stay"],
+                desc: "Beach hopping and cafe crawling in Gokarna! Booked a beautiful beachside hostel. Hit me up if you vibe with sunsets and acoustic music."
+            },
+            {
+                id: 3,
+                user: "Vikram R.",
+                verified: false,
+                destination: "Spiti Valley Circuit",
+                dates: "10 Nov – 18 Nov",
+                seats: 1,
+                budget: "₹18,000 / person",
+                inclusions: ["🚙 4x4 SUV", "⛺ Camps"],
+                desc: "Doing the complete Spiti winter circuit. It will be freezing but epic. Need one adventurous person who can handle extreme weather and long drives."
+            },
+            {
+                id: 4,
+                user: "Priya M.",
+                verified: true,
+                destination: "Udaipur, Rajasthan",
+                dates: "24 Oct – 28 Oct",
+                seats: 2,
+                budget: "₹15,000 / person",
+                inclusions: ["🏨 Heritage Stay", "🥘 Food"],
+                desc: "A cultural and royal getaway to the city of lakes! We have booked a nice heritage property. Looking for travel buddies who love history and photography."
+            }
+        ];
+
+        function renderTrips() {
+            const container = document.getElementById('buddies-container');
+            container.innerHTML = '';
+            
+            trips.forEach(trip => {
+                const verifiedIcon = trip.verified ? `<i class="fa-solid fa-circle-check" style="color: #3b82f6; font-size: 0.9rem;" title="Verified Traveler"></i>` : '';
+                
+                const inclusionsHTML = trip.inclusions.map(inc => `<span class="inclusion-tag">${inc}</span>`).join('');
+                
+                const cardHTML = `
+                    <div class="buddy-card">
+                        <div class="buddy-header">
+                            <div class="user-info">
+                                <div class="user-avatar">${trip.user.charAt(0)}</div>
+                                <div class="user-details">
+                                    <h4>${trip.user} ${verifiedIcon}</h4>
+                                    <span>Trip Organizer</span>
+                                </div>
+                            </div>
+                            <span class="seats-badge">${trip.seats} seats left</span>
+                        </div>
+                        
+                        <div>
+                            <div class="trip-destination">${trip.destination}</div>
+                            <p style="color: #cbd5e1; font-size: 0.9rem; margin: 0.5rem 0 1rem 0; line-height: 1.4;">
+                                "${trip.desc}"
+                            </p>
+                        </div>
+                        
+                        <div class="trip-meta">
+                            <div class="meta-item">
+                                <i class="fa-regular fa-calendar"></i> ${trip.dates}
+                            </div>
+                            <div class="meta-item">
+                                <i class="fa-solid fa-wallet"></i> ${trip.budget}
+                            </div>
+                            <div class="inclusions" style="margin-top: 0.3rem;">
+                                ${inclusionsHTML}
+                            </div>
+                        </div>
+                        
+                        <button class="join-btn" onclick="openJoinModal(${trip.id})">
+                            <i class="fa-solid fa-paper-plane"></i> Send Join Request
+                        </button>
+                    </div>
+                `;
+                container.innerHTML += cardHTML;
+            });
+        }
+
+        function openJoinModal(tripId) {
+            document.getElementById('join-modal').style.display = 'flex';
+        }
+
+        function closeJoinModal() {
+            document.getElementById('join-modal').style.display = 'none';
+            document.getElementById('join-message').value = '';
+        }
+
+        function submitJoinRequest() {
+            alert('Your join request has been sent to the organizer!');
+            closeJoinModal();
+        }
+
+        function openCreateTripModal() {
+            document.getElementById('create-trip-modal').style.display = 'flex';
+        }
+
+        function closeCreateTripModal() {
+            document.getElementById('create-trip-modal').style.display = 'none';
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTrips();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Hidden Gems - TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="explore-bg">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
+        </div>
+        <div class="nav-links">
+            <a href="index.html" data-i18n="nav_dashboard">Dashboard</a>
+            <a href="explore.html" class="active" data-i18n="nav_explore">Explore</a>
+            <a href="mytrips.html" data-i18n="nav_mytrips">My Trips</a>
+            <a href="community.html" data-i18n="nav_community">Community</a>
+            <a href="buddies.html">Find Buddies</a>
+        </div>
+        <div class="user-profile">
+            <!-- User name injected via script.js -->
+        </div>
+    </nav>
+
+    <main class="page-container explore-page" style="padding-top: 2rem; max-width: 1280px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem;">
+        <!-- Hero & Search Header -->
+        <div class="explore-hero-card mb-4" style="margin-bottom: 2rem;">
+            <div style="margin-bottom: 12px; color: #fb923c; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
+                Find Your Next Getaway
+            </div>
+            <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.8rem; color: #f8fafc;">
+                Discover Hidden Places
+            </h1>
+            <p style="color: #94a3b8; font-size: 1.05rem; max-width: 600px; margin: 0 auto 1.8rem auto; line-height: 1.5;">
+                Explore handpicked, less-crowded destinations recommended by real travelers. See where the locals go.
+            </p>
+
+            <!-- Live Search Bar -->
+            <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search by place, city (e.g. Jaipur, Rome) or category..." onkeyup="handleSearchInput()">
+            </div>
+        </div>
+
+        <!-- Mode Navigation & Country Filter -->
+        <div style="display: flex; flex-direction: column; gap: 1.2rem; align-items: center; margin-bottom: 1.8rem;">
+            <div class="mode-tabs-container">
+                <button class="nav-tab active" id="tab-gems" onclick="switchMode('gems')">
+                    <i class="fa-solid fa-gem" style="color:var(--accent);"></i> Hidden Gems
+                </button>
+                <button class="nav-tab" id="tab-all" onclick="switchMode('all')">
+                    <i class="fa-solid fa-earth-americas" style="color:#60a5fa;"></i> Popular Destinations
+                </button>
+                <button class="nav-tab" id="tab-saved" onclick="switchMode('saved')">
+                    <i class="fa-solid fa-heart" style="color:#f43f5e;"></i> Saved (<span id="saved-count-badge">0</span>)
+                </button>
+                <button class="nav-tab" onclick="openSubmitGemModal()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: #f8fafc; border: none; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);">
+                    <i class="fa-solid fa-plus"></i> Add Secret Spot
+                </button>
+            </div>
+
+            <!-- Country Filter Select -->
+            <div style="width: 100%; max-width: 320px;" id="country-select-container">
+                <select id="country-select" style="width: 100%; font-size: 0.95rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); color: white; appearance: none; cursor: pointer; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" onchange="loadData()">
+<option value="All" style="background:#0f172a; color:white;">Famous Destinations</option>
+                    <option value="Argentina" style="background:#0f172a; color:white;">Argentina</option>
+                    <option value="Australia" style="background:#0f172a; color:white;">Australia</option>
+                    <option value="Austria" style="background:#0f172a; color:white;">Austria</option>
+                    <option value="Belgium" style="background:#0f172a; color:white;">Belgium</option>
+                    <option value="Brazil" style="background:#0f172a; color:white;">Brazil</option>
+                    <option value="Canada" style="background:#0f172a; color:white;">Canada</option>
+                    <option value="Chile" style="background:#0f172a; color:white;">Chile</option>
+                    <option value="China" style="background:#0f172a; color:white;">China</option>
+                    <option value="Colombia" style="background:#0f172a; color:white;">Colombia</option>
+                    <option value="Costa Rica" style="background:#0f172a; color:white;">Costa Rica</option>
+                    <option value="Croatia" style="background:#0f172a; color:white;">Croatia</option>
+                    <option value="Czech Republic" style="background:#0f172a; color:white;">Czech Republic</option>
+                    <option value="Denmark" style="background:#0f172a; color:white;">Denmark</option>
+                    <option value="Egypt" style="background:#0f172a; color:white;">Egypt</option>
+                    <option value="Finland" style="background:#0f172a; color:white;">Finland</option>
+                    <option value="France" style="background:#0f172a; color:white;">France</option>
+                    <option value="Germany" style="background:#0f172a; color:white;">Germany</option>
+                    <option value="Greece" style="background:#0f172a; color:white;">Greece</option>
+                    <option value="Hungary" style="background:#0f172a; color:white;">Hungary</option>
+                    <option value="Iceland" style="background:#0f172a; color:white;">Iceland</option>
+                    <option value="India" style="background:#0f172a; color:white;">India</option>
+                    <option value="Indonesia" style="background:#0f172a; color:white;">Indonesia</option>
+                    <option value="Ireland" style="background:#0f172a; color:white;">Ireland</option>
+                    <option value="Israel" style="background:#0f172a; color:white;">Israel</option>
+                    <option value="Italy" style="background:#0f172a; color:white;">Italy</option>
+                    <option value="Japan" style="background:#0f172a; color:white;">Japan</option>
+                    <option value="Malaysia" style="background:#0f172a; color:white;">Malaysia</option>
+                    <option value="Maldives" style="background:#0f172a; color:white;">Maldives</option>
+                    <option value="Mexico" style="background:#0f172a; color:white;">Mexico</option>
+                    <option value="Morocco" style="background:#0f172a; color:white;">Morocco</option>
+                    <option value="Netherlands" style="background:#0f172a; color:white;">Netherlands</option>
+                    <option value="New Zealand" style="background:#0f172a; color:white;">New Zealand</option>
+                    <option value="Norway" style="background:#0f172a; color:white;">Norway</option>
+                    <option value="Peru" style="background:#0f172a; color:white;">Peru</option>
+                    <option value="Philippines" style="background:#0f172a; color:white;">Philippines</option>
+                    <option value="Poland" style="background:#0f172a; color:white;">Poland</option>
+                    <option value="Portugal" style="background:#0f172a; color:white;">Portugal</option>
+                    <option value="Qatar" style="background:#0f172a; color:white;">Qatar</option>
+                    <option value="Saudi Arabia" style="background:#0f172a; color:white;">Saudi Arabia</option>
+                    <option value="Singapore" style="background:#0f172a; color:white;">Singapore</option>
+                    <option value="South Africa" style="background:#0f172a; color:white;">South Africa</option>
+                    <option value="South Korea" style="background:#0f172a; color:white;">South Korea</option>
+                    <option value="Spain" style="background:#0f172a; color:white;">Spain</option>
+                    <option value="Sweden" style="background:#0f172a; color:white;">Sweden</option>
+                    <option value="Switzerland" style="background:#0f172a; color:white;">Switzerland</option>
+                    <option value="Taiwan" style="background:#0f172a; color:white;">Taiwan</option>
+                    <option value="Thailand" style="background:#0f172a; color:white;">Thailand</option>
+                    <option value="Turkey" style="background:#0f172a; color:white;">Turkey</option>
+                    <option value="United Arab Emirates" style="background:#0f172a; color:white;">United Arab Emirates</option>
+                    <option value="United Kingdom" style="background:#0f172a; color:white;">United Kingdom</option>
+                    <option value="United States" style="background:#0f172a; color:white;">United States</option>
+                    <option value="Vietnam" style="background:#0f172a; color:white;">Vietnam</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Category Chips -->
+        <div class="categories" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 2rem;" id="category-chips-container">
+            <!-- Dynamic Chips injected via JS -->
+        </div>
+
+        <!-- Grid Container -->
+        <div class="destinations-grid" id="explore-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+            <p style="text-align:center; grid-column: 1/-1; color:#94a3b8; padding: 3rem;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i><br><br>Loading places...
+            </p>
+        </div>
+    </main>
+
+    <!-- Modal 1: Add Secret Spot Modal -->
+    <div class="modal-overlay" id="submit-gem-modal" style="display:none;">
+        <div class="modal-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h3 style="margin: 0; font-size: 1.4rem; font-weight: 700; display:flex; align-items:center; gap:8px; color: white;">
+                    <i class="fa-solid fa-gem" style="color:var(--accent);"></i> Submit a Secret Spot
+                </h3>
+                <button onclick="closeSubmitGemModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <p style="color: #475569; font-size: 0.88rem; margin-bottom: 1.2rem; line-height: 1.45;">
+                Share an authentic local secret with fellow travelers. It will be added to the explorer directory for everyone to discover!
+            </p>
+            <form onsubmit="handleGemSubmission(event)" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div>
+                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Place Name *</label>
+                    <input type="text" id="gem-name" placeholder="e.g. Nahargarh Secret Sunset Point" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">City *</label>
+                        <input type="text" id="gem-city" placeholder="e.g. Jaipur" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Country *</label>
+                        <input type="text" id="gem-country" placeholder="e.g. India" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Category *</label>
+                        <select id="gem-category" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.9); color: white; border:1px solid rgba(255,255,255,0.18);" required>
+                            <option value="Secret Viewpoint">Secret Viewpoint</option>
+                            <option value="Local Cafés">Local Café</option>
+                            <option value="Nature & Waterfalls">Nature & Waterfalls</option>
+                            <option value="Hidden History">Hidden History</option>
+                            <option value="Instagram Photo Spot">Photography Spot</option>
+                            <option value="Offbeat Escapes">Offbeat Escape</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Best Time to Visit</label>
+                        <input type="text" id="gem-time" placeholder="e.g. 5:00 PM - 7:00 PM" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);">
+                    </div>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Description & Directions</label>
+                    <textarea id="gem-desc" rows="3" placeholder="Directions on how to reach and what makes it special..." class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); font-family:inherit; color: white;"></textarea>
+                </div>
+                <div>
+                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Photo URL (Optional)</label>
+                    <input type="url" id="gem-photo" placeholder="https://images.unsplash.com/..." class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);">
+                </div>
+                <button type="submit" id="gem-submit-btn" class="btn-primary" style="padding: 0.85rem; border-radius: 12px; margin-top: 0.5rem; font-weight: 600; display:flex; align-items:center; justify-content:center; gap:8px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none; box-shadow:0 4px 15px rgba(249,115,22,0.4);">
+                    <i class="fa-solid fa-paper-plane"></i> Submit Place
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal 2: Spot Details & Travel Tips Modal -->
+    <div class="modal-overlay" id="gem-score-modal" style="display:none;">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 1rem;">
+                <div>
+                    <div style="display:inline-flex; align-items:center; gap:6px; font-size:0.75rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;" id="modal-category-badge">
+                        <i class="fa-solid fa-gem"></i> Secret Viewpoint
+                    </div>
+                    <h3 style="font-size: 1.5rem; font-weight: 800; color: white; margin: 0;" id="breakdown-title">Nahargarh Secret Sunset Point</h3>
+                    <p style="color: #94a3b8; font-size: 0.88rem; margin-top: 2px; display:flex; align-items:center; gap:5px;" id="breakdown-subtitle">
+                        <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> Jaipur, India
+                    </p>
+                </div>
+                <button onclick="closeGemScoreModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+
+            <!-- Highlights Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1.2rem 0;">
+                <div style="background: rgba(255,255,255,0.05); padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Crowd Rating</div>
+                    <div style="font-size: 0.95rem; color: #34d399; font-weight: 700; margin-top: 2px;" id="modal-crowd">
+                        <i class="fa-solid fa-users-slash" style="margin-right:4px;"></i> Low Crowd
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Best Time</div>
+                    <div style="font-size: 0.95rem; color: #facc15; font-weight: 700; margin-top: 2px;" id="modal-time">
+                        <i class="fa-solid fa-clock" style="margin-right:4px;"></i> 5:00 PM - 7:00 PM
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Budget</div>
+                    <div style="font-size: 0.95rem; color: #60a5fa; font-weight: 700; margin-top: 2px;" id="modal-budget">
+                        <i class="fa-solid fa-wallet" style="margin-right:4px;"></i> Free
+                    </div>
+                </div>
+                <div style="background: rgba(255,255,255,0.05); padding: 0.85rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;">Rating Score</div>
+                    <div style="font-size: 0.95rem; color: var(--accent); font-weight: 700; margin-top: 2px;" id="modal-rating">
+                        <i class="fa-solid fa-star" style="margin-right:4px;"></i> 4.8 / 5
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.2rem;">
+                <div style="font-size: 0.82rem; color: #475569; font-weight: 700; margin-bottom: 6px;">Spot Overview & Directions</div>
+                <p id="modal-desc" style="color: #475569; font-size: 0.9rem; line-height: 1.55; background: rgba(255,255,255,0.04); padding: 1rem; border-radius: 14px; border: 1px solid rgba(255,255,255,0.08); margin: 0;"></p>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:1.5rem;">
+                <button onclick="shareGemLink()" class="btn-small" style="flex:1; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color: white; border-radius:12px; padding:0.75rem; font-weight:600; cursor:pointer;">
+                    <i class="fa-solid fa-share-nodes"></i> Share Link
+                </button>
+                <button onclick="planFromModal()" class="btn-primary" style="flex:1; border-radius: 12px; padding:0.75rem; font-weight:600; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none; box-shadow: 0 4px 15px rgba(249,115,22,0.4); cursor:pointer;">
+                    Plan Trip <i class="fa-solid fa-arrow-right" style="font-size:0.8rem; margin-left:4px;"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer style="margin-top: 4rem; padding: 2.5rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); font-size: 0.88rem; background: white;">
+        <p>&copy; 2026 TripoNext. Crafted for genuine travel explorers.</p>
+    </footer>
+
+    <script>
+        let currentMode = 'gems';
+        let currentCategory = 'All Gems';
+        let searchQuery = '';
+        let gemsData = [];
+        let savedGems = JSON.parse(localStorage.getItem('savedGems') || '[]');
+
+        const gemCategories = [
+            { name: "All Gems", icon: "fa-solid fa-gem" },
+            { name: "Secret Viewpoint", icon: "fa-solid fa-mountain" },
+            { name: "Local Cafés", icon: "fa-solid fa-mug-hot" },
+            { name: "Nature & Waterfalls", icon: "fa-solid fa-tree" },
+            { name: "Hidden History", icon: "fa-solid fa-landmark" },
+            { name: "Instagram Photo Spot", icon: "fa-solid fa-camera" },
+            { name: "Offbeat Escapes", icon: "fa-solid fa-compass" }
+        ];
+
+        const normalCategories = [
+            { name: "All", icon: "fa-solid fa-globe" },
+            { name: "Beaches", icon: "fa-solid fa-umbrella-beach" },
+            { name: "Mountains", icon: "fa-solid fa-mountain-sun" },
+            { name: "Cities", icon: "fa-solid fa-city" }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSavedBadge();
+            renderCategoryChips();
+            loadData();
+        });
+
+        function updateSavedBadge() {
+            document.getElementById('saved-count-badge').innerText = savedGems.length;
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            document.getElementById('tab-gems').classList.toggle('active', mode === 'gems');
+            document.getElementById('tab-all').classList.toggle('active', mode === 'all');
+            document.getElementById('tab-saved').classList.toggle('active', mode === 'saved');
+
+            document.getElementById('country-select-container').style.display = (mode === 'saved' ? 'none' : 'block');
+            document.getElementById('category-chips-container').style.display = (mode === 'saved' ? 'none' : 'flex');
+
+            currentCategory = mode === 'gems' ? 'All Gems' : 'All';
+            renderCategoryChips();
+            loadData();
+        }
+
+        function renderCategoryChips() {
+            const container = document.getElementById('category-chips-container');
+            const list = currentMode === 'gems' ? gemCategories : normalCategories;
+            
+            container.innerHTML = list.map(cat => `
+                <div class="category-chip ${cat.name === currentCategory ? 'active' : ''}" onclick="filterCategory('${cat.name}', this)">
+                    <i class="${cat.icon}"></i> ${cat.name}
+                </div>
+            `).join('');
+        }
+
+        function filterCategory(catName, el) {
+            document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+            if(el) el.classList.add('active');
+            currentCategory = catName;
+            renderGrid();
+        }
+
+        function handleSearchInput() {
+            searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            renderGrid();
+        }
+
+        async function loadData() {
+            const grid = document.getElementById('explore-grid');
+            grid.innerHTML = '<p style="text-align:center; grid-column: 1/-1; color:#94a3b8; padding: 3rem;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i><br><br>Loading places...</p>';
+
+            if (currentMode === 'gems' || currentMode === 'saved') {
+                try {
+                    let url = '/api/hidden-gems';
+                    const res = await fetch(url);
+                    if (res.ok) {
+                        gemsData = await res.json();
+                    }
+                } catch(e) {
+                    console.warn("Failed to load gems from API", e);
+                }
+            }
+            renderGrid();
+        }
+
+        function toggleSaveGem(gemId, e) {
+            e.stopPropagation();
+            const idStr = String(gemId);
+            const index = savedGems.indexOf(idStr);
+            if (index > -1) {
+                savedGems.splice(index, 1);
+            } else {
+                savedGems.push(idStr);
+            }
+            localStorage.setItem('savedGems', JSON.stringify(savedGems));
+            updateSavedBadge();
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('explore-grid');
+            const country = document.getElementById('country-select').value;
+
+            if (currentMode === 'saved') {
+                const savedList = gemsData.filter(g => savedGems.includes(String(g.id)));
+                if (savedList.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.14); color: #94a3b8;">
+                            <i class="fa-regular fa-heart fa-3x" style="color: #f43f5e; margin-bottom: 1rem;"></i>
+                            <h3 style="color: white; font-size: 1.3rem;">No saved places yet</h3>
+                            <p style="margin-top:0.5rem;">Click the heart icon on any secret spot to save it here for quick access!</p>
+                        </div>
+                    `;
+                    return;
+                }
+                renderGemsList(savedList);
+                return;
+            }
+
+            if (currentMode === 'gems') {
+                let filtered = gemsData;
+
+                if (country && country !== 'All') {
+                    filtered = filtered.filter(g => g.country && g.country.toLowerCase() === country.toLowerCase());
+                }
+                if (currentCategory && currentCategory !== 'All Gems') {
+                    filtered = filtered.filter(g => g.category === currentCategory);
+                }
+                if (searchQuery) {
+                    filtered = filtered.filter(g => 
+                        (g.name && g.name.toLowerCase().includes(searchQuery)) ||
+                        (g.city && g.city.toLowerCase().includes(searchQuery)) ||
+                        (g.country && g.country.toLowerCase().includes(searchQuery)) ||
+                        (g.category && g.category.toLowerCase().includes(searchQuery)) ||
+                        (g.description && g.description.toLowerCase().includes(searchQuery))
+                    );
+                }
+
+                if (!filtered || filtered.length === 0) {
+                    grid.innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.14); color: #94a3b8;">
+                            <i class="fa-solid fa-compass fa-3x" style="color: #94a3b8; margin-bottom: 1rem;"></i>
+                            <h3 style="color: white; font-size: 1.3rem;">No secret spots match your search</h3>
+                            <p style="margin-top:0.5rem;">Try adjusting your filter or search term.</p>
+                            <button onclick="openSubmitGemModal()" class="btn-primary" style="margin-top:1.2rem; padding: 0.65rem 1.4rem; border-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
+                                <i class="fa-solid fa-plus"></i> Submit a Hidden Gem
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                renderGemsList(filtered);
+            } else {
+                renderStandardDestinations(country);
+            }
+        }
+
+        function renderGemsList(list) {
+            const grid = document.getElementById('explore-grid');
+            grid.innerHTML = list.map(gem => {
+                const isSaved = savedGems.includes(String(gem.id));
+                const gemImg = gem.photo_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80';
+                
+                return `
+                    <div class="dest-card">
+                        <div style="position:relative; height: 210px; overflow: hidden;">
+                            <img src="${gemImg}" alt="${gem.name}" style="width:100%; height:100%; object-fit:cover;">
+                            
+                            <!-- Wishlist Heart Button -->
+                            <button class="wishlist-btn ${isSaved ? 'saved' : ''}" onclick="toggleSaveGem('${gem.id}', event)" title="${isSaved ? 'Remove from Saved' : 'Save to Favorites'}">
+                                <i class="${isSaved ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
+                            </button>
+
+                            <!-- Rating Badge -->
+                            <div style="position:absolute; top: 12px; right: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; color: #facc15; font-weight: 700; border: 1px solid rgba(255,255,255,0.18); display:flex; align-items:center; gap:4px;">
+                                <i class="fa-solid fa-star"></i> ${gem.rating || '4.8'}
+                            </div>
+
+                            <!-- Location Tag -->
+                            <div style="position:absolute; bottom: 12px; left: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; color: #e2e8f0; font-weight: 600; border: 1px solid rgba(255,255,255,0.18); display:flex; align-items:center; gap:5px;">
+                                <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${gem.city}, ${gem.country}
+                            </div>
+                        </div>
+
+                        <div style="padding: 1.25rem; display:flex; flex-direction:column; gap: 10px; flex:1; justify-content:space-between;">
+                            <div>
+                                <span style="font-size: 0.74rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    ${gem.category}
+                                </span>
+                                <h3 style="margin-top: 3px; font-size: 1.15rem; font-weight: 700; color: white;">${gem.name}</h3>
+                                <p style="font-size: 0.88rem; color: #475569; line-height: 1.45; margin-top: 6px;">${gem.description}</p>
+                            </div>
+
+                            <!-- Metadata Badges -->
+                            <div>
+                                <div style="display:flex; flex-wrap:wrap; gap: 6px; margin-bottom: 12px;">
+                                    <span class="meta-tag"><i class="fa-solid fa-users-slash" style="color:#34d399;"></i> ${gem.crowd_level || 'Low Crowd'}</span>
+                                    <span class="meta-tag"><i class="fa-solid fa-clock" style="color:#facc15;"></i> ${gem.best_time || 'Best Time'}</span>
+                                    <span class="meta-tag"><i class="fa-solid fa-wallet" style="color:#60a5fa;"></i> ${gem.budget || 'Free'}</span>
+                                </div>
+
+                                <div style="display:flex; justify-content:space-between; align-items:center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
+                                    <span style="font-size: 0.78rem; color: #94a3b8;"><i class="fa-regular fa-user" style="margin-right:4px;"></i> ${gem.submitted_by || 'Explorer'}</span>
+                                    <div style="display:flex; gap: 8px;">
+                                        <button class="btn-small" style="background: rgba(255,255,255,0.08); color: white; border:1px solid rgba(255,255,255,0.15); border-radius: 8px; padding:0.4rem 0.85rem; font-size:0.8rem; cursor:pointer;" onclick="showGemScoreBreakdown('${gem.id}')">
+                                            <i class="fa-solid fa-circle-info"></i> Details
+                                        </button>
+                                        <button class="btn-small btn-primary" onclick="planThis('${gem.city}')" style="border-radius: 8px; font-weight:600; padding:0.4rem 0.9rem; font-size:0.8rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
+                                            Plan Trip <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:2px;"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderStandardDestinations(country) {
+            const destinationsDb = {
+                "India": [
+                    { name: "Goa", type: "Beaches", desc: "Famous for its beaches, nightlife, and great seafood.", img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=600&q=80" },
+                    { name: "Manali", type: "Mountains", desc: "A beautiful hill station surrounded by snow peaks and pine forests.", img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=600&q=80" },
+                    { name: "Jaipur", type: "Cities", desc: "The Pink City, known for its royal palaces and busy local markets.", img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=600&q=80" }
+                ],
+                "Japan": [
+                    { name: "Okinawa Island", type: "Beaches", desc: "Tropical beaches with clear water and great diving spots.", img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=600&q=80" },
+                    { name: "Tokyo", type: "Cities", desc: "A busy, modern city that still keeps its traditional culture alive.", img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80" }
+                ],
+                "France": [
+                    { name: "Nice", type: "Beaches", desc: "A popular coastal city on the French Riviera with beautiful pebble beaches.", img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=600&q=80" },
+                    { name: "Paris", type: "Cities", desc: "The capital city, famous for art, food, fashion, and the Eiffel Tower.", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80" }
+                ]
+            };
+
+            const grid = document.getElementById('explore-grid');
+            let data = [];
+            if (country && country !== 'All') {
+                data = destinationsDb[country] || [];
+            } else {
+                Object.values(destinationsDb).forEach(list => data.push(...list));
+            }
+
+            if (currentCategory && currentCategory !== 'All') {
+                data = data.filter(d => d.type === currentCategory);
+            }
+
+            if (searchQuery) {
+                data = data.filter(d => d.name.toLowerCase().includes(searchQuery) || d.desc.toLowerCase().includes(searchQuery));
+            }
+
+            grid.innerHTML = data.map(dest => `
+                <div class="dest-card">
+                    <img src="${dest.img}" alt="${dest.name}" style="height: 200px; width:100%; object-fit: cover;">
+                    <div style="padding: 1.25rem; display:flex; flex-direction:column; justify-content:space-between; flex:1;">
+                        <div>
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <h3 style="margin:0; font-size:1.15rem; color: white;">${dest.name}</h3>
+                                <span class="meta-tag" style="font-size:0.75rem;">${dest.type}</span>
+                            </div>
+                            <p style="margin-top: 0.6rem; font-size: 0.88rem; color: #475569; line-height: 1.45;">${dest.desc}</p>
+                        </div>
+                        <div style="margin-top: 1.2rem; display:flex; justify-content:flex-end;">
+                            <button class="btn-small btn-primary" onclick="planThis('${dest.name}')" style="border-radius:8px; font-weight:600; padding:0.4rem 0.9rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
+                                Plan Trip <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:2px;"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function planThis(destName) {
+            window.location.href = `index.html?dest=${encodeURIComponent(destName)}`;
+        }
+
+        function planFromModal() {
+            if (selectedGemForShare) {
+                planThis(selectedGemForShare.city || selectedGemForShare.name);
+            }
+        }
+
+        // Modal Handlers
+        function openSubmitGemModal() {
+            document.getElementById('submit-gem-modal').style.display = 'flex';
+        }
+        function closeSubmitGemModal() {
+            document.getElementById('submit-gem-modal').style.display = 'none';
+        }
+
+        function openGemScoreModal() {
+            document.getElementById('gem-score-modal').style.display = 'flex';
+        }
+        function closeGemScoreModal() {
+            document.getElementById('gem-score-modal').style.display = 'none';
+        }
+
+        let selectedGemForShare = null;
+        function showGemScoreBreakdown(id) {
+            const idStr = String(id);
+            const gem = gemsData.find(g => String(g.id) === idStr);
+            if (!gem) return;
+
+            selectedGemForShare = gem;
+            document.getElementById('breakdown-title').innerText = gem.name;
+            document.getElementById('breakdown-subtitle').innerHTML = `<i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${gem.city}, ${gem.country}`;
+            document.getElementById('modal-category-badge').innerHTML = `<i class="fa-solid fa-gem"></i> ${gem.category || 'Hidden Gem'}`;
+            
+            document.getElementById('modal-crowd').innerHTML = `<i class="fa-solid fa-users-slash" style="margin-right:4px;"></i> ${gem.crowd_level || 'Low Crowd'}`;
+            document.getElementById('modal-time').innerHTML = `<i class="fa-solid fa-clock" style="margin-right:4px;"></i> ${gem.best_time || 'Best Time'}`;
+            document.getElementById('modal-budget').innerHTML = `<i class="fa-solid fa-wallet" style="margin-right:4px;"></i> ${gem.budget || 'Free'}`;
+            document.getElementById('modal-rating').innerHTML = `<i class="fa-solid fa-star" style="margin-right:4px;"></i> ${gem.rating || '4.8'} / 5`;
+            document.getElementById('modal-desc').innerText = gem.description || 'No detailed directions provided.';
+
+            openGemScoreModal();
+        }
+
+        function shareGemLink() {
+            if (!selectedGemForShare) return;
+            const link = `${window.location.origin}/explore.html?gem=${selectedGemForShare.id}`;
+            navigator.clipboard.writeText(link);
+            alert(`Link copied to clipboard!\n${link}`);
+        }
+
+        async function handleGemSubmission(e) {
+            e.preventDefault();
+            const btn = document.getElementById('gem-submit-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
+            btn.disabled = true;
+
+            const user = JSON.parse(localStorage.getItem('user')) || {};
+
+            const payload = {
+                name: document.getElementById('gem-name').value,
+                city: document.getElementById('gem-city').value,
+                country: document.getElementById('gem-country').value,
+                category: document.getElementById('gem-category').value,
+                best_time: document.getElementById('gem-time').value,
+                description: document.getElementById('gem-desc').value,
+                photo_url: document.getElementById('gem-photo').value,
+                submitted_by: user.name || 'Explorer'
+            };
+
+            try {
+                const res = await fetch('/api/hidden-gems', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                closeSubmitGemModal();
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Place';
+                btn.disabled = false;
+
+                // Toast Feedback
+                const toast = document.createElement('div');
+                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#10b981,#059669);color: white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:600;z-index:999999;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
+                toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${data.message || 'Hidden Gem added successfully!'}`;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+
+                // Reset form & reload
+                e.target.reset();
+                loadData();
+            } catch(err) {
+                console.error("Submission failed", err);
+                alert("Could not submit. Please try again.");
+                btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Submit Place';
+                btn.disabled = false;
+            }
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

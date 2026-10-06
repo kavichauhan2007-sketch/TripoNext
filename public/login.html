@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            background-image: url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .auth-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 100%);
+        }
+        .auth-wrapper {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 450px;
+            margin: auto;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            padding: 3rem;
+        }
+        .auth-form-container {
+            width: 100%;
+        }
+        .auth-card {
+            width: 100%;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .auth-card h2 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Outfit', sans-serif;
+        }
+        .auth-card p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2.5rem;
+        }
+        .input-group {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            transition: border-color 0.3s;
+        }
+        .input-group:focus-within {
+            border-color: var(--primary);
+            background: rgba(255,255,255,0.1);
+        }
+        .input-group i {
+            color: var(--primary);
+            width: 24px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 1.2rem 0.5rem;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 1.2rem;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(249, 115, 22, 0.4);
+        }
+        .toggle-auth {
+            text-align: center;
+            margin-top: 2rem;
+            color: var(--text-muted);
+        }
+        .toggle-auth a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 0.5rem;
+            transition: color 0.3s;
+        }
+        .toggle-auth a:hover {
+            color: var(--accent);
+        }
+        @media (max-width: 500px) {
+            .auth-wrapper { padding: 2rem; margin: 1rem; border-radius: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-overlay"></div>
+        <div class="auth-wrapper">
+            <div class="auth-form-container">
+                
+                <!-- Login Box -->
+                <div class="auth-card" id="login-box">
+                    <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;">
+                        <i class="fa-solid fa-plane-departure"></i>
+                    </div>
+                    <h2>Welcome Back</h2>
+                    <p class="subtitle">Enter your details to access your trips.</p>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input type="email" id="login-email" placeholder="Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="login-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Login to Dashboard</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Don't have an account? <a href="#" onclick="toggleAuth()">Create Account</a>
+                    </div>
+                </div>
+
+                <!-- Register Box -->
+                <div class="auth-card" id="register-box" style="display: none;">
+                    <div style="font-size: 2.5rem; color: var(--primary); margin-bottom: 1rem;">
+                        <i class="fa-solid fa-plane-arrival"></i>
+                    </div>
+                    <h2>Start Your Journey</h2>
+                    <p class="subtitle">Create an account to start planning trips.</p>
+                    <form id="register-form">
+                        <div class="input-group">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="reg-name" placeholder="Full Name" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-envelope"></i>
+                            <input type="email" id="reg-email" placeholder="Email Address" required>
+                        </div>
+                        <div class="input-group">
+                            <i class="fa-solid fa-lock"></i>
+                            <input type="password" id="reg-password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="auth-btn">Sign Up Now</button>
+                    </form>
+                    <div class="toggle-auth">
+                        Already have an account? <a href="#" onclick="toggleAuth()">Login instead</a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
+    <script src="auth.js"></script>
+</body>
+</html>
+

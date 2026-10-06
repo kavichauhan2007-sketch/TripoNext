@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Trips - TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .trips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .trip-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .trip-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .trip-header h3 {
+            margin: 0;
+            color: #fff;
+            font-size: 1.4rem;
+        }
+        .trip-budget {
+            color: var(--success);
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+        .trip-details p {
+            margin: 0.2rem 0;
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+    </style>
+</head>
+<body class="mytrips-bg">
+    <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        <div class="logo">
+            <i class="fa-solid fa-plane-departure"></i> TripoNext
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Dashboard</a>
+            <a href="explore.html">Explore</a>
+            <a href="mytrips.html" class="active">My Trips</a>
+            <a href="community.html">Community</a>
+            <a href="buddies.html">Find Buddies</a>
+        </div>
+        <div class="user-profile">
+            <!-- User name injected via JS -->
+        </div>
+    </nav>
+
+    <main class="page-container mt-4">
+        <h1 class="text-center" style="font-size: 2.5rem; margin-bottom: 0.5rem;">My Planned Trips</h1>
+        <p class="text-center text-muted">All your upcoming and past adventures.</p>
+
+        <div id="trips-container" class="trips-grid">
+            <p style="text-align:center; width:100%;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i> Loading trips...</p>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTrips);
+
+        let allTripsData = [];
+
+        async function loadTrips() {
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('trips-container');
+
+            let dbTrips = [];
+            if (token) {
+                try {
+                    const res = await fetch('/api/trips', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        dbTrips = await res.json();
+                    }
+                } catch (e) {
+                    console.warn("Backend unavailable for loading trips.");
+                }
+            }
+
+            let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+            allTripsData = [...(Array.isArray(dbTrips) ? dbTrips : []), ...localTrips];
+
+            try {
+                if (allTripsData.length > 0) {
+                    let html = '';
+                    const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+
+                    allTripsData.slice().reverse().forEach(trip => {
+                        const safeId = String(trip.id || Math.random());
+                        const safeDest = (trip.destination || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const safeDates = (trip.dates || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        const budgetVal = Number(trip.budget) || 0;
+
+                        html += `
+                            <div class="trip-card glassmorphism" style="position:relative;">
+                                <div class="trip-header" style="display:flex; justify-content:space-between; align-items:center;">
+                                    <h3 style="display:flex; align-items:center; gap:8px;">
+                                        <i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${trip.destination || 'Unspecified'}
+                                    </h3>
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <span class="trip-budget">${formatter.format(budgetVal)}</span>
+                                        <button onclick="deleteSingleTrip('${safeId}')" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:8px; width:34px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all 0.2s;" title="Delete Trip">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="trip-details">
+                                    <p><i class="fa-regular fa-calendar"></i> <strong>Dates:</strong> ${trip.dates || 'Not specified'}</p>
+                                    <div style="background: rgba(59,130,246,0.15); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; color: #60a5fa; display: inline-block; margin-top: 0.5rem; border: 1px solid rgba(59,130,246,0.3);">
+                                        <i class="fa-solid fa-plane"></i> Upcoming Trip
+                                    </div>
+                                </div>
+                                <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="width:100%; margin-top:1rem; border-radius: 8px;">Edit or View Trip</button>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<p style="text-align:center; width:100%; padding:3rem; color:#94a3b8;">You have no planned trips yet! Go to the Dashboard to create one.</p>';
+                }
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p style="text-align:center; width:100%; color: var(--danger);">Failed to load trips. Make sure the server is running.</p>';
+            }
+        }
+
+        // Edit Trip Modal Logic
+        let editingTripId = null;
+        function openEditModal(id, dest, dates, budget) {
+            editingTripId = String(id);
+            document.getElementById('edit-dest').value = dest;
+            document.getElementById('edit-dates').value = dates;
+            document.getElementById('edit-budget').value = budget;
+            document.getElementById('editTripModal').style.display = 'flex';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editTripModal').style.display = 'none';
+        }
+
+        async function saveTripChanges() {
+            if(!editingTripId) return;
+            const dest = document.getElementById('edit-dest').value;
+            const dates = document.getElementById('edit-dates').value;
+            const budget = document.getElementById('edit-budget').value;
+            const token = localStorage.getItem('token');
+            
+            let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+            let foundLocal = false;
+            localTrips = localTrips.map(t => {
+                if (String(t.id) === String(editingTripId)) {
+                    foundLocal = true;
+                    return { ...t, destination: dest, dates, budget };
+                }
+                return t;
+            });
+            if (foundLocal) {
+                localStorage.setItem('localTrips', JSON.stringify(localTrips));
+            }
+
+            if (token && !foundLocal) {
+                try {
+                    await fetch(`/api/trips/${editingTripId}`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                        },
+                        body: JSON.stringify({ destination: dest, dates, budget })
+                    });
+                } catch(e) {
+                    console.warn("Backend update failed", e);
+                }
+            }
+
+            closeEditModal();
+            loadTrips();
+        }
+
+        async function deleteTrip() {
+            if(!editingTripId) return;
+            await deleteSingleTrip(editingTripId);
+            closeEditModal();
+        }
+
+        async function deleteSingleTrip(id) {
+            if(!confirm("Are you sure you want to delete this trip?")) return;
+            
+            const targetIdStr = String(id);
+
+            // 1. Delete from localStorage localTrips if present
+            let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+            localTrips = localTrips.filter(t => String(t.id) !== targetIdStr);
+            localStorage.setItem('localTrips', JSON.stringify(localTrips));
+
+            // 2. Delete from database via API if logged in
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    await fetch(`/api/trips/${encodeURIComponent(targetIdStr)}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch(e) {
+                    console.warn("Backend request failed, but local trip removed.", e);
+                }
+            }
+
+            // Reload UI
+            loadTrips();
+
+            // Toast feedback
+            const toast = document.createElement('div');
+            toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#ef4444;color:white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:bold;z-index:99999;box-shadow:0 8px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
+            toast.innerHTML = '<i class="fa-solid fa-trash-can"></i> Trip deleted successfully!';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+    </script>
+
+    <!-- Edit Trip Modal -->
+    <div id="editTripModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div class="modal-content glassmorphism" style="width: 90%; max-width: 400px; padding: 2rem; border-radius: 20px; position: relative;">
+            <button onclick="closeEditModal()" class="close-btn" style="position: absolute; right: 20px; top: 20px; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;"><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Trip</h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Destination</label>
+                <input type="text" id="edit-dest" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Dates</label>
+                <input type="text" id="edit-dates" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Budget (INR)</label>
+                <input type="number" id="edit-budget" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
+            </div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <button onclick="saveTripChanges()" class="btn-primary" style="flex: 1; border-radius: 8px;">Save Changes</button>
+                <button onclick="deleteTrip()" class="btn-primary" style="flex: 1; border-radius: 8px; background: var(--danger); border-color: var(--danger);">Delete</button>
+            </div>
+        </div>
+    </div>
+    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
+        <div style="margin-bottom: 1rem;">
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
+        </div>
+        <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="#" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>
+

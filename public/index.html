@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - TripoNext</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- html2pdf for Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Leaflet CSS & JS for Real Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Flatpickr for date selection -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fa-solid fa-plane-departure"></i> TripoNext
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="active" data-i18n="nav_dashboard">Dashboard</a>
+            <a href="explore.html" data-i18n="nav_explore">Explore</a>
+            <a href="mytrips.html" data-i18n="nav_mytrips">My Trips</a>
+            <a href="community.html" data-i18n="nav_community">Community</a>
+            <a href="buddies.html">Find Buddies</a>
+        </div>
+        
+        <div class="settings-group" style="display: flex; gap: 1rem; align-items: center;">
+            <select id="lang-selector" class="glass-select" onchange="changeLanguage()">
+                <option value="en">🇺🇸 EN</option>
+                <option value="es">🇪🇸 ES</option>
+                <option value="fr">🇫🇷 FR</option>
+            </select>
+            <div class="user-profile">
+                <!-- User name injected via JS -->
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero" style="background-image: url('https://images.unsplash.com/photo-1503220317375-aaad61436b1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80')">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 data-i18n="hero_title">Plan Your Dream Trip in Seconds</h1>
+            <p data-i18n="hero_subtitle">One smart platform for maps, weather, places, itineraries, and budget.</p>
+            
+            <div class="search-bar">
+                <div class="input-group" style="position: relative; display: flex; align-items: center; width: 100%;">
+                    <i class="fa-solid fa-location-dot" style="margin-right: 10px;"></i>
+                    <input type="text" placeholder="Where to? (e.g. Paris)" id="destination-input" style="flex: 1; background: transparent; border: none; color: white; outline: none;">
+                    <button id="voice-search-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; margin-left: 5px; transition: color 0.3s;" title="Voice Search">
+                        <i class="fa-solid fa-microphone"></i>
+                    </button>
+                </div>
+                <div class="input-group">
+                    <i class="fa-regular fa-calendar"></i>
+                    <input type="text" placeholder="Select Dates" id="dates-input">
+                </div>
+                <div class="input-group" style="position: relative;">
+                    <i class="fa-solid fa-wallet"></i>
+                    <input type="number" placeholder="Budget" id="budget-input">
+                    <select id="budget-currency" style="background:transparent; border:none; color:var(--text-main); margin-left: 5px; outline: none;" onchange="updateCurrency()">
+                        <option value="INR">₹ INR</option>
+                        <option value="USD">$ USD</option>
+                        <option value="EUR">€ EUR</option>
+                        <option value="GBP">£ GBP</option>
+                    </select>
+                    <button class="btn-small" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); border: none; padding: 0.3rem 0.6rem; border-radius: 4px; color: white; cursor: pointer;" onclick="openBudgetCalculator()" title="Auto Calculate Budget">
+                        <i class="fa-solid fa-calculator"></i>
+                    </button>
+                </div>
+                <div class="input-group">
+                    <i class="fa-solid fa-user-group"></i>
+                    <input type="number" placeholder="Travelers" id="people-input" min="1" value="1">
+                </div>
+                <button class="search-btn" onclick="planTrip()">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="btn_plan">Plan It</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard" id="dashboard" style="display: none;">
+        <div class="dashboard-header">
+            <h2 id="trip-title">Trip to ...</h2>
+            <div class="trip-meta">
+                <span class="badge status-good"><i class="fa-solid fa-wallet"></i> <span data-i18n="badge_budget">On Budget</span></span>
+                <span class="badge" id="distance-badge" style="display:none; background: var(--accent); color: white;"><i class="fa-solid fa-route"></i> <span id="trip-distance">Calculating...</span></span>
+            </div>
+        </div>
+
+        <div class="bento-grid">
+            <!-- Interactive Real Map -->
+            <div class="card map-card glassmorphism">
+                <div class="map-header">
+                    <h3><i class="fa-solid fa-map-location-dot"></i> <span data-i18n="title_map">Live Interactive Map</span></h3>
+                </div>
+                <div class="map-container" style="padding:0;">
+                    <div id="real-map" style="height: 100%; width: 100%; min-height: 350px;"></div>
+                </div>
+            </div>
+
+            <!-- Budget Tracker -->
+            <div class="card budget-card glassmorphism">
+                <h3><i class="fa-solid fa-chart-pie"></i> <span data-i18n="title_budget">Budget Overview</span></h3>
+                <div class="budget-stats">
+                    <div class="stat">
+                        <span class="label" data-i18n="label_total">Total Budget</span>
+                        <span class="value" id="total-budget-disp">$0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label" data-i18n="label_spent">Estimated Cost</span>
+                        <span class="value spent" id="spent-budget-disp">$0</span>
+                    </div>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" style="width: 60%;"></div>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted);" data-i18n="budget_desc">Automatically adjusted to your selected regional currency.</p>
+            </div>
+
+            <!-- Weather Widget & Local Time -->
+            <div class="card weather-card glassmorphism">
+                <h3><i class="fa-solid fa-cloud-sun-rain"></i> <span data-i18n="title_weather">Live Weather Forecast</span></h3>
+                <div class="weather-current" style="display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div class="temp" id="real-weather-temp" style="font-size: 2.5rem; font-weight: bold;">--°C</div>
+                        <div class="condition" id="real-weather-cond" style="color: var(--text-muted);">Loading...</div>
+                        <div style="margin-top: 5px; font-size: 0.9rem; color: var(--primary);"><i class="fa-solid fa-clock"></i> Local Time: <span id="dest-local-time">--:--</span></div>
+                    </div>
+                    <div id="weather-anim-icon" style="font-size: 3rem; text-shadow: 0 0 15px rgba(255,255,255,0.3);">☁️</div>
+                </div>
+            </div>
+
+            <!-- Live Currency Converter -->
+            <div class="card currency-card glassmorphism">
+                <h3><i class="fa-solid fa-money-bill-transfer"></i> Live Currency Converter</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom:1rem;">Convert your budget in real-time.</p>
+                
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                    <span style="display:flex; align-items:center; font-size: 1.2rem; font-weight:bold;" id="curr-sym">₹</span>
+                    <input type="number" id="currency-input" value="1000" class="glass-select" style="flex:1;" oninput="updateCurrencyValues()">
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">USD ($)</div>
+                        <div id="conv-usd" style="font-weight: bold; font-size: 1.1rem; color: var(--success);">--</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">EUR (€)</div>
+                        <div id="conv-eur" style="font-weight: bold; font-size: 1.1rem; color: var(--success);">--</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">GBP (£)</div>
+                        <div id="conv-gbp" style="font-weight: bold; font-size: 1.1rem; color: var(--success);">--</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.8rem; color: #cbd5e1;">AED (د.إ)</div>
+                        <div id="conv-aed" style="font-weight: bold; font-size: 1.1rem; color: var(--success);">--</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bookings Section -->
+            <div class="card bookings-card glassmorphism" style="grid-column: span 8;">
+                <h3><i class="fa-solid fa-ticket"></i> Bookings & Reservations</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.skyscanner.com', '_blank')">
+                        <i class="fa-solid fa-plane" style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;"></i>
+                        <h4>Flights</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Find best prices</p>
+                    </div>
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.booking.com', '_blank')">
+                        <i class="fa-solid fa-hotel" style="font-size: 2rem; color: #10b981; margin-bottom: 0.5rem;"></i>
+                        <h4>Hotels</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Secure your stay</p>
+                    </div>
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.uber.com', '_blank')">
+                        <i class="fa-solid fa-taxi" style="font-size: 2rem; color: #f59e0b; margin-bottom: 0.5rem;"></i>
+                        <h4>Cabs</h4>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Ride locally</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TripoNext Auto-Planner -->
+            <div class="card ai-itinerary-card glassmorphism" style="grid-column: 1 / -1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3><i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> TripoNext Auto-Planner</h3>
+                    <button id="generate-ai-btn" class="btn-primary" onclick="generateAIItinerary()" style="background: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 8px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Build My Trip</button>
+                </div>
+                <div id="ai-loading" style="display: none; text-align: center; padding: 2rem;">
+                    <i class="fa-solid fa-compass fa-spin fa-2x" style="color: var(--primary); margin-bottom: 1rem;"></i>
+                    <p style="color: var(--text-muted); font-family: 'Inter', sans-serif;" id="ai-status-text">Syncing with local guides...</p>
+                    <div style="width: 100%; background: rgba(255,255,255,0.1); height: 4px; border-radius: 2px; margin-top: 1rem; overflow: hidden;">
+                        <div id="ai-progress-bar" style="width: 0%; height: 100%; background: var(--primary); transition: width 0.2s;"></div>
+                    </div>
+                </div>
+                <div id="ai-result" style="display: none; margin-top: 1rem;">
+                    <!-- AI Plan will be injected here -->
+                </div>
+            </div>
+
+            <!-- Essential Packing List -->
+            <div class="card packing-card glassmorphism" style="grid-column: span 3;">
+                <h3><i class="fa-solid fa-suitcase-rolling"></i> Essential Packing List</h3>
+                <ul class="packing-list" id="packing-list" style="list-style: none; padding: 0; margin-top: 1rem;">
+                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack1" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack1" style="cursor: pointer;">Passport & ID</label></li>
+                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack2" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack2" style="cursor: pointer;">Phone Charger & Power Bank</label></li>
+                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack3" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack3" style="cursor: pointer;">Travel Insurance</label></li>
+                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack4" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack4" style="cursor: pointer;">Comfortable Walking Shoes</label></li>
+                </ul>
+                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                    <input type="text" id="new-pack-item" placeholder="Add custom item..." class="glass-select" style="flex:1;">
+                    <button class="btn-small" onclick="addPackingItem()" style="background: var(--primary); border:none; color:white; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+
+            <!-- ✈ DESTINATION HERO PHOTO CARD — Small Size -->
+            <div class="card glassmorphism" id="dest-photo-card"
+                 style="padding: 0; overflow: hidden; border-radius: 20px; cursor: pointer; position: relative; border: 1px solid rgba(59,130,246,0.3); transition: box-shadow 0.3s, transform 0.3s; min-height: 240px; grid-column: span 3;"
+                 onmouseenter="this.style.boxShadow='0 0 0 2px #3b82f6, 0 10px 30px rgba(59,130,246,0.2)';document.getElementById('real-dest-img').style.transform='scale(1.05)'"
+                 onmouseleave="this.style.boxShadow='';document.getElementById('real-dest-img').style.transform='scale(1)'"
+                 onclick="(function(){var d=document.getElementById('dest-photo-label');var dest=d?d.getAttribute('data-dest')||d.textContent.replace('📍','').trim():'Travel';window.open('https://www.google.com/search?q='+encodeURIComponent(dest+' tourist places photos')+'&tbm=isch','_blank');})()"
+            >
+                <!-- Hero Image -->
+                <div style="position:relative; width:100%; height:100%; min-height: 240px; overflow:hidden; background:#1e293b;">
+                    <img id="real-dest-img" src="https://source.unsplash.com/600x400/?landscape,nature"
+                         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block;"
+                         alt="Destination Photo">
+
+                    <!-- Gradient overlays -->
+                    <div style="position:absolute;inset:0;background:linear-gradient(to bottom, transparent 10%, rgba(10,17,40,0.95) 100%);pointer-events:none;"></div>
+
+                    <!-- Bottom info bar -->
+                    <div style="position:absolute;bottom:0;left:0;right:0;padding:16px;display:flex;flex-direction:column;gap:12px;">
+                        <div>
+                            <div id="dest-photo-label" data-dest="Destination" style="font-size:1.4rem;font-weight:800;color:#f8fafc;text-shadow:0 2px 8px rgba(0,0,0,0.8);letter-spacing:-0.5px;line-height:1.2;">📍 Destination</div>
+                        </div>
+                        <!-- Quick action buttons (Stacked for small card) -->
+                        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="photo-action-btns">
+                            <button id="photo-btn-images"
+                                onclick="event.stopPropagation(); (function(){var d=document.getElementById('dest-photo-label');var dest=d?d.getAttribute('data-dest'):'Travel';window.open('https://www.google.com/search?q='+encodeURIComponent(dest+' photos')+'&tbm=isch','_blank');})()"
+                                style="flex:1;background:linear-gradient(135deg,#1a56db,#4285f4);border:none;color:white;padding:8px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;box-shadow:0 2px 10px rgba(66,133,244,0.4);transition:transform 0.2s;"
+                                onmouseenter="this.style.transform='translateY(-2px)'"
+                                onmouseleave="this.style.transform=''">
+                                <i class="fa-brands fa-google"></i> Photos
+                            </button>
+                            <button id="photo-btn-maps"
+                                onclick="event.stopPropagation(); (function(){var d=document.getElementById('dest-photo-label');var dest=d?d.getAttribute('data-dest'):'Travel';window.open('https://www.google.com/maps/search/'+encodeURIComponent(dest),'_blank');})()"
+                                style="flex:1;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.2s;"
+                                onmouseenter="this.style.background='rgba(255,255,255,0.25)'"
+                                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">
+                                <i class="fa-solid fa-map-location-dot" style="color:#34a853;"></i> Maps
+                            </button>
+                            <button id="photo-btn-wiki"
+                                onclick="event.stopPropagation(); (function(){var d=document.getElementById('dest-photo-label');var dest=d?d.getAttribute('data-dest'):'Travel';window.open('https://en.wikipedia.org/wiki/'+encodeURIComponent(dest),'_blank');})()"
+                                style="flex:1;background:rgba(255,255,255,0.15);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);color:white;padding:8px;border-radius:8px;font-size:0.75rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.2s;"
+                                onmouseenter="this.style.background='rgba(255,255,255,0.25)'"
+                                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">
+                                <i class="fa-brands fa-wikipedia-w" style="color:#e2e8f0;"></i> Wiki
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            
+            <!-- Real Places API Integration -->
+            <div class="card recommendations-card glassmorphism" style="grid-column: span 6;">
+                 <h3><i class="fa-solid fa-utensils"></i> <span data-i18n="title_places">Actual Local Places (Live Data)</span></h3>
+                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom:1rem;" data-i18n="places_desc">Click on any place to learn more about it on Google.</p>
+                 <div class="rec-grid" id="real-places-container">
+                    <!-- Places will be injected here via JS -->
+                    <div style="text-align:center; width:100%; color:var(--text-muted);">
+                        <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    </div>
+                 </div>
+            </div>
+        </div>
+    </main>
+
+    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
+        <div style="margin-bottom: 1rem;">
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
+        </div>
+        <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="#" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
+    </footer>
+
+    <!-- Budget Calculator Modal -->
+    <div id="budget-modal" class="modal-overlay">
+        <div class="modal-content glassmorphism">
+            <h3><i class="fa-solid fa-calculator"></i> Estimated Budget Calculator</h3>
+            <p style="font-size: 0.9rem; color: #cbd5e1;">Answer a few questions to get an accurate estimated cost.</p>
+            
+            <label>Leaving From (City/Country) <button class="btn-small" style="font-size: 0.7rem; padding: 2px 5px;" onclick="fetchUserLocation()"><i class="fa-solid fa-location-crosshairs"></i> Get My Location</button></label>
+            <input type="text" id="calc-origin" placeholder="e.g. New York">
+
+            <label>Going To</label>
+            <input type="text" id="calc-dest" placeholder="e.g. Paris">
+
+            <div id="dist-display" style="color: var(--success); font-size: 0.85rem; margin-bottom: 10px;"></div>
+
+            <label>How many days is your trip?</label>
+            <input type="number" id="calc-days" value="3" min="1">
+
+            <label>Mode of Transport</label>
+            <select id="calc-transport">
+                <option value="flight">Flight (Air Travel)</option>
+                <option value="train">Train (Rail Travel)</option>
+                <option value="bus">Bus / Car (Road Travel)</option>
+            </select>
+
+            <label>Accommodation Style</label>
+            <select id="calc-hotel">
+                <option value="15000">Luxury Hotel (5-Star / Resort)</option>
+                <option value="5000">Standard Hotel (3-Star / Business)</option>
+                <option value="1500">Hostel / Budget (1-Star / Backpacker)</option>
+            </select>
+
+            <label>Food & Dining</label>
+            <select id="calc-food">
+                <option value="5000">Fine Dining (High-end Restaurants)</option>
+                <option value="1500">Local Restaurants (Standard Dining)</option>
+                <option value="500">Street Food (Budget / Quick Bites)</option>
+            </select>
+
+            <div class="modal-btns">
+                <button class="btn-small" style="background: transparent; border: 1px solid white;" onclick="closeBudgetCalculator()">Cancel</button>
+                <button class="btn-small btn-primary" onclick="calculateAndSetBudget()">Calculate & Set Budget</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js?v=3"></script>
+</body>
+</html>
+
