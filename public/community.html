@@ -17,6 +17,10 @@
         .ai-input-group input { flex-grow: 1; padding: 0.5rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #fff; border-radius: 4px; }
         .ai-input-group button { padding: 0.5rem 1rem; background: var(--primary); color: #fff; border: none; border-radius: 4px; cursor: pointer; }
     </style>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
 </head>
 <body class="community-bg">
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
@@ -251,6 +255,16 @@
         <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="#" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
     <script src="script.js"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.log('Service Worker registration failed: ', err));
+            });
+        }
+    </script>
 </body>
 </html>
 
