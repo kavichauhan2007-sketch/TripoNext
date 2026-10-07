@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const { GoogleGenAI } = require('@google/genai');
 require('dotenv').config();
+const { generateDynamicPlan } = require('./itineraryEngine');
 
 const app = express();
 const PORT = 3001;
@@ -559,9 +560,9 @@ User message: ${message}`
     }
 });
 
-// API: AI Itinerary Generator (Gemini + Smart Travel Planner Engine)
+// API: AI Itinerary Generator (Gemini + Smart Authentic Travel Planner Engine)
 app.post('/api/ai-itinerary', async (req, res) => {
-    const { destination, days = 3, budget = 10000, currency = "INR", travelers = 1, style = "Balanced" } = req.body;
+    const { destination, days = 3, budget = 15000, currency = "INR", travelers = 1, style = "Balanced" } = req.body;
     if (!destination) return res.status(400).json({ error: 'Destination is required' });
     const numDays = Math.min(Math.max(parseInt(days) || 3, 1), 7);
 
@@ -571,6 +572,7 @@ app.post('/api/ai-itinerary', async (req, res) => {
             const ai = new GoogleGenAI({});
             const prompt = `Generate a realistic and exciting ${numDays}-day travel itinerary for ${destination}.
 Travel style: ${style}, Travelers: ${travelers}, Total Budget: ${currency} ${budget}.
+Include actual famous landmarks, authentic local food specialties, and realistic morning/afternoon/evening schedule.
 Return strictly valid JSON only without markdown or backticks in this exact schema:
 {
   "destination": "${destination}",
@@ -583,7 +585,7 @@ Return strictly valid JSON only without markdown or backticks in this exact sche
   "dailyPlan": [
     {
       "day": 1,
-      "theme": "Day theme (e.g. Arrival & Old Town Vibe)",
+      "theme": "Day theme (e.g. Arrival, Old Town Vibe & Sunset Eats)",
       "morning": { "time": "09:00 AM", "activity": "Name of morning spot/activity", "location": "Exact landmark", "tip": "Insider morning tip" },
       "afternoon": { "time": "01:30 PM", "activity": "Name of lunch & afternoon activity", "location": "Exact landmark", "tip": "Food or crowd tip" },
       "evening": { "time": "06:30 PM", "activity": "Sunset/night activity or dining", "location": "Exact landmark", "tip": "Evening vibe tip" }
@@ -601,78 +603,13 @@ Return strictly valid JSON only without markdown or backticks in this exact sche
             const parsed = JSON.parse(cleanText);
             return res.json(parsed);
         } catch (e) {
-            console.warn('Gemini itinerary generation failed, switching to Smart Rule Engine:', e.message);
+            console.warn('Gemini itinerary generation failed, switching to Smart Authentic Engine:', e.message);
         }
     }
 
-    // High quality intelligent algorithmic itinerary generator
-    const themes = [
-        "Arrival, Landmark Exploration & Local Flavors",
-        "Cultural Deep-Dive & Heritage Secrets",
-        "Scenic Panoramic Viewpoints & Café Trail",
-        "Hidden Gems & Authentic Street Markets",
-        "Nature Escape & Sunset Serenity",
-        "Art, History & Photography Walking Route",
-        "Farewell Memories, Souvenirs & Nightlife"
-    ];
-
-    const morningSpots = [
-        { act: "Sunrise Panoramic Walk & Breakfast", loc: `${destination} Historic Viewpoint`, tip: "Arrive before 8:30 AM to beat tourist crowds and capture soft lighting." },
-        { act: "Old Town Heritage Architecture Walk", loc: `${destination} Central Heritage Quarter`, tip: "Wear comfortable walking shoes; local bakeries open at 7:30 AM." },
-        { act: "Iconic Cultural Monument Exploration", loc: `${destination} Grand Cathedral / Fort / Palace`, tip: "Book tickets online in advance to skip queue lines." },
-        { act: "Peaceful Botanical Sanctuary & Lake Walk", loc: `${destination} Nature Reserve / Riverfront`, tip: "Perfect for morning coffee and serene photography." }
-    ];
-
-    const afternoonSpots = [
-        { act: "Authentic Local Gastronomy & Bistro Crawl", loc: `Famous ${destination} Food Market & Eatery`, tip: "Try the signature local specialty dish with iced artisanal brew." },
-        { act: "Museum & Secret Art Alley Discovery", loc: `${destination} Contemporary & Classic Gallery`, tip: "Air-conditioned break from midday heat; free admission hours on weekdays." },
-        { act: "Local Artisan Workshops & Souvenir Stalls", loc: `${destination} Traditional Craft Bazaar`, tip: "Haggle politely with street vendors for handmade keepsakes." },
-        { act: "Historic Riverside / Harbor Cruise or Tram", loc: `${destination} Waterfront Pier`, tip: "Relaxing 45-minute ride offering scenic skyline angles." }
-    ];
-
-    const eveningSpots = [
-        { act: "Golden Hour Rooftop Lounge & Sunset Views", loc: `${destination} Sunset Terrace / Sky Bar`, tip: "Reserve a ledge table 30 mins before sunset for breathtaking golden rays." },
-        { act: "Vibrant Night Market & Street Food Feast", loc: `${destination} Night Food Street`, tip: "Look for stalls with long local queues for maximum freshness." },
-        { act: "Live Acoustic Music & Candlelit Dinner", loc: `${destination} Lantern-lit Courtyard Bistro`, tip: "Try the chef's special dessert with locally brewed beverages." },
-        { act: "Illuminated Night Walk & City Square Vibes", loc: `${destination} Main Plaza Promenade`, tip: "The monuments light up beautifully after 7:30 PM." }
-    ];
-
-    const bVal = parseFloat(budget) || 10000;
-    const dailyPlan = [];
-    for (let d = 1; d <= numDays; d++) {
-        dailyPlan.push({
-            day: d,
-            theme: themes[(d - 1) % themes.length],
-            morning: morningSpots[(d - 1) % morningSpots.length],
-            afternoon: afternoonSpots[(d - 1) % afternoonSpots.length],
-            evening: eveningSpots[(d - 1) % eveningSpots.length]
-        });
-    }
-
-    res.json({
-        destination,
-        days: numDays,
-        summary: `An unforgettable ${numDays}-day journey across ${destination} designed for memorable sights, authentic eats, and hidden photo spots.`,
-        vibe: style === "Budget" ? "Backpacker & Street Food" : style === "Luxury" ? "Premium Heritage & Fine Dining" : "Balanced Exploration & Local Charm",
-        budgetBreakdown: {
-            stay: `${currency} ${Math.round(bVal * 0.40)}`,
-            food: `${currency} ${Math.round(bVal * 0.25)}`,
-            activities: `${currency} ${Math.round(bVal * 0.20)}`,
-            transport: `${currency} ${Math.round(bVal * 0.15)}`
-        },
-        packingList: [
-            "Comfortable all-day walking sneakers",
-            "Universal power adapter & power bank",
-            "Light rain jacket / layer for evening breezes",
-            "Reusable water bottle & personal essentials kit"
-        ],
-        insiderTips: [
-            `Download offline maps of ${destination} before leaving your hotel.`,
-            "Carry a small amount of local physical cash for street vendors and transit.",
-            "Early morning (before 9 AM) offers the best uncrowded photo opportunities."
-        ],
-        dailyPlan
-    });
+    // High quality authentic curated itinerary engine
+    const curatedPlan = generateDynamicPlan(destination, numDays, budget, currency, style);
+    res.json(curatedPlan);
 });
 
 // API: Get Buddy Messages / Chats

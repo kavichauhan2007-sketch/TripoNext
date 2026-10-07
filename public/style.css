@@ -1232,38 +1232,170 @@ h1, h2, h3, h4, h5, h6 {
     overflow-y: auto;
 }
 
-/* Mobile Fixes */
+/* ========================================================
+   COMPREHENSIVE MOBILE RESPONSIVENESS & PHONE FIXES
+   ======================================================== */
 @media (max-width: 768px) {
+    /* Mobile Compact Navbar */
     .navbar {
-        flex-wrap: wrap;
-        padding: 1rem;
-        gap: 0.5rem;
-        justify-content: center;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        padding: 0.6rem 0.9rem;
+        gap: 0.4rem;
+        background: rgba(15, 23, 42, 0.97) !important;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     }
     .logo {
-        width: 100%;
-        text-align: center;
-        justify-content: center;
-        margin-bottom: 0.5rem;
-    }
-    .nav-links {
-        width: 100%;
-        gap: 0.8rem;
-        justify-content: center;
-        flex-wrap: wrap;
-        font-size: 0.9rem;
+        grid-column: 1;
+        grid-row: 1;
+        font-size: 1.25rem;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.5rem;
     }
     .settings-group {
+        grid-column: 2;
+        grid-row: 1;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.5rem !important;
+    }
+    .nav-links {
+        grid-column: 1 / -1;
+        grid-row: 2;
         width: 100%;
-        justify-content: center;
-        margin-top: 0.5rem;
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        white-space: nowrap;
+        gap: 0.4rem;
+        padding: 2px 0 4px 0;
+        justify-content: flex-start;
+    }
+    .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+    .nav-links a {
+        padding: 0.35rem 0.75rem;
+        font-size: 0.8rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+        color: #cbd5e1;
+    }
+    .nav-links a.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: #fff;
+        font-weight: 600;
     }
     .page-container, .dashboard {
-        padding-top: 12rem;
+        padding-top: 6.8rem !important;
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
     }
     .auth-card {
-        width: 90%;
+        width: 95%;
         margin: 0 auto;
+        padding: 1.5rem;
+    }
+
+    /* Notification Panel Mobile Fix (No half cut-off) */
+    .notif-dropdown {
+        position: fixed !important;
+        top: 68px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: calc(100vw - 20px) !important;
+        max-height: 80vh !important;
+        border-radius: 18px !important;
+        box-shadow: 0 15px 50px rgba(0, 0, 0, 0.85) !important;
+        z-index: 99999 !important;
+        padding: 1rem !important;
+    }
+    .notif-list {
+        max-height: calc(80vh - 100px) !important;
+    }
+
+    /* Floating Travel Toolbox Mobile Positioning */
+    .floating-toolbox-btn {
+        bottom: 16px !important;
+        right: 16px !important;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 1.2rem !important;
+    }
+    .toolbox-modal {
+        position: fixed !important;
+        bottom: 74px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: calc(100vw - 20px) !important;
+        max-height: 78vh !important;
+        z-index: 99999 !important;
+    }
+
+    /* Modals & Dialogs on Mobile */
+    .modal-card {
+        width: 95vw !important;
+        max-width: calc(100vw - 20px) !important;
+        padding: 1.25rem !important;
+        border-radius: 18px !important;
+        max-height: 90vh !important;
+    }
+    .chat-modal-content {
+        width: 95vw !important;
+        max-width: calc(100vw - 20px) !important;
+        height: 85vh !important;
+        max-height: 85vh !important;
+        border-radius: 18px !important;
+    }
+
+    /* Hero Search Bar on Mobile */
+    .hero {
+        min-height: 70vh !important;
+        padding: 2rem 1rem !important;
+    }
+    .hero-content h1 {
+        font-size: 1.9rem !important;
+    }
+    .search-bar {
+        flex-direction: column !important;
+        border-radius: 16px !important;
+        padding: 0.8rem !important;
+        gap: 0.6rem !important;
+    }
+    .search-bar .input-group {
+        width: 100% !important;
+        padding: 0.4rem 0 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .search-bar .search-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 0.8rem !important;
+        border-radius: 10px !important;
+    }
+
+    /* Grid layouts on Phone */
+    .bento-grid, .community-grid {
+        grid-template-columns: 1fr !important;
+    }
+    .card {
+        grid-column: 1 / -1 !important;
+    }
+    .photo-album-grid {
+        grid-template-columns: 1fr !important;
     }
 }
 

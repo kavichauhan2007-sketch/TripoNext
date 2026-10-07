@@ -861,8 +861,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     );
                     out 20;
                 `;
-                const overpassRes = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: overpassQuery });
-                const overpassData = await overpassRes.json();
+                let overpassData = null;
+                try {
+                    const ctl = new AbortController();
+                    const tid = setTimeout(() => ctl.abort(), 2000);
+                    const overpassRes = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', body: overpassQuery, signal: ctl.signal });
+                    clearTimeout(tid);
+                    if (overpassRes.ok) overpassData = await overpassRes.json();
+                } catch(e) {
+                    console.log('Overpass timeout/fallback, using curated travel places.');
+                }
                 
                 if (overpassData.elements && overpassData.elements.length > 0) {
                     let attrNames = [...new Set(overpassData.elements.filter(e => e.tags.tourism === 'attraction' && e.tags.name).map(e => e.tags.name))].slice(0, 8);
@@ -1843,38 +1851,152 @@ window.shareEmergencyLocation = function() {
 };
 
 // ========================================================
-// 11. AI MAGIC ITINERARY MODAL (Day-by-Day Gemini Planner)
+// 11. AI MAGIC ITINERARY MODAL (Interactive & Mobile-Ready)
 // ========================================================
-window.openMagicPlanner = async function(destination, days, budget, currency = "INR") {
-    const dest = destination || document.getElementById('destination-input')?.value || "Paris";
-    const numDays = days || window._selectedNumDays || 3;
-    const bgt = budget || document.getElementById('budget-input')?.value || 15000;
+
+// Client-side authentic destination database (Zero failure guarantee)
+const CLIENT_CURATED_TRIPS = {
+    "goa": {
+        vibe: "Tropical Beaches & Portuguese Heritage",
+        summary: "A sun-soaked coastal adventure of golden shores, secret cliff viewpoints, iconic beach shacks, and vibrant Latin Quarter heritage walks.",
+        days: [
+            { day: 1, theme: "North Goa Coast, Sunset Cliffs & Seafood Feast", morning: { time: "09:00 AM", act: "Aguada Fort & Portuguese Lighthouse Walk", loc: "Candolim Coast", tip: "Rent a scooty early near Candolim (₹350/day) for easy coastal hopping." }, afternoon: { time: "01:30 PM", act: "Authentic Goan Fish Curry Thali & Kingfish Rawa Fry", loc: "Ritz Classic or Martin's Corner", tip: "Pair with chilled kokum sol kadhi for a refreshing local palate cleanser." }, evening: { time: "06:00 PM", act: "Sunset Cocktails at Thalassa Cliffside Lounge & Anjuna Market", loc: "Vagator Cliff Edge", tip: "Reach 30 mins before 6 PM for golden rays sinking into the Arabian Sea." } },
+            { day: 2, theme: "Latin Quarter Heritage & Old Goa History", morning: { time: "08:30 AM", act: "UNESCO Basilica of Bom Jesus & Se Cathedral", loc: "Old Goa (Velha Goa)", tip: "Marvel at 400-year-old gilded baroque altars and marble relics." }, afternoon: { time: "01:00 PM", act: "Colorful Heritage Photography Walk in Fontainhas", loc: "Panjim Latin Quarter", tip: "Snap pastel yellow and indigo havelis; sample fresh bebinca at Viva Panjim." }, evening: { time: "06:30 PM", act: "Mandovi River Sunset Cruise with Live Konkani Music", loc: "Panjim Jetty Promenade", tip: "Enjoy traditional Goan folk performances against the sunset breeze." } },
+            { day: 3, theme: "South Goa Serenity & Crescent Bay Kayaking", morning: { time: "08:00 AM", act: "Cabo de Rama Fort Secret Ocean Drop-off", loc: "Cabo de Rama, Canacona", tip: "Uncrowded dramatic ocean drop-off; bring drinking water." }, afternoon: { time: "01:30 PM", act: "Palolem Crescent Bay Kayaking & Beach Shack Lunch", loc: "Palolem Beach & Dropadi", tip: "Rent a double kayak for ₹300/hour to paddle out to quiet rocky islets." }, evening: { time: "06:30 PM", act: "Agonda Beach Stargazing Dinner & Bonfire", loc: "Agonda Beachfront", tip: "Peaceful turtle-nesting sanctuary; zero noise pollution, pure ocean sounds." } }
+        ]
+    },
+    "manali": {
+        vibe: "Snowy Alpine & Bohemian Mountain Charm",
+        summary: "A thrilling Himalayan journey featuring ancient deodar pine forests, gushing river rapids, cozy bohemian cafés, and high-altitude mountain passes.",
+        days: [
+            { day: 1, theme: "Old Manali Bohemian Vibes & Pine Forests", morning: { time: "09:00 AM", act: "Hidimba Devi Temple & Ancient Pine Forest Walk", loc: "Dhungri Van Vihar", tip: "Built in 1553 with tiered wooden pagodas; friendly rabbits in the woods." }, afternoon: { time: "01:30 PM", act: "Wood-fired Pizza & Hot Ginger Lemon Honey Tea by River Rapids", loc: "Café 1947, Old Manali", tip: "Sit on the riverside wooden deck overlooking gushing clear stream waters." }, evening: { time: "06:00 PM", act: "Mall Road Stroll, Hot Steamed Momos & Woolen Shawl Shopping", loc: "The Mall, Manali", tip: "Buy certified Kullu handwoven shawls and dried Himalayan apricots." } },
+            { day: 2, theme: "Atal Tunnel Engineering Marvel & Sissu Snow Valley", morning: { time: "08:00 AM", act: "Drive through the 9.02 km Atal Tunnel into Lahaul", loc: "Atal Tunnel Highway", tip: "Landscape dramatically transforms from lush green to snowy high-altitude peaks." }, afternoon: { time: "01:00 PM", act: "Hike to Frozen Sissu Waterfall & Riverside Maggi", loc: "Sissu, Lahaul Valley", tip: "Zip-lining over the glacial river is available here for ₹500 - ₹800." }, evening: { time: "06:00 PM", act: "Solang Valley Snow Point Fun & ATV Quad Riding", loc: "Solang Valley", tip: "Experience mountain quad rides and paragliding launch viewpoints." } },
+            { day: 3, theme: "Jogini Waterfall Trek & Natural Sulphur Springs", morning: { time: "08:30 AM", act: "Apple Orchard Hike to Jogini Waterfall", loc: "Vashisht Village Trail", tip: "The top cascade offers mist spray and panoramic Beas valley views." }, afternoon: { time: "01:30 PM", act: "Natural Sulphur Hot Spring Bath & Hot Himachali Siddu", loc: "Vashisht Temple Baths", tip: "Natural warm mineral water relieves muscle fatigue from mountain walks." }, evening: { time: "06:30 PM", act: "Live Acoustic Night & Fresh Cinnamon Cookies", loc: "Dylan's Toasted & Roasted", tip: "Legendary cozy backpacker haven with famous warm chocolate cookies." } }
+        ]
+    },
+    "jaipur": {
+        vibe: "Royal Heritage & Vibrant Rajasthani Splendor",
+        summary: "A grand royal expedition across the Pink City with majestic hilltop forts, vibrant artisan bazaars, regal palaces, and legendary Rajasthani delicacies.",
+        days: [
+            { day: 1, theme: "Pink City Landmarks & Street Gastronomy", morning: { time: "08:30 AM", act: "Sunrise Photography from Wind View Café facing Hawa Mahal", loc: "Badi Chaupar, Old Jaipur", tip: "Early morning sunlight illuminates the 953 honeycomb casements." }, afternoon: { time: "01:00 PM", act: "City Palace Courtyards, Peacock Gate & Jantar Mantar", loc: "City Palace Complex", tip: "Intricate colored glass and peacock feather motifs make incredible portraits." }, evening: { time: "06:00 PM", act: "Legendary Pyaaz Kachori & Thick Makhaniya Lassi Feast", loc: "Rawat Mishthan Bhandar", tip: "Crispy piping-hot onion kachori served with sweet tamarind chutney." } },
+            { day: 2, theme: "Amer Fort Grandeur & Nahargarh Sunset Ridge", morning: { time: "08:30 AM", act: "Amer Fort Exploration & Sheesh Mahal (Mirror Palace)", loc: "Amer Fort Hilltop", tip: "A single candle light reflects across thousands of convex Belgian mirrors." }, afternoon: { time: "01:30 PM", act: "Panna Meena Ka Kund Stepwell & Royal Rajasthani Lunch", loc: "Amer Heritage Quarter", tip: "Symmetrical geometric steps make for world-famous photography." }, evening: { time: "05:30 PM", act: "Nahargarh Fort Sunset Ledge overlooking Glowing Pink City", loc: "Nahargarh Fort Ridge", tip: "Watch the entire pink city light up like golden embers beneath you." } },
+            { day: 3, theme: "Albert Hall Museum & Rooftop Chai at Tapri", morning: { time: "09:30 AM", act: "Albert Hall Museum & Royal Weaponry Collection", loc: "Ram Niwas Garden", tip: "Feed the friendly pigeons in the grand open museum plaza." }, afternoon: { time: "01:30 PM", act: "Bapu Bazaar Blue Pottery & Bandhani Saree Shopping", loc: "Old City Bazaars", tip: "Politely bargain with shopkeepers; check for authentic block-prints." }, evening: { time: "06:30 PM", act: "Rooftop Chai & Hand-cut Nachos at Tapri Central", loc: "Tapri Central, C-Scheme", tip: "Trendy rooftop overlooking Central Park with artisanal chai in cutting glasses." } }
+        ]
+    },
+    "paris": {
+        vibe: "Haussmann Elegance & Romantic Boulevards",
+        summary: "A timeless journey through romantic Parisian boulevards, world-class art collections, hidden hilltop bistros, and golden hour river views.",
+        days: [
+            { day: 1, theme: "Eiffel Tower Golden Hour & Seine River Cruise", morning: { time: "08:30 AM", act: "Sunrise Photography from Place du Trocadéro", loc: "Trocadéro Esplanade", tip: "Beat tourist crowds before 9 AM for unobstructed Eiffel Tower views." }, afternoon: { time: "01:30 PM", act: "Scenic 1-Hour Seine River Boat Cruise", loc: "Pont de l'Alma / Bateaux-Mouches", tip: "Glides past Notre-Dame, Musée d'Orsay, and historic stone bridges." }, evening: { time: "06:30 PM", act: "Montmartre Cobblestone Walk & Steak-Frites Dinner", loc: "Sacré-Cœur & Le Relais de l'Entrecôte", tip: "Watch street musicians on the steps of Sacré-Cœur with city views." } },
+            { day: 2, theme: "World Art, Tuileries Gardens & Arc de Triomphe", morning: { time: "09:00 AM", act: "The Louvre Museum Treasures", loc: "Cour Napoléon Glass Pyramid", tip: "Enter via the underground Carrousel shopping mall entrance to skip outdoor queues." }, afternoon: { time: "01:30 PM", act: "Stroll through Jardin des Tuileries & Angelina Hot Chocolate", loc: "Rue de Rivoli", tip: "Order the famous thick African hot chocolate and Mont-Blanc pastry." }, evening: { time: "06:00 PM", act: "Arc de Triomphe Rooftop Golden Hour & Champs-Élysées Walk", loc: "Place Charles de Gaulle", tip: "Climb the 284 steps for 12 radiating grand avenue sunset views." } },
+            { day: 3, theme: "Latin Quarter, Vintage Books & Wine by the Seine", morning: { time: "09:30 AM", act: "Shakespeare and Company Historic Bookstore", loc: "Latin Quarter / Rue de la Bûcherie", tip: "Browse ceiling-high antique books in the legendary 1920s literary haven." }, afternoon: { time: "01:30 PM", act: "Artisanal Falafel in Le Marais Trendy Quarter", loc: "L'As du Fallafel, Rue des Rosiers", tip: "Warm pita packed with fried eggplant, tahini, and crispy chickpeas." }, evening: { time: "07:00 PM", act: "Sunset Baguette & Cheese Picnic along Pont des Arts", loc: "Seine Riverbank", tip: "Every hour on the hour after dark, the Eiffel Tower sparkles for 5 magical minutes." } }
+        ]
+    }
+};
+
+let _currentActivePlan = null;
+
+window.openMagicPlanner = function(destination, days, budget, currency = "INR") {
+    let initialDest = destination || document.getElementById('destination-input')?.value || "";
+    let initialDays = days || window._selectedNumDays || 3;
+    let initialBudget = budget || document.getElementById('budget-input')?.value || 15000;
 
     let modal = document.getElementById('magic-itinerary-modal');
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'magic-itinerary-modal';
         modal.className = 'modal-overlay';
+        modal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 12px;";
         modal.innerHTML = `
-            <div class="modal-card" style="max-width: 720px; width: 95vw; max-height: 85vh; display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
-                    <div>
-                        <h2 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px; font-size: 1.5rem;">
-                            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> AI Magic Itinerary
-                        </h2>
-                        <span id="magic-modal-subtitle" style="color: #94a3b8; font-size: 0.85rem;">Generating custom plan...</span>
+            <div class="modal-card" style="max-width: 760px; width: 100%; max-height: 90vh; display: flex; flex-direction: column; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); overflow: hidden; padding: 0;">
+                
+                <!-- Modal Top Header -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.2rem 1.4rem; background: rgba(255,255,255,0.04); border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <div>
+                            <h2 style="margin: 0; color: #fff; font-size: 1.25rem; font-family: 'Outfit', sans-serif;">TripoNext AI Day-by-Day Planner</h2>
+                            <span style="color: #94a3b8; font-size: 0.78rem;">Smart, authentic morning-to-night travel itineraries</span>
+                        </div>
                     </div>
-                    <button onclick="closeMagicPlanner()" style="background: none; border: none; color: #cbd5e1; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                    <button onclick="closeMagicPlanner()" style="background: none; border: none; color: #94a3b8; font-size: 1.3rem; cursor: pointer; padding: 4px 8px;"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div id="magic-modal-body" style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
-                    <div style="text-align: center; padding: 3rem 1rem;">
-                        <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary);"></i>
-                        <p style="color: #e2e8f0; margin-top: 1rem; font-weight: 500;">TripoNext AI is crafting your day-by-day plan for ${dest}...</p>
+
+                <!-- Scrollable Body Content -->
+                <div id="magic-modal-scroll" style="flex: 1; overflow-y: auto; padding: 1.2rem 1.4rem;">
+                    
+                    <!-- Trip Config Input Form Bar -->
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div>
+                                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600;">Destination</label>
+                                <input type="text" id="magic-input-dest" placeholder="e.g. Goa, Manali, Paris, Jaipur" class="glass-select" style="width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600;">Days (1-7)</label>
+                                <select id="magic-input-days" class="glass-select" style="width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                                    <option value="1">1 Day</option>
+                                    <option value="2">2 Days</option>
+                                    <option value="3" selected>3 Days</option>
+                                    <option value="4">4 Days</option>
+                                    <option value="5">5 Days</option>
+                                    <option value="6">6 Days</option>
+                                    <option value="7">7 Days</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.75rem; color: #94a3b8; display: block; margin-bottom: 4px; font-weight: 600;">Currency</label>
+                                <select id="magic-input-curr" class="glass-select" style="width: 100%; padding: 0.65rem 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                                    <option value="INR">₹ INR</option>
+                                    <option value="USD">$ USD</option>
+                                    <option value="EUR">€ EUR</option>
+                                    <option value="GBP">£ GBP</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Quick Popular Destination Chips -->
+                        <div style="margin-bottom: 0.9rem;">
+                            <span style="font-size: 0.72rem; color: #64748b; margin-right: 6px; font-weight: 600;">Quick Pick:</span>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                                <button type="button" onclick="selectMagicChip('Goa')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">🏖️ Goa</button>
+                                <button type="button" onclick="selectMagicChip('Manali')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">❄️ Manali</button>
+                                <button type="button" onclick="selectMagicChip('Jaipur')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">🏰 Jaipur</button>
+                                <button type="button" onclick="selectMagicChip('Paris')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">🗼 Paris</button>
+                                <button type="button" onclick="selectMagicChip('Tokyo')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">⛩️ Tokyo</button>
+                                <button type="button" onclick="selectMagicChip('Bali')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">🌴 Bali</button>
+                                <button type="button" onclick="selectMagicChip('Dubai')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); color: #e2e8f0; border-radius: 20px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer;">🏜️ Dubai</button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="button" id="magic-submit-btn" onclick="executeMagicPlannerGeneration()" class="btn-primary" style="width: 100%; padding: 0.75rem; font-weight: 700; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Authentic Day-by-Day Plan
+                        </button>
+                    </div>
+
+                    <!-- Output Container -->
+                    <div id="magic-plan-output">
+                        <div style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8;">
+                            <i class="fa-solid fa-compass fa-2x" style="color: var(--primary); margin-bottom: 0.75rem;"></i>
+                            <p style="margin: 0; font-size: 0.95rem;">Enter your destination above and hit generate to see a realistic morning-to-night itinerary!</p>
+                        </div>
                     </div>
                 </div>
-                <div id="magic-modal-footer" style="display: none; justify-content: flex-end; gap: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; margin-top: 1rem;">
-                    <button class="btn-small" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;" onclick="closeMagicPlanner()">Close</button>
-                    <button id="save-magic-trip-btn" class="btn-small btn-primary" style="padding: 0.6rem 1.4rem; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-bookmark"></i> Save to My Trips</button>
+
+                <!-- Modal Sticky Footer Actions -->
+                <div id="magic-modal-footer" style="display: none; padding: 1rem 1.4rem; background: rgba(0,0,0,0.5); border-top: 1px solid rgba(255,255,255,0.1); justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem;">
+                    <button type="button" onclick="exportItineraryPDF()" class="btn-small" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; padding: 0.55rem 1rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> Export PDF
+                    </button>
+                    <div style="display: flex; gap: 0.6rem;">
+                        <button type="button" onclick="closeMagicPlanner()" class="btn-small" style="background: transparent; border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; border-radius: 8px; padding: 0.55rem 1rem; cursor: pointer;">Close</button>
+                        <button type="button" id="save-magic-trip-btn" class="btn-small btn-primary" style="border-radius: 8px; padding: 0.55rem 1.3rem; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-bookmark"></i> Save to My Trips
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -1882,31 +2004,19 @@ window.openMagicPlanner = async function(destination, days, budget, currency = "
     }
 
     modal.style.display = 'flex';
-    document.getElementById('magic-modal-subtitle').textContent = `${numDays} Days in ${dest}`;
-    document.getElementById('magic-modal-body').innerHTML = `
-        <div style="text-align: center; padding: 3rem 1rem;">
-            <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary);"></i>
-            <p style="color: #e2e8f0; margin-top: 1rem; font-weight: 500;">TripoNext AI is generating your personalized ${numDays}-day plan...</p>
-        </div>
-    `;
-    document.getElementById('magic-modal-footer').style.display = 'none';
 
-    try {
-        const res = await fetch('/api/ai-itinerary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ destination: dest, days: numDays, budget: bgt, currency })
-        });
-        const data = await res.json();
-        renderMagicItineraryPlan(data);
-    } catch (e) {
-        console.error('AI itinerary error:', e);
-        document.getElementById('magic-modal-body').innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: #ef4444;">
-                <i class="fa-solid fa-circle-exclamation fa-2x"></i>
-                <p>Could not generate itinerary right now. Please check your internet connection.</p>
-            </div>
-        `;
+    // Prefill inputs
+    const destInput = document.getElementById('magic-input-dest');
+    const daysSelect = document.getElementById('magic-input-days');
+    const currSelect = document.getElementById('magic-input-curr');
+    
+    if (destInput && initialDest) destInput.value = initialDest;
+    if (daysSelect && initialDays) daysSelect.value = Math.min(Math.max(initialDays, 1), 7);
+    if (currSelect && currency) currSelect.value = currency;
+
+    // If destination was explicitly provided, auto-generate immediately!
+    if (initialDest && initialDest.trim()) {
+        executeMagicPlannerGeneration();
     }
 };
 
@@ -1915,72 +2025,155 @@ window.closeMagicPlanner = function() {
     if (modal) modal.style.display = 'none';
 };
 
-function renderMagicItineraryPlan(plan) {
-    const body = document.getElementById('magic-modal-body');
+window.selectMagicChip = function(name) {
+    const input = document.getElementById('magic-input-dest');
+    if (input) input.value = name;
+    executeMagicPlannerGeneration();
+};
+
+window.executeMagicPlannerGeneration = async function() {
+    const destInput = document.getElementById('magic-input-dest');
+    const destination = (destInput && destInput.value.trim()) ? destInput.value.trim() : "Goa";
+    const daysSelect = document.getElementById('magic-input-days');
+    const numDays = parseInt(daysSelect ? daysSelect.value : 3) || 3;
+    const currSelect = document.getElementById('magic-input-curr');
+    const currency = currSelect ? currSelect.value : "INR";
+    const budget = currency === "INR" ? 15000 : 800;
+
+    const output = document.getElementById('magic-plan-output');
+    const submitBtn = document.getElementById('magic-submit-btn');
     const footer = document.getElementById('magic-modal-footer');
-    if (!body) return;
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Itinerary...';
+    }
+    if (footer) footer.style.display = 'none';
+
+    output.innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem;">
+            <i class="fa-solid fa-compass fa-spin fa-3x" style="color: var(--primary);"></i>
+            <p style="color: #e2e8f0; margin-top: 1rem; font-weight: 500;">TripoNext AI is curating your ${numDays}-day journey in ${destination}...</p>
+            <p style="color: #94a3b8; font-size: 0.8rem;">Gathering genuine landmarks, authentic eateries & scenic viewpoints...</p>
+        </div>
+    `;
+
+    let planData = null;
+
+    try {
+        const res = await fetch('/api/ai-itinerary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ destination, days: numDays, budget, currency })
+        });
+        if (res.ok) {
+            planData = await res.json();
+        }
+    } catch (e) {
+        console.warn('Backend unavailable, using client-side curated engine:', e);
+    }
+
+    // Client fallback if network failed or server offline
+    if (!planData || !planData.dailyPlan) {
+        planData = generateClientCuratedPlan(destination, numDays, budget, currency);
+    }
+
+    _currentActivePlan = planData;
+    renderMagicPlanUI(planData);
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Regenerate Itinerary';
+    }
+    if (footer) footer.style.display = 'flex';
+
+    // Hook Save button
+    const saveBtn = document.getElementById('save-magic-trip-btn');
+    if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> Save to My Trips';
+        saveBtn.onclick = async () => {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+            await saveMagicTripToMyTrips(planData);
+            saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Saved to My Trips!';
+            setTimeout(() => {
+                closeMagicPlanner();
+                window.location.href = 'mytrips.html';
+            }, 900);
+        };
+    }
+};
+
+function renderMagicPlanUI(plan) {
+    const output = document.getElementById('magic-plan-output');
+    if (!output) return;
 
     let html = `
-        <div style="background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700;">AI Trip Overview</span>
-                <span style="background: var(--primary); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${plan.vibe || 'Curated'}</span>
+        <div id="printable-itinerary">
+            <!-- Vibe & Summary Header Card -->
+            <div style="background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.3); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700;">${plan.destination} Itinerary</span>
+                    <span style="background: var(--primary); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${plan.vibe || 'Curated Tour'}</span>
+                </div>
+                <p style="margin: 0; color: #f8fafc; font-size: 0.95rem; line-height: 1.45;">${plan.summary}</p>
             </div>
-            <p style="margin: 0.4rem 0 0; color: #f8fafc; font-size: 0.95rem; line-height: 1.5;">${plan.summary}</p>
-        </div>
 
-        <div style="margin-bottom: 1.2rem;">
-            <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 1rem;"><i class="fa-solid fa-wallet" style="color: var(--accent);"></i> Estimated Budget Split</h4>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem;">
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #94a3b8;">🏨 Stay</div>
-                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.stay || '40%'}</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #94a3b8;">🥘 Food</div>
-                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.food || '25%'}</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #94a3b8;">🎟️ Activities</div>
-                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.activities || '20%'}</div>
-                </div>
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
-                    <div style="font-size: 0.75rem; color: #94a3b8;">🚕 Travel</div>
-                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.transport || '15%'}</div>
+            <!-- Budget Breakdown Pills -->
+            <div style="margin-bottom: 1.2rem;">
+                <div style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600; margin-bottom: 0.5rem;"><i class="fa-solid fa-wallet" style="color: #38bdf8; margin-right: 6px;"></i> Estimated Budget Allocation</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem;">
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8;">🏨 Stay / Hotel</div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${plan.budgetBreakdown?.stay || '40%'}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8;">🥘 Food & Dining</div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${plan.budgetBreakdown?.food || '25%'}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8;">🎟️ Activities / Passes</div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${plan.budgetBreakdown?.activities || '20%'}</div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                        <div style="font-size: 0.72rem; color: #94a3b8;">🚕 Local Transit</div>
+                        <div style="font-weight: 700; color: #fff; font-size: 0.95rem;">${plan.budgetBreakdown?.transport || '15%'}</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.05rem;"><i class="fa-solid fa-calendar-days" style="color: #38bdf8;"></i> Day-by-Day Schedule</h4>
-        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <!-- Daily Schedule Cards -->
+            <div style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600; margin-bottom: 0.75rem;"><i class="fa-solid fa-calendar-days" style="color: #38bdf8; margin-right: 6px;"></i> Day-by-Day Detailed Schedule</div>
+            <div style="display: flex; flex-direction: column; gap: 0.9rem;">
     `;
 
     (plan.dailyPlan || []).forEach(d => {
         html += `
-            <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
-                    <span style="font-weight: 700; color: var(--primary); font-size: 1rem;">Day ${d.day}: ${d.theme}</span>
+            <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem;">
+                <div style="border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.4rem; margin-bottom: 0.7rem; font-weight: 700; color: var(--primary); font-size: 0.95rem;">
+                    Day ${d.day}: ${d.theme}
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.65rem;">
                     <div style="display: flex; gap: 8px; align-items: flex-start;">
-                        <span style="background: rgba(234,179,8,0.2); color: #facc15; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">🌅 Morning</span>
+                        <span style="background: rgba(234,179,8,0.2); color: #facc15; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; min-width: 72px; text-align: center;">🌅 Morning</span>
                         <div>
-                            <strong style="color: #fff;">${d.morning?.act || d.morning?.activity || 'Morning highlights'}</strong>
-                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.morning?.loc || d.morning?.location || ''} • 💡 ${d.morning?.tip || ''}</div>
+                            <strong style="color: #fff; font-size: 0.88rem;">${d.morning?.act || d.morning?.activity || 'Morning Discovery'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">📍 ${d.morning?.loc || d.morning?.location || ''} • 💡 ${d.morning?.tip || ''}</div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: flex-start;">
-                        <span style="background: rgba(59,130,246,0.2); color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">☀️ Afternoon</span>
+                        <span style="background: rgba(59,130,246,0.2); color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; min-width: 72px; text-align: center;">☀️ Afternoon</span>
                         <div>
-                            <strong style="color: #fff;">${d.afternoon?.act || d.afternoon?.activity || 'Afternoon exploration'}</strong>
-                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.afternoon?.loc || d.afternoon?.location || ''} • 💡 ${d.afternoon?.tip || ''}</div>
+                            <strong style="color: #fff; font-size: 0.88rem;">${d.afternoon?.act || d.afternoon?.activity || 'Afternoon Food & Culture'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">📍 ${d.afternoon?.loc || d.afternoon?.location || ''} • 💡 ${d.afternoon?.tip || ''}</div>
                         </div>
                     </div>
                     <div style="display: flex; gap: 8px; align-items: flex-start;">
-                        <span style="background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">🌙 Evening</span>
+                        <span style="background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 0.72rem; font-weight: 700; min-width: 72px; text-align: center;">🌙 Evening</span>
                         <div>
-                            <strong style="color: #fff;">${d.evening?.act || d.evening?.activity || 'Dinner & sunset views'}</strong>
-                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.evening?.loc || d.evening?.location || ''} • 💡 ${d.evening?.tip || ''}</div>
+                            <strong style="color: #fff; font-size: 0.88rem;">${d.evening?.act || d.evening?.activity || 'Sunset & Night Dining'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem; margin-top: 2px;">📍 ${d.evening?.loc || d.evening?.location || ''} • 💡 ${d.evening?.tip || ''}</div>
                         </div>
                     </div>
                 </div>
@@ -1991,34 +2184,118 @@ function renderMagicItineraryPlan(plan) {
     if (plan.packingList && plan.packingList.length > 0) {
         html += `
             <div style="margin-top: 1rem;">
-                <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;"><i class="fa-solid fa-suitcase" style="color: #4ade80;"></i> Smart Packing Checklist</h4>
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                    ${plan.packingList.map(item => `<span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; color: #e2e8f0;"><i class="fa-solid fa-check" style="color: #4ade80; margin-right: 4px;"></i> ${item}</span>`).join('')}
+                <div style="font-size: 0.85rem; color: #cbd5e1; font-weight: 600; margin-bottom: 0.4rem;"><i class="fa-solid fa-suitcase" style="color: #4ade80; margin-right: 6px;"></i> Smart Packing Checklist</div>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                    ${plan.packingList.map(item => `<span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 3px 8px; font-size: 0.78rem; color: #e2e8f0;"><i class="fa-solid fa-check" style="color: #4ade80; margin-right: 4px;"></i> ${item}</span>`).join('')}
                 </div>
             </div>
         `;
     }
 
-    html += `</div>`;
-    body.innerHTML = html;
+    if (plan.insiderTips && plan.insiderTips.length > 0) {
+        html += `
+            <div style="margin-top: 1rem; background: rgba(56,189,248,0.07); border: 1px solid rgba(56,189,248,0.2); border-radius: 10px; padding: 0.8rem;">
+                <div style="font-size: 0.82rem; color: #38bdf8; font-weight: 700; margin-bottom: 0.3rem;"><i class="fa-solid fa-lightbulb"></i> Local Insider Hacks</div>
+                <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.8rem; color: #94a3b8; line-height: 1.4;">
+                    ${plan.insiderTips.map(t => `<li style="margin-bottom: 3px;">${t}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+    }
 
-    if (footer) {
-        footer.style.display = 'flex';
-        const saveBtn = document.getElementById('save-magic-trip-btn');
-        if (saveBtn) {
-            saveBtn.onclick = async () => {
-                saveBtn.disabled = true;
-                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-                await saveMagicTripToMyTrips(plan);
-                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
-                setTimeout(() => {
-                    closeMagicPlanner();
-                    window.location.href = 'mytrips.html';
-                }, 1000);
+    html += `</div></div>`;
+    output.innerHTML = html;
+}
+
+function generateClientCuratedPlan(destination, numDays, budget, currency) {
+    const key = destination.toLowerCase().trim();
+    for (const [destKey, data] of Object.entries(CLIENT_CURATED_TRIPS)) {
+        if (key.includes(destKey) || destKey.includes(key)) {
+            const bVal = parseFloat(budget) || 15000;
+            return {
+                destination: destination.charAt(0).toUpperCase() + destination.slice(1),
+                days: numDays,
+                summary: data.summary,
+                vibe: data.vibe,
+                budgetBreakdown: {
+                    stay: `${currency} ${Math.round(bVal * 0.40).toLocaleString()}`,
+                    food: `${currency} ${Math.round(bVal * 0.25).toLocaleString()}`,
+                    activities: `${currency} ${Math.round(bVal * 0.20).toLocaleString()}`,
+                    transport: `${currency} ${Math.round(bVal * 0.15).toLocaleString()}`
+                },
+                packingList: [
+                    "Comfortable all-day walking sneakers",
+                    "Universal travel adapter & power bank",
+                    "Light rain jacket / layer for evening breezes",
+                    "Reusable water bottle & personal essentials kit"
+                ],
+                insiderTips: [
+                    `Download offline maps of ${destination} before leaving your hotel.`,
+                    "Start morning activities before 9:00 AM to beat tourist crowds.",
+                    "Ask local café owners for their favorite neighborhood food spots instead of tourist traps."
+                ],
+                dailyPlan: data.days.slice(0, numDays)
             };
         }
     }
+
+    // Universal fallback
+    const bVal = parseFloat(budget) || 12000;
+    const cleanDest = destination.trim();
+    const fallbackDays = [];
+    for (let d = 1; d <= numDays; d++) {
+        fallbackDays.push({
+            day: d,
+            theme: d === 1 ? "Old Quarter Heritage, Scenic Viewpoint & Regional Flavors" : d === 2 ? "Cultural Deep-Dive, Iconic Monuments & Artisan Bazaars" : "Nature Escapes, Local Cafés & Twilight Atmosphere",
+            morning: { time: "09:00 AM", act: `Historic Heritage Trail & Architecture Walk in ${cleanDest}`, loc: `${cleanDest} Old Town`, tip: "Arrive early before 9 AM for peaceful morning photography." },
+            afternoon: { time: "01:30 PM", act: `Signature Regional Gastronomy & Bistro Crawl`, loc: `Traditional Market in ${cleanDest}`, tip: "Sample the famous local specialty dish accompanied by artisanal tea." },
+            evening: { time: "06:30 PM", act: `Sunset Terrace Viewpoint & Evening Night Market Walk`, loc: `${cleanDest} Panoramic Overlook`, tip: "Catch golden hour rays over the city skyline." }
+        });
+    }
+
+    return {
+        destination: cleanDest,
+        days: numDays,
+        summary: `A personalized ${numDays}-day journey across ${cleanDest} designed for memorable sights, authentic regional eats, and unmissable photo viewpoints.`,
+        vibe: "Balanced Cultural Exploration",
+        budgetBreakdown: {
+            stay: `${currency} ${Math.round(bVal * 0.40).toLocaleString()}`,
+            food: `${currency} ${Math.round(bVal * 0.25).toLocaleString()}`,
+            activities: `${currency} ${Math.round(bVal * 0.20).toLocaleString()}`,
+            transport: `${currency} ${Math.round(bVal * 0.15).toLocaleString()}`
+        },
+        packingList: [
+            "Comfortable broken-in walking shoes",
+            "Universal travel adapter & high-capacity power bank",
+            "Breathable layers & light windbreaker",
+            "Reusable insulated water bottle"
+        ],
+        insiderTips: [
+            `Download offline navigation maps of ${cleanDest} on your phone before departing.`,
+            "Always keep a small amount of local physical currency for small transit.",
+            "Ask local café baristas for their favorite neighborhood eats."
+        ],
+        dailyPlan: fallbackDays
+    };
 }
+
+window.exportItineraryPDF = function() {
+    const elem = document.getElementById('printable-itinerary');
+    if (!elem) return;
+    if (typeof html2pdf === 'undefined') {
+        window.print();
+        return;
+    }
+    const dest = (_currentActivePlan && _currentActivePlan.destination) ? _currentActivePlan.destination : 'Trip';
+    const opt = {
+        margin: [10, 10, 10, 10],
+        filename: `${dest}_TripoNext_Itinerary.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(elem).save();
+};
 
 async function saveMagicTripToMyTrips(plan) {
     const token = localStorage.getItem('token');
@@ -2054,4 +2331,3 @@ async function saveMagicTripToMyTrips(plan) {
     });
     localStorage.setItem('localTrips', JSON.stringify(localTrips));
 }
-
