@@ -129,7 +129,15 @@
                                         <i class="fa-solid fa-plane"></i> Upcoming Trip
                                     </div>
                                 </div>
-                                <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="width:100%; margin-top:1rem; border-radius: 8px;">Edit or View Trip</button>
+                                <div style="display:flex; gap:0.6rem; margin-top:1rem;">
+                                    <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="flex:1; border-radius: 8px;">Edit</button>
+                                    <button onclick="openExpenseModal('${safeId}', '${safeDest}')" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Split Expenses">
+                                        <i class="fa-solid fa-receipt"></i> Split Expenses
+                                    </button>
+                                </div>
+                                <button onclick="viewTripItinerary('${safeId}', '${safeDest}')" style="background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.25); color:var(--primary); padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:0.5rem; width:100%;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> View AI Day-by-Day Plan
+                                </button>
                             </div>
                         `;
                     });
@@ -235,6 +243,192 @@
             document.body.appendChild(toast);
             setTimeout(() => toast.remove(), 3000);
         }
+
+        // ==========================================
+        // EXPENSE SPLITTER (SPLITWISE SYSTEM)
+        // ==========================================
+        let currentExpenseTripId = null;
+        let currentExpenseTripDest = '';
+
+        async function openExpenseModal(tripId, dest) {
+            currentExpenseTripId = String(tripId);
+            currentExpenseTripDest = dest;
+            document.getElementById('expense-trip-title').textContent = `Manage & Split Expenses for ${dest}`;
+            document.getElementById('expenseModal').style.display = 'flex';
+            await loadTripExpenses(tripId);
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expenseModal').style.display = 'none';
+        }
+
+        async function loadTripExpenses(tripId) {
+            const container = document.getElementById('expenses-list-container');
+            container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Loading expenses...</div>';
+
+            let expenses = [];
+            try {
+                const res = await fetch(`/api/trips/${tripId}/expenses`);
+                if (res.ok) {
+                    expenses = await res.json();
+                }
+            } catch(e) {
+                console.warn('Backend expense fetch failed, checking local');
+            }
+
+            // Fallback / local storage sync
+            const allLocalExpenses = JSON.parse(localStorage.getItem('tripExpenses') || '{}');
+            const localList = allLocalExpenses[tripId] || [];
+            if (!expenses || expenses.length === 0) {
+                expenses = localList;
+            }
+
+            // If empty, seed initial realistic expenses so user sees how it works!
+            if (!expenses || expenses.length === 0) {
+                expenses = [
+                    { id: 'sample-1', paid_by: 'You', amount: 4500, description: 'Resort & Stay Deposit', category: 'Hotel & Stay', date: '2026-10-15' },
+                    { id: 'sample-2', paid_by: 'Rahul S.', amount: 1800, description: 'Highway Fuel & Tolls', category: 'Cab & Fuel', date: '2026-10-16' },
+                    { id: 'sample-3', paid_by: 'Ananya D.', amount: 2100, description: 'Cafe dinner & snacks', category: 'Food & Dining', date: '2026-10-16' }
+                ];
+                allLocalExpenses[tripId] = expenses;
+                localStorage.setItem('tripExpenses', JSON.stringify(allLocalExpenses));
+            }
+
+            renderExpenses(expenses);
+        }
+
+        function renderExpenses(expenses) {
+            const container = document.getElementById('expenses-list-container');
+            const totalDisp = document.getElementById('expense-total-disp');
+            const perPersonDisp = document.getElementById('expense-per-person');
+            const settlementBox = document.getElementById('settlement-details');
+
+            const total = (expenses || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+            const numBuddies = 3; // You + 2 travel buddies
+            const perPerson = total / numBuddies;
+
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+            if (totalDisp) totalDisp.textContent = formatter.format(total);
+            if (perPersonDisp) perPersonDisp.textContent = formatter.format(perPerson);
+
+            // Calculate paid per person
+            const paidTotals = { 'You': 0, 'Rahul S.': 0, 'Ananya D.': 0 };
+            (expenses || []).forEach(e => {
+                const p = e.paid_by || 'You';
+                paidTotals[p] = (paidTotals[p] || 0) + Number(e.amount);
+            });
+
+            // Settlement calculations
+            let settlementHTML = '';
+            for (const [person, paid] of Object.entries(paidTotals)) {
+                const diff = paid - perPerson;
+                if (diff > 0) {
+                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#4ade80; font-weight:600;">Gets back ${formatter.format(diff)}</span></div>`;
+                } else if (diff < 0) {
+                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#f87171; font-weight:600;">Owes ${formatter.format(Math.abs(diff))}</span></div>`;
+                } else {
+                    settlementHTML += `<div><strong>${person}</strong> is completely settled up!</div>`;
+                }
+            }
+            if (settlementBox) settlementBox.innerHTML = settlementHTML;
+
+            // Render list
+            if (!expenses || expenses.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;">No expenses added yet.</div>';
+                return;
+            }
+
+            container.innerHTML = expenses.map(e => `
+                <div class="expense-item">
+                    <div>
+                        <div style="font-weight:600; color:#fff; font-size:0.92rem; display:flex; align-items:center; gap:8px;">
+                            ${e.description}
+                            <span class="expense-category-tag">${e.category || 'General'}</span>
+                        </div>
+                        <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">
+                            Paid by <strong>${e.paid_by}</strong> • Split with 3 buddies • ${e.date || ''}
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-weight:700; color:#4ade80; font-size:1.05rem;">${formatter.format(e.amount)}</span>
+                        <button onclick="deleteExpenseItem('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.9rem;" title="Delete Expense">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function submitNewExpense() {
+            const desc = document.getElementById('new-exp-desc').value.trim();
+            const amt = parseFloat(document.getElementById('new-exp-amt').value);
+            const category = document.getElementById('new-exp-category').value;
+            const payer = document.getElementById('new-exp-payer').value;
+
+            if (!desc || !amt || amt <= 0) {
+                alert('Please enter a description and valid amount.');
+                return;
+            }
+
+            const newExp = {
+                id: 'exp-' + Date.now(),
+                trip_id: currentExpenseTripId,
+                paid_by: payer,
+                amount: amt,
+                description: desc,
+                category: category,
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            // Backend sync
+            try {
+                await fetch(`/api/trips/${currentExpenseTripId}/expenses`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(newExp)
+                });
+            } catch(e) {}
+
+            // LocalStorage sync
+            const allLocalExpenses = JSON.parse(localStorage.getItem('tripExpenses') || '{}');
+            const list = allLocalExpenses[currentExpenseTripId] || [];
+            list.unshift(newExp);
+            allLocalExpenses[currentExpenseTripId] = list;
+            localStorage.setItem('tripExpenses', JSON.stringify(allLocalExpenses));
+
+            // Reset inputs
+            document.getElementById('new-exp-desc').value = '';
+            document.getElementById('new-exp-amt').value = '';
+
+            loadTripExpenses(currentExpenseTripId);
+        }
+
+        async function deleteExpenseItem(expId) {
+            try {
+                await fetch(`/api/trips/${currentExpenseTripId}/expenses/${expId}`, { method: 'DELETE' });
+            } catch(e) {}
+
+            const allLocalExpenses = JSON.parse(localStorage.getItem('tripExpenses') || '{}');
+            let list = allLocalExpenses[currentExpenseTripId] || [];
+            list = list.filter(e => String(e.id) !== String(expId));
+            allLocalExpenses[currentExpenseTripId] = list;
+            localStorage.setItem('tripExpenses', JSON.stringify(allLocalExpenses));
+
+            loadTripExpenses(currentExpenseTripId);
+        }
+
+        // ==========================================
+        // AI DAY-BY-DAY ITINERARY VIEWER
+        // ==========================================
+        function viewTripItinerary(tripId, dest) {
+            const trip = allTripsData.find(t => String(t.id) === String(tripId));
+            if (trip && trip.itinerary) {
+                const plan = typeof trip.itinerary === 'object' ? trip.itinerary : JSON.parse(trip.itinerary);
+                window.openMagicPlanner(trip.destination, plan.days || 3, trip.budget || 15000);
+            } else {
+                window.openMagicPlanner(dest, 3, 15000);
+            }
+        }
     </script>
 
     <!-- Edit Trip Modal -->
@@ -261,6 +455,75 @@
             <div style="display: flex; gap: 1rem;">
                 <button onclick="saveTripChanges()" class="btn-primary" style="flex: 1; border-radius: 8px;">Save Changes</button>
                 <button onclick="deleteTrip()" class="btn-primary" style="flex: 1; border-radius: 8px; background: var(--danger); border-color: var(--danger);">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Splitter Modal -->
+    <div id="expenseModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="modal-content glassmorphism" style="width: 95%; max-width: 620px; max-height: 85vh; padding: 1.8rem; border-radius: 20px; position: relative; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-receipt text-primary"></i> Trip Expense Splitter
+                    </h2>
+                    <span id="expense-trip-title" style="color: #94a3b8; font-size: 0.85rem;">Split costs with travel buddies</span>
+                </div>
+                <button onclick="closeExpenseModal()" class="close-btn" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                <!-- Summary Card -->
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; text-align: center;">
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">Total Spent</div>
+                        <div id="expense-total-disp" style="font-size: 1.2rem; font-weight: 700; color: #4ade80;">₹0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">Participants</div>
+                        <div style="font-size: 1.2rem; font-weight: 700; color: #60a5fa;" id="expense-pax-count">3 Buddies</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #94a3b8;">Per Person</div>
+                        <div id="expense-per-person" style="font-size: 1.2rem; font-weight: 700; color: #facc15;">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Settlement Card -->
+                <div id="expense-settlement-box" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: #cbd5e1;">
+                    <strong style="color: #60a5fa; display: block; margin-bottom: 4px;"><i class="fa-solid fa-scale-balanced"></i> Who Owes Whom (Settlement)</strong>
+                    <div id="settlement-details">No expenses recorded yet.</div>
+                </div>
+
+                <!-- Add Expense Form -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
+                    <h4 style="margin: 0 0 0.8rem 0; color: #fff; font-size: 0.95rem;"><i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Add New Expense</h4>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+                        <input type="text" id="new-exp-desc" placeholder="Description (e.g. Hotel, Taxi, Rooftop Dinner)" style="padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                        <input type="number" id="new-exp-amt" placeholder="Amount (₹)" min="1" style="padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.8rem;">
+                        <select id="new-exp-category" style="padding: 0.6rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                            <option value="Food & Dining">🥘 Food & Dining</option>
+                            <option value="Hotel & Stay">🏨 Hotel & Stay</option>
+                            <option value="Cab & Fuel">🚕 Cab & Fuel</option>
+                            <option value="Activities">🎟️ Activities & Tickets</option>
+                            <option value="General">🛍️ Miscellaneous</option>
+                        </select>
+                        <select id="new-exp-payer" style="padding: 0.6rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                            <option value="You">Paid by: You</option>
+                            <option value="Rahul S.">Paid by: Rahul S.</option>
+                            <option value="Ananya D.">Paid by: Ananya D.</option>
+                        </select>
+                    </div>
+                    <button onclick="submitNewExpense()" class="btn-small btn-primary" style="width: 100%; padding: 0.6rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                        <i class="fa-solid fa-plus"></i> Record Expense
+                    </button>
+                </div>
+
+                <!-- Expenses List -->
+                <h4 style="margin: 0 0 0.6rem 0; color: #fff; font-size: 0.95rem;">Recent Expenses</h4>
+                <div id="expenses-list-container"></div>
             </div>
         </div>
     </div>

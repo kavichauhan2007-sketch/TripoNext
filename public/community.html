@@ -40,6 +40,31 @@
     </nav>
 
     <main class="page-container community-page">
+        <!-- Shared Trip Moments & Photo Album Wall -->
+        <div class="photo-album-section glassmorphism" style="padding: 1.5rem; border-radius: 20px; margin-bottom: 2rem;">
+            <div class="photo-album-header">
+                <div>
+                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 1.6rem; display: flex; align-items: center; gap: 0.6rem; color: #fff;">
+                        <i class="fa-solid fa-camera-retro" style="color: #38bdf8;"></i> Shared Trip Moments & Photo Wall
+                    </h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+                        Explore real traveler memories from across the globe or share your own favorite snapshots!
+                    </p>
+                </div>
+                <button class="btn-primary" onclick="openSharePhotoModal()" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.7rem 1.4rem; border-radius: 12px; font-weight: 600; cursor: pointer;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Share Trip Moment
+                </button>
+            </div>
+
+            <!-- Gallery Grid -->
+            <div class="photo-album-grid" id="photo-album-grid">
+                <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 2rem;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 0.5rem;">Loading travel moments...</p>
+                </div>
+            </div>
+        </div>
+
         <div class="community-grid">
             <div class="feed">
                 <!-- Dedicated App Feedback Section -->
@@ -108,14 +133,235 @@
                 </div>
             </div>
         </div>
+
+        <!-- Share Trip Moment Modal -->
+        <div class="modal" id="share-photo-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); z-index: 10000; align-items: center; justify-content: center; padding: 1rem;">
+            <div class="glassmorphism" style="background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.18); border-radius: 20px; width: 480px; max-width: 95vw; padding: 1.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.7);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+                    <h3 style="font-family: 'Outfit', sans-serif; display: flex; align-items: center; gap: 0.5rem; color: #fff;">
+                        <i class="fa-solid fa-camera-retro" style="color: #38bdf8;"></i> Share Your Trip Moment
+                    </h3>
+                    <button onclick="closeSharePhotoModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.9rem;">
+                    <div>
+                        <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Destination / Place Name</label>
+                        <input type="text" id="photo-dest-input" placeholder="e.g. Goa, India or Swiss Alps" class="glass-select" style="width: 100%; padding: 0.65rem; border-radius: 8px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Photo Image URL</label>
+                        <input type="text" id="photo-url-input" placeholder="https://images.unsplash.com/..." class="glass-select" style="width: 100%; padding: 0.65rem; border-radius: 8px;">
+                    </div>
+
+                    <!-- Quick Preset Buttons -->
+                    <div>
+                        <label style="font-size: 0.75rem; color: #64748b; display: block; margin-bottom: 4px;">Or pick a preset travel photo:</label>
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            <button type="button" class="btn-small" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="setPhotoPreset('https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80', 'Goa, India', 'Golden sunset vibes by the beach shack 🌅🌴')">🏖️ Goa Beach</button>
+                            <button type="button" class="btn-small" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="setPhotoPreset('https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?auto=format&fit=crop&w=800&q=80', 'Swiss Alps', 'Hiking between snowy peaks and emerald valleys 🏔️❄️')">🏔️ Swiss Alps</button>
+                            <button type="button" class="btn-small" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="setPhotoPreset('https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=800&q=80', 'Tokyo, Japan', 'Neon lights and late-night ramen alley adventures 🍜✨')">🏮 Tokyo Neon</button>
+                            <button type="button" class="btn-small" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; cursor: pointer;" onclick="setPhotoPreset('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80', 'Bali, Indonesia', 'Sacred jungle waterfall sanctuary exploration 🌿💧')">🌺 Bali Jungle</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 0.8rem; color: #94a3b8; display: block; margin-bottom: 4px;">Caption / Story</label>
+                        <textarea id="photo-caption-input" rows="2" placeholder="Tell other travelers about this memorable moment..." class="glass-select" style="width: 100%; padding: 0.65rem; border-radius: 8px; resize: none;"></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 0.5rem;">
+                        <button type="button" onclick="closeSharePhotoModal()" class="btn-small" style="background: rgba(255,255,255,0.1); border: none; color: white; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer;">Cancel</button>
+                        <button type="button" onclick="submitTripPhoto()" class="btn-primary" style="padding: 0.6rem 1.4rem; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i> Post Moment</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
-        // Load feedback from backend with local storage fallback
-        document.addEventListener('DOMContentLoaded', loadFeed);
+        // Load feed & photos on start
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFeed();
+            loadPhotos();
+        });
 
+        // ----------------------------------------------------
+        // TRIP PHOTOS ALBUM LOGIC
+        // ----------------------------------------------------
+        async function loadPhotos() {
+            const container = document.getElementById('photo-album-grid');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/photos');
+                if (res.ok) {
+                    const photos = await res.json();
+                    renderPhotos(photos);
+                    return;
+                }
+            } catch (e) {
+                console.warn('Backend photos error, using fallback:', e);
+            }
+
+            // Local fallback
+            const fallbackPhotos = [
+                { id: 1, author_name: "Amit K.", destination: "Jaipur, India", caption: "Pink City sunset from the secret fort ridge. Unmatched vibes!", photo_url: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80", likes: 42 },
+                { id: 2, author_name: "Pooja V.", destination: "Kyoto, Japan", caption: "Early morning serenity in Arashiyama bamboo path before crowds arrived 🎋", photo_url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80", likes: 58 },
+                { id: 3, author_name: "Rohan S.", destination: "Spiti Valley, India", caption: "Chilly morning ride across Kunzum Pass with my travel buddy! ❄️🏍️", photo_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80", likes: 89 },
+                { id: 4, author_name: "Sneha M.", destination: "Paris, France", caption: "Croissant & coffee near Montmartre secret vineyard alley ☕✨", photo_url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80", likes: 37 }
+            ];
+            renderPhotos(fallbackPhotos);
+        }
+
+        function renderPhotos(photos) {
+            const container = document.getElementById('photo-album-grid');
+            if (!container) return;
+            if (!photos || photos.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted);">No moments shared yet. Be the first explorer to post!</p>';
+                return;
+            }
+
+            container.innerHTML = photos.map(p => `
+                <div class="photo-moment-card" id="photo-card-${p.id}">
+                    <div class="photo-moment-img-wrap">
+                        <img src="${p.photo_url}" alt="${p.destination}" class="photo-moment-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1503220317375-aaad61436b1b?auto=format&fit=crop&w=800&q=80'">
+                        <div class="photo-dest-badge">
+                            <i class="fa-solid fa-location-dot"></i> ${p.destination}
+                        </div>
+                    </div>
+                    <div class="photo-moment-body">
+                        <p class="photo-moment-caption">"${p.caption}"</p>
+                        <div class="photo-moment-footer">
+                            <div class="photo-moment-author">
+                                <div class="avatar sm" style="width: 24px; height: 24px; font-size: 0.75rem; background: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: 50%; color: white; font-weight: bold;">
+                                    ${(p.author_name || 'Traveler').charAt(0).toUpperCase()}
+                                </div>
+                                <span>${p.author_name || 'Traveler'}</span>
+                            </div>
+                            <button class="photo-like-btn" id="like-btn-${p.id}" onclick="likePhoto(${p.id})">
+                                <i class="fa-solid fa-heart"></i>
+                                <span id="like-count-${p.id}">${p.likes || 0}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function likePhoto(id) {
+            const btn = document.getElementById(`like-btn-${id}`);
+            const countElem = document.getElementById(`like-count-${id}`);
+            if (!btn || !countElem) return;
+
+            // Optimistic UI update
+            const currentLikes = parseInt(countElem.innerText) || 0;
+            countElem.innerText = currentLikes + 1;
+            btn.classList.add('liked');
+
+            try {
+                await fetch(`/api/photos/${id}/like`, { method: 'POST' });
+            } catch (e) {
+                console.warn('Failed to like on backend:', e);
+            }
+        }
+
+        function openSharePhotoModal() {
+            const modal = document.getElementById('share-photo-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeSharePhotoModal() {
+            const modal = document.getElementById('share-photo-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        function setPhotoPreset(url, dest, caption) {
+            document.getElementById('photo-url-input').value = url;
+            document.getElementById('photo-dest-input').value = dest;
+            document.getElementById('photo-caption-input').value = caption;
+        }
+
+        async function submitTripPhoto() {
+            const dest = document.getElementById('photo-dest-input').value.trim();
+            const url = document.getElementById('photo-url-input').value.trim();
+            const caption = document.getElementById('photo-caption-input').value.trim();
+
+            if (!dest || !url) {
+                alert('Please enter a Destination and Photo URL (or select a preset)!');
+                return;
+            }
+
+            const user = JSON.parse(localStorage.getItem('user')) || { name: 'You' };
+
+            try {
+                const res = await fetch('/api/photos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        author_name: user.name || 'You',
+                        destination: dest,
+                        photo_url: url,
+                        caption: caption || 'Unforgettable travel memory!'
+                    })
+                });
+
+                if (res.ok) {
+                    closeSharePhotoModal();
+                    loadPhotos();
+                    document.getElementById('photo-dest-input').value = '';
+                    document.getElementById('photo-url-input').value = '';
+                    document.getElementById('photo-caption-input').value = '';
+                    return;
+                }
+            } catch (e) {
+                console.warn('Backend photo post failed:', e);
+            }
+
+            // Fallback prepend
+            const container = document.getElementById('photo-album-grid');
+            if (container) {
+                const tempId = Date.now();
+                const newCardHTML = `
+                    <div class="photo-moment-card" id="photo-card-${tempId}">
+                        <div class="photo-moment-img-wrap">
+                            <img src="${url}" alt="${dest}" class="photo-moment-img">
+                            <div class="photo-dest-badge">
+                                <i class="fa-solid fa-location-dot"></i> ${dest}
+                            </div>
+                        </div>
+                        <div class="photo-moment-body">
+                            <p class="photo-moment-caption">"${caption || 'Unforgettable trip moment!'}"</p>
+                            <div class="photo-moment-footer">
+                                <div class="photo-moment-author">
+                                    <div class="avatar sm" style="width: 24px; height: 24px; font-size: 0.75rem; background: var(--primary); display: flex; align-items: center; justify-content: center; border-radius: 50%; color: white; font-weight: bold;">
+                                        ${(user.name || 'You').charAt(0).toUpperCase()}
+                                    </div>
+                                    <span>${user.name || 'You'}</span>
+                                </div>
+                                <button class="photo-like-btn" id="like-btn-${tempId}" onclick="likePhoto(${tempId})">
+                                    <i class="fa-solid fa-heart"></i>
+                                    <span id="like-count-${tempId}">1</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = newCardHTML + container.innerHTML;
+            }
+
+            closeSharePhotoModal();
+            document.getElementById('photo-dest-input').value = '';
+            document.getElementById('photo-url-input').value = '';
+            document.getElementById('photo-caption-input').value = '';
+        }
+
+        // ----------------------------------------------------
+        // COMMUNITY FEED & FEEDBACK
+        // ----------------------------------------------------
         async function loadFeed() {
             const container = document.getElementById('feed-container');
+            if (!container) return;
             const token = localStorage.getItem('token');
             let posts = [];
 
@@ -130,7 +376,6 @@
 
             const localPosts = JSON.parse(localStorage.getItem('feedbacks') || '[]');
             
-            // Render local posts (optimistic UI) first, then backend posts
             const allPosts = [...localPosts.map(p => ({
                 author_name: p.name,
                 content: p.text,
@@ -138,7 +383,6 @@
                 isLocal: true
             })), ...posts];
 
-            // Remove duplicates (simple approach) and sort
             container.innerHTML = '';
             
             if(allPosts.length === 0) {
@@ -175,13 +419,11 @@
                 }
             } catch(e) {
                 console.warn('Failed to save to backend');
-                // Save to localStorage as fallback
                 const savedFeedback = JSON.parse(localStorage.getItem('feedbacks') || '[]');
                 savedFeedback.push({ text, time: new Date().toISOString(), name: user.name });
                 localStorage.setItem('feedbacks', JSON.stringify(savedFeedback));
             }
 
-            // Inject to DOM
             const container = document.getElementById('feed-container');
             if(container.innerHTML.includes('Be the first')) container.innerHTML = '';
             
@@ -195,7 +437,7 @@
             return `
                 <div class="post-card glassmorphism mb-3" style="animation: slideUp 0.3s ease-out; background: rgba(255, 255, 255, 0.05);">
                     <div class="post-header">
-                        <div class="avatar sm" style="background: var(--primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">${name.charAt(0).toUpperCase()}</div>
+                        <div class="avatar sm" style="background: var(--primary); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">${(name || 'T').charAt(0).toUpperCase()}</div>
                         <div>
                             <h4>${name}</h4>
                             <span class="text-sm text-muted">${time}</span>
@@ -221,12 +463,10 @@
             
             const msgs = document.getElementById('ai-messages');
             
-            // User msg
             msgs.innerHTML += `<div class="ai-msg user">${text}</div>`;
             input.value = '';
             msgs.scrollTop = msgs.scrollHeight;
 
-            // Mock Bot typing
             const botId = 'msg-' + Date.now();
             msgs.innerHTML += `<div class="ai-msg bot" id="${botId}"><i class="fa-solid fa-spinner fa-spin"></i> Thinking...</div>`;
             msgs.scrollTop = msgs.scrollHeight;

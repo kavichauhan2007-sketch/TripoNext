@@ -39,8 +39,98 @@ const db = new sqlite3.Database(dbPath, (err) => {
             destination TEXT,
             dates TEXT,
             budget REAL,
+            itinerary TEXT,
             FOREIGN KEY(user_id) REFERENCES users(id)
+        )`, () => {
+            db.run(`ALTER TABLE trips ADD COLUMN itinerary TEXT`, () => {});
+        });
+
+        // Create Buddy Messages table
+        db.run(`CREATE TABLE IF NOT EXISTS buddy_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER,
+            sender_name TEXT,
+            receiver_name TEXT,
+            trip_destination TEXT,
+            message TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`, () => {
+            db.get("SELECT COUNT(*) as count FROM buddy_messages", [], (err, row) => {
+                if (row && row.count === 0) {
+                    const sampleMessages = [
+                        { sender_id: 1, sender_name: "Rahul S.", receiver_name: "You", trip_destination: "Manali, Himachal", message: "Hey! Super excited for the Manali road trip. We're planning to stop by Solang Valley and Sissu waterfall." },
+                        { sender_id: 2, sender_name: "Ananya D.", receiver_name: "You", trip_destination: "Gokarna, Karnataka", message: "Hi buddy! Kudle beach hostel is booked. Don't forget your trekking shoes for the beach trail!" }
+                    ];
+                    const stmt = db.prepare(`INSERT INTO buddy_messages (sender_id, sender_name, receiver_name, trip_destination, message) VALUES (?, ?, ?, ?, ?)`);
+                    sampleMessages.forEach(m => stmt.run(m.sender_id, m.sender_name, m.receiver_name, m.trip_destination, m.message));
+                    stmt.finalize();
+                }
+            });
+        });
+
+        // Create Trip Expenses table
+        db.run(`CREATE TABLE IF NOT EXISTS trip_expenses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trip_id INTEGER,
+            user_id INTEGER,
+            paid_by TEXT,
+            amount REAL,
+            description TEXT,
+            category TEXT,
+            split_with TEXT,
+            date TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
+
+        // Create Shared Trip Photos table
+        db.run(`CREATE TABLE IF NOT EXISTS trip_photos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            author_name TEXT,
+            destination TEXT,
+            caption TEXT,
+            photo_url TEXT,
+            likes INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`, () => {
+            db.get("SELECT COUNT(*) as count FROM trip_photos", [], (err, row) => {
+                if (row && row.count === 0) {
+                    const samplePhotos = [
+                        { author_name: "Amit K.", destination: "Jaipur, India", caption: "Pink City sunset from the secret fort ridge. Unmatched vibes!", photo_url: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=800&q=80", likes: 42 },
+                        { author_name: "Pooja V.", destination: "Kyoto, Japan", caption: "Early morning serenity in Arashiyama bamboo path before crowds arrived 🎋", photo_url: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80", likes: 58 },
+                        { author_name: "Rohan S.", destination: "Spiti Valley, India", caption: "Chilly morning ride across Kunzum Pass with my travel buddy! ❄️🏍️", photo_url: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80", likes: 89 },
+                        { author_name: "Sneha M.", destination: "Paris, France", caption: "Croissant & coffee near Montmartre secret vineyard alley ☕✨", photo_url: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=800&q=80", likes: 37 }
+                    ];
+                    const stmt = db.prepare(`INSERT INTO trip_photos (author_name, destination, caption, photo_url, likes) VALUES (?, ?, ?, ?, ?)`);
+                    samplePhotos.forEach(p => stmt.run(p.author_name, p.destination, p.caption, p.photo_url, p.likes));
+                    stmt.finalize();
+                }
+            });
+        });
+
+        // Create Notifications table
+        db.run(`CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            title TEXT,
+            message TEXT,
+            type TEXT,
+            is_read INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`, () => {
+            db.get("SELECT COUNT(*) as count FROM notifications", [], (err, row) => {
+                if (row && row.count === 0) {
+                    const sampleNotifs = [
+                        { title: "Buddy Request Accepted 🎉", message: "Rahul S. accepted your join request for the Manali Roadtrip! Say hi in chat.", type: "buddy" },
+                        { title: "Weather Update ☀️", message: "Sunny skies and clear weather expected for your upcoming trip.", type: "weather" },
+                        { title: "Expense Splitter Active 💸", message: "Keep track of who paid what during your adventures with the new Expense Splitter in My Trips.", type: "system" }
+                    ];
+                    const stmt = db.prepare(`INSERT INTO notifications (title, message, type) VALUES (?, ?, ?)`);
+                    sampleNotifs.forEach(n => stmt.run(n.title, n.message, n.type));
+                    stmt.finalize();
+                }
+            });
+        });
 
         // Create Community Posts table
         db.run(`CREATE TABLE IF NOT EXISTS posts (
@@ -249,14 +339,25 @@ app.post('/api/login', (req, res) => {
 
 // API: Create Trip
 app.post('/api/trips', authenticateToken, (req, res) => {
-    const { destination, dates, budget } = req.body;
+    const { destination, dates, budget, itinerary } = req.body;
     const userId = req.user.id;
+    const itVal = itinerary ? (typeof itinerary === 'object' ? JSON.stringify(itinerary) : itinerary) : null;
     
-    db.run('INSERT INTO trips (user_id, destination, dates, budget) VALUES (?, ?, ?, ?)', 
-        [userId, destination, dates, budget], 
+    db.run('INSERT INTO trips (user_id, destination, dates, budget, itinerary) VALUES (?, ?, ?, ?, ?)', 
+        [userId, destination, dates, budget, itVal], 
         function(err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
-            res.json({ id: this.lastID, destination, dates, budget });
+            if (err) {
+                // Fallback if schema doesn't have itinerary
+                db.run('INSERT INTO trips (user_id, destination, dates, budget) VALUES (?, ?, ?, ?)',
+                    [userId, destination, dates, budget],
+                    function(err2) {
+                        if (err2) return res.status(500).json({ error: 'Database error' });
+                        res.json({ id: this.lastID, destination, dates, budget });
+                    }
+                );
+                return;
+            }
+            res.json({ id: this.lastID, destination, dates, budget, itinerary: itVal });
         }
     );
 });
@@ -267,20 +368,37 @@ app.get('/api/trips', authenticateToken, (req, res) => {
     
     db.all('SELECT * FROM trips WHERE user_id = ? ORDER BY id DESC', [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: 'Database error' });
-        res.json(rows);
+        // Parse JSON itinerary if present
+        const parsed = (rows || []).map(r => {
+            if (r.itinerary) {
+                try { r.itinerary = JSON.parse(r.itinerary); } catch(e){}
+            }
+            return r;
+        });
+        res.json(parsed);
     });
 });
 
 // API: Update Trip
 app.put('/api/trips/:id', authenticateToken, (req, res) => {
-    const { destination, dates, budget } = req.body;
+    const { destination, dates, budget, itinerary } = req.body;
     const userId = req.user.id;
     const tripId = req.params.id;
+    const itVal = itinerary ? (typeof itinerary === 'object' ? JSON.stringify(itinerary) : itinerary) : null;
     
-    db.run('UPDATE trips SET destination = ?, dates = ?, budget = ? WHERE id = ? AND user_id = ?', 
-        [destination, dates, budget, tripId, userId], 
+    db.run('UPDATE trips SET destination = ?, dates = ?, budget = ?, itinerary = ? WHERE id = ? AND user_id = ?', 
+        [destination, dates, budget, itVal, tripId, userId], 
         function(err) {
-            if (err) return res.status(500).json({ error: 'Database error' });
+            if (err) {
+                db.run('UPDATE trips SET destination = ?, dates = ?, budget = ? WHERE id = ? AND user_id = ?',
+                    [destination, dates, budget, tripId, userId],
+                    function(err2) {
+                        if (err2) return res.status(500).json({ error: 'Database error' });
+                        res.json({ success: true });
+                    }
+                );
+                return;
+            }
             if (this.changes === 0) return res.status(404).json({ error: 'Trip not found or unauthorized' });
             res.json({ success: true });
         }
@@ -439,6 +557,250 @@ User message: ${message}`
         console.error('AI Error:', e);
         res.json({ reply: "Sorry, I'm having trouble thinking right now. Please try again later! ⚙️" });
     }
+});
+
+// API: AI Itinerary Generator (Gemini + Smart Travel Planner Engine)
+app.post('/api/ai-itinerary', async (req, res) => {
+    const { destination, days = 3, budget = 10000, currency = "INR", travelers = 1, style = "Balanced" } = req.body;
+    if (!destination) return res.status(400).json({ error: 'Destination is required' });
+    const numDays = Math.min(Math.max(parseInt(days) || 3, 1), 7);
+
+    // If Gemini API Key exists, try generating with Gemini
+    if (process.env.GEMINI_API_KEY) {
+        try {
+            const ai = new GoogleGenAI({});
+            const prompt = `Generate a realistic and exciting ${numDays}-day travel itinerary for ${destination}.
+Travel style: ${style}, Travelers: ${travelers}, Total Budget: ${currency} ${budget}.
+Return strictly valid JSON only without markdown or backticks in this exact schema:
+{
+  "destination": "${destination}",
+  "days": ${numDays},
+  "summary": "Brief 2-line exciting summary of the trip",
+  "vibe": "Adventure / Cultural / Relaxed / Romantic",
+  "budgetBreakdown": { "stay": "estimated amount", "food": "estimated amount", "activities": "estimated amount", "transport": "estimated amount" },
+  "packingList": ["item 1", "item 2", "item 3", "item 4"],
+  "insiderTips": ["tip 1", "tip 2", "tip 3"],
+  "dailyPlan": [
+    {
+      "day": 1,
+      "theme": "Day theme (e.g. Arrival & Old Town Vibe)",
+      "morning": { "time": "09:00 AM", "activity": "Name of morning spot/activity", "location": "Exact landmark", "tip": "Insider morning tip" },
+      "afternoon": { "time": "01:30 PM", "activity": "Name of lunch & afternoon activity", "location": "Exact landmark", "tip": "Food or crowd tip" },
+      "evening": { "time": "06:30 PM", "activity": "Sunset/night activity or dining", "location": "Exact landmark", "tip": "Evening vibe tip" }
+    }
+  ]
+}`;
+            const response = await ai.models.generateContent({
+                model: 'gemini-2.5-flash',
+                contents: prompt
+            });
+            let cleanText = response.text.trim();
+            if (cleanText.startsWith('```')) {
+                cleanText = cleanText.replace(/^```(json)?\n?/, '').replace(/\n?```$/, '');
+            }
+            const parsed = JSON.parse(cleanText);
+            return res.json(parsed);
+        } catch (e) {
+            console.warn('Gemini itinerary generation failed, switching to Smart Rule Engine:', e.message);
+        }
+    }
+
+    // High quality intelligent algorithmic itinerary generator
+    const themes = [
+        "Arrival, Landmark Exploration & Local Flavors",
+        "Cultural Deep-Dive & Heritage Secrets",
+        "Scenic Panoramic Viewpoints & Café Trail",
+        "Hidden Gems & Authentic Street Markets",
+        "Nature Escape & Sunset Serenity",
+        "Art, History & Photography Walking Route",
+        "Farewell Memories, Souvenirs & Nightlife"
+    ];
+
+    const morningSpots = [
+        { act: "Sunrise Panoramic Walk & Breakfast", loc: `${destination} Historic Viewpoint`, tip: "Arrive before 8:30 AM to beat tourist crowds and capture soft lighting." },
+        { act: "Old Town Heritage Architecture Walk", loc: `${destination} Central Heritage Quarter`, tip: "Wear comfortable walking shoes; local bakeries open at 7:30 AM." },
+        { act: "Iconic Cultural Monument Exploration", loc: `${destination} Grand Cathedral / Fort / Palace`, tip: "Book tickets online in advance to skip queue lines." },
+        { act: "Peaceful Botanical Sanctuary & Lake Walk", loc: `${destination} Nature Reserve / Riverfront`, tip: "Perfect for morning coffee and serene photography." }
+    ];
+
+    const afternoonSpots = [
+        { act: "Authentic Local Gastronomy & Bistro Crawl", loc: `Famous ${destination} Food Market & Eatery`, tip: "Try the signature local specialty dish with iced artisanal brew." },
+        { act: "Museum & Secret Art Alley Discovery", loc: `${destination} Contemporary & Classic Gallery`, tip: "Air-conditioned break from midday heat; free admission hours on weekdays." },
+        { act: "Local Artisan Workshops & Souvenir Stalls", loc: `${destination} Traditional Craft Bazaar`, tip: "Haggle politely with street vendors for handmade keepsakes." },
+        { act: "Historic Riverside / Harbor Cruise or Tram", loc: `${destination} Waterfront Pier`, tip: "Relaxing 45-minute ride offering scenic skyline angles." }
+    ];
+
+    const eveningSpots = [
+        { act: "Golden Hour Rooftop Lounge & Sunset Views", loc: `${destination} Sunset Terrace / Sky Bar`, tip: "Reserve a ledge table 30 mins before sunset for breathtaking golden rays." },
+        { act: "Vibrant Night Market & Street Food Feast", loc: `${destination} Night Food Street`, tip: "Look for stalls with long local queues for maximum freshness." },
+        { act: "Live Acoustic Music & Candlelit Dinner", loc: `${destination} Lantern-lit Courtyard Bistro`, tip: "Try the chef's special dessert with locally brewed beverages." },
+        { act: "Illuminated Night Walk & City Square Vibes", loc: `${destination} Main Plaza Promenade`, tip: "The monuments light up beautifully after 7:30 PM." }
+    ];
+
+    const bVal = parseFloat(budget) || 10000;
+    const dailyPlan = [];
+    for (let d = 1; d <= numDays; d++) {
+        dailyPlan.push({
+            day: d,
+            theme: themes[(d - 1) % themes.length],
+            morning: morningSpots[(d - 1) % morningSpots.length],
+            afternoon: afternoonSpots[(d - 1) % afternoonSpots.length],
+            evening: eveningSpots[(d - 1) % eveningSpots.length]
+        });
+    }
+
+    res.json({
+        destination,
+        days: numDays,
+        summary: `An unforgettable ${numDays}-day journey across ${destination} designed for memorable sights, authentic eats, and hidden photo spots.`,
+        vibe: style === "Budget" ? "Backpacker & Street Food" : style === "Luxury" ? "Premium Heritage & Fine Dining" : "Balanced Exploration & Local Charm",
+        budgetBreakdown: {
+            stay: `${currency} ${Math.round(bVal * 0.40)}`,
+            food: `${currency} ${Math.round(bVal * 0.25)}`,
+            activities: `${currency} ${Math.round(bVal * 0.20)}`,
+            transport: `${currency} ${Math.round(bVal * 0.15)}`
+        },
+        packingList: [
+            "Comfortable all-day walking sneakers",
+            "Universal power adapter & power bank",
+            "Light rain jacket / layer for evening breezes",
+            "Reusable water bottle & personal essentials kit"
+        ],
+        insiderTips: [
+            `Download offline maps of ${destination} before leaving your hotel.`,
+            "Carry a small amount of local physical cash for street vendors and transit.",
+            "Early morning (before 9 AM) offers the best uncrowded photo opportunities."
+        ],
+        dailyPlan
+    });
+});
+
+// API: Get Buddy Messages / Chats
+app.get('/api/messages', (req, res) => {
+    const { buddy } = req.query;
+    let query = 'SELECT * FROM buddy_messages';
+    let params = [];
+    if (buddy) {
+        query += ' WHERE sender_name = ? OR receiver_name = ?';
+        params = [buddy, buddy];
+    }
+    query += ' ORDER BY id ASC LIMIT 100';
+    db.all(query, params, (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
+});
+
+// API: Send Buddy Message
+app.post('/api/messages', (req, res) => {
+    const { sender_name = "You", receiver_name, trip_destination, message } = req.body;
+    if (!message || !receiver_name) return res.status(400).json({ error: 'Message and receiver are required' });
+
+    db.run('INSERT INTO buddy_messages (sender_id, sender_name, receiver_name, trip_destination, message) VALUES (?, ?, ?, ?, ?)',
+        [1, sender_name, receiver_name, trip_destination || "Trip", message],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            const insertedId = this.lastID;
+            
+            // Smart auto-reply after short delay if chatting with an organizer
+            const autoReplies = {
+                "Rahul S.": "Hey! Thanks for messaging. We have 2 spots left for Manali. Are you comfortable with a road trip from Delhi?",
+                "Ananya D.": "Awesome! We're doing Gokarna next month. Let me know if you prefer beach hostel or private room!",
+                "Vikram R.": "Spiti requires heavy winter jackets! Let me know if you have road-trip experience.",
+                "Priya M.": "Udaipur is magical! We booked a heritage haveli near Lake Pichola. Super happy to have you join!"
+            };
+
+            res.json({ success: true, id: insertedId, message: { id: insertedId, sender_name, receiver_name, message, timestamp: new Date() } });
+
+            if (autoReplies[receiver_name] && sender_name === "You") {
+                setTimeout(() => {
+                    db.run('INSERT INTO buddy_messages (sender_id, sender_name, receiver_name, trip_destination, message) VALUES (?, ?, ?, ?, ?)',
+                        [2, receiver_name, "You", trip_destination || "Trip", autoReplies[receiver_name]]
+                    );
+                }, 1200);
+            }
+        }
+    );
+});
+
+// API: Get Trip Expenses
+app.get('/api/trips/:id/expenses', (req, res) => {
+    const tripId = req.params.id;
+    db.all('SELECT * FROM trip_expenses WHERE trip_id = ? ORDER BY id DESC', [tripId], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
+});
+
+// API: Add Trip Expense
+app.post('/api/trips/:id/expenses', (req, res) => {
+    const tripId = req.params.id;
+    const { paid_by, amount, description, category, split_with, date } = req.body;
+    if (!paid_by || !amount || !description) return res.status(400).json({ error: 'Missing required fields' });
+
+    db.run('INSERT INTO trip_expenses (trip_id, user_id, paid_by, amount, description, category, split_with, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [tripId, 1, paid_by, parseFloat(amount), description, category || "General", split_with || "All", date || new Date().toISOString().split('T')[0]],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json({ success: true, id: this.lastID });
+        }
+    );
+});
+
+// API: Delete Trip Expense
+app.delete('/api/trips/:id/expenses/:expId', (req, res) => {
+    const { id: tripId, expId } = req.params;
+    db.run('DELETE FROM trip_expenses WHERE id = ? AND trip_id = ?', [expId, tripId], function(err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ success: true });
+    });
+});
+
+// API: Get Trip Photos
+app.get('/api/photos', (req, res) => {
+    db.all('SELECT * FROM trip_photos ORDER BY id DESC LIMIT 50', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
+});
+
+// API: Post Trip Photo
+app.post('/api/photos', (req, res) => {
+    const { author_name = "You", destination, caption, photo_url } = req.body;
+    if (!destination || !photo_url) return res.status(400).json({ error: 'Destination and photo URL are required' });
+
+    db.run('INSERT INTO trip_photos (user_id, author_name, destination, caption, photo_url, likes) VALUES (?, ?, ?, ?, ?, 0)',
+        [1, author_name, destination, caption || "Unforgettable trip moments!", photo_url],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Database error' });
+            res.json({ success: true, id: this.lastID });
+        }
+    );
+});
+
+// API: Like Trip Photo
+app.post('/api/photos/:id/like', (req, res) => {
+    const photoId = req.params.id;
+    db.run('UPDATE trip_photos SET likes = likes + 1 WHERE id = ?', [photoId], function(err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ success: true });
+    });
+});
+
+// API: Get Notifications
+app.get('/api/notifications', (req, res) => {
+    db.all('SELECT * FROM notifications ORDER BY id DESC LIMIT 20', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows);
+    });
+});
+
+// API: Mark Notifications Read
+app.post('/api/notifications/read-all', (req, res) => {
+    db.run('UPDATE notifications SET is_read = 1', [], function(err) {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json({ success: true });
+    });
 });
 
 // Fallback to serve index.html for SPA-like behavior if needed

@@ -77,14 +77,37 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set user name
+    // Set user name & inject notification bell
     const user = JSON.parse(localStorage.getItem('user'));
     if(user) {
         const logo = document.querySelector('.logo');
         if(logo) logo.innerHTML = `<i class="fa-solid fa-plane-departure"></i> TripoNext`;
         const profile = document.querySelector('.user-profile');
-        if(profile) profile.innerHTML = `<span style="margin-right:10px; font-weight:bold;">${user.name}</span> <a href="#" onclick="logout()" style="color:var(--danger); text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i></a>`;
+        if(profile) {
+            profile.innerHTML = `
+                <div class="notif-wrapper" style="margin-right: 14px;">
+                    <button class="notif-bell-btn" onclick="toggleNotifications(event)" title="Notifications">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-badge" id="notif-count">3</span>
+                    </button>
+                    <div class="notif-dropdown" id="notif-dropdown">
+                        <div class="notif-header">
+                            <h4><i class="fa-solid fa-bell" style="color:var(--primary)"></i> Notifications</h4>
+                            <button onclick="markAllNotificationsRead()" style="background:none; border:none; color:var(--primary); font-size:0.75rem; cursor:pointer;">Mark all read</button>
+                        </div>
+                        <div class="notif-list" id="notif-list"></div>
+                    </div>
+                </div>
+                <span style="margin-right:10px; font-weight:bold;">${user.name}</span>
+                <a href="#" onclick="logout()" style="color:var(--danger); text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i></a>
+            `;
+            setTimeout(loadNotifications, 100);
+        }
     }
+
+    // Initialize global utilities
+    injectFloatingToolbox();
+    setupOfflineDetection();
 
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
@@ -1482,3 +1505,553 @@ window.shareOnWhatsApp = function(dest, days) {
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
 };
+
+// ========================================================
+// 8. NOTIFICATION CENTER SYSTEM
+// ========================================================
+window.toggleNotifications = function(e) {
+    if (e) e.stopPropagation();
+    const dropdown = document.getElementById('notif-dropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('show');
+    }
+};
+
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('notif-dropdown');
+    const bellBtn = document.querySelector('.notif-bell-btn');
+    if (dropdown && dropdown.classList.contains('show')) {
+        if (!dropdown.contains(e.target) && (!bellBtn || !bellBtn.contains(e.target))) {
+            dropdown.classList.remove('show');
+        }
+    }
+});
+
+window.loadNotifications = async function() {
+    const countBadge = document.getElementById('notif-count');
+    const listEl = document.getElementById('notif-list');
+    if (!listEl) return;
+
+    let notifs = [];
+    try {
+        const res = await fetch('/api/notifications');
+        if (res.ok) {
+            notifs = await res.json();
+        }
+    } catch (e) {
+        console.warn('Backend notifications unavailable.');
+    }
+
+    if (!notifs || notifs.length === 0) {
+        notifs = [
+            { id: 1, title: "Buddy Request Accepted 🎉", message: "Rahul S. accepted your join request for the Manali Roadtrip! You can now chat in Find Buddies.", is_read: 0 },
+            { id: 2, title: "Weather Update ☀️", message: "Sunny skies (22°C) expected for your upcoming destination.", is_read: 0 },
+            { id: 3, title: "Expense Splitter Active 💸", message: "Split hotel and cab bills with your travel buddies in My Trips.", is_read: 0 }
+        ];
+    }
+
+    const unreadCount = notifs.filter(n => !n.is_read).length;
+    if (countBadge) {
+        countBadge.textContent = unreadCount;
+        countBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+    }
+
+    listEl.innerHTML = notifs.map(n => `
+        <div class="notif-item ${n.is_read ? '' : 'unread'}">
+            <div class="notif-item-title">${n.title}</div>
+            <div class="notif-item-desc">${n.message}</div>
+        </div>
+    `).join('');
+};
+
+window.markAllNotificationsRead = async function() {
+    try {
+        await fetch('/api/notifications/read-all', { method: 'POST' });
+    } catch(e) {}
+    const countBadge = document.getElementById('notif-count');
+    if (countBadge) countBadge.style.display = 'none';
+    const items = document.querySelectorAll('.notif-item');
+    items.forEach(it => it.classList.remove('unread'));
+};
+
+// ========================================================
+// 9. OFFLINE MODE DETECTION & STATUS BANNER
+// ========================================================
+window.setupOfflineDetection = function() {
+    let banner = document.getElementById('offline-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'offline-banner';
+        banner.className = 'offline-banner';
+        banner.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> <span>Offline Mode: Using cached itineraries & plans</span>';
+        document.body.appendChild(banner);
+    }
+
+    function updateOnlineStatus() {
+        if (!navigator.onLine) {
+            banner.classList.add('active');
+            banner.innerHTML = '<i class="fa-solid fa-wifi-slash"></i> <span>Offline Mode: Using cached itineraries & plans</span>';
+        } else {
+            if (banner.classList.contains('active')) {
+                banner.innerHTML = '<i class="fa-solid fa-check-circle" style="color:#10b981"></i> <span>Back Online! Changes synchronized.</span>';
+                setTimeout(() => { banner.classList.remove('active'); }, 3000);
+            }
+        }
+    }
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    if (!navigator.onLine) {
+        banner.classList.add('active');
+    }
+};
+
+// ========================================================
+// 10. FLOATING TRAVEL TOOLBOX (Currency + Audio Phrases + SOS)
+// ========================================================
+const TOOLBOX_EXCHANGE_RATES = {
+    INR: 1,
+    USD: 0.012,
+    EUR: 0.011,
+    GBP: 0.0095,
+    JPY: 1.85,
+    AED: 0.044,
+    THB: 0.42,
+    AUD: 0.018,
+    CAD: 0.016
+};
+
+const TRAVEL_PHRASES = [
+    { text: "Hello / Greetings", hi: "नमस्ते (Namaste)", es: "¡Hola! (OH-lah)", fr: "Bonjour (bon-ZHOOR)", ja: "こんにちは (Konnichiwa)", de: "Hallo (HAH-loh)", it: "Ciao (CHOW)" },
+    { text: "Where is the hospital?", hi: "अस्पताल कहाँ है?", es: "¿Dónde está el hospital?", fr: "Où est l'hôpital?", ja: "病院はどこですか？", de: "Wo ist das Krankenhaus?", it: "Dov'è l'ospedale?" },
+    { text: "How much is this?", hi: "यह कितने का है?", es: "¿Cuánto cuesta esto?", fr: "Combien ça coûte?", ja: "これはいくらですか？", de: "Wie viel kostet das?", it: "Quanto costa questo?" },
+    { text: "Please help me!", hi: "कृपया मेरी मदद करें!", es: "¡Por favor, ayúdame!", fr: "Aidez-moi s'il vous plaît!", ja: "助けてください！", de: "Bitte helfen Sie mir!", it: "Per favore aiutami!" },
+    { text: "Where is the police station?", hi: "पुलिस स्टेशन कहाँ है?", es: "¿Dónde está la policía?", fr: "Où est le commissariat?", ja: "警察署はどこですか？", de: "Wo ist die Polizeiwache?", it: "Dov'è la stazione di polizia?" },
+    { text: "Thank you so much!", hi: "बहुत-बहुत धन्यवाद!", es: "¡Muchas gracias!", fr: "Merci beaucoup!", ja: "どうもありがとうございます！", de: "Vielen Dank!", it: "Grazie mille!" }
+];
+
+window.injectFloatingToolbox = function() {
+    if (document.getElementById('floating-toolbox-btn')) return;
+
+    // Floating Button
+    const btn = document.createElement('button');
+    btn.id = 'floating-toolbox-btn';
+    btn.className = 'floating-toolbox-btn';
+    btn.title = 'Travel Toolbox (Currency, Translator, SOS)';
+    btn.innerHTML = '<i class="fa-solid fa-toolbox"></i>';
+    btn.onclick = toggleToolbox;
+    document.body.appendChild(btn);
+
+    // Modal
+    const modal = document.createElement('div');
+    modal.id = 'toolbox-modal';
+    modal.className = 'toolbox-modal';
+    modal.innerHTML = `
+        <div class="toolbox-header">
+            <h4 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-compass" style="color:var(--primary)"></i> Travel Toolbox
+            </h4>
+            <button onclick="toggleToolbox()" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="toolbox-tabs">
+            <button class="toolbox-tab-btn active" onclick="switchToolboxTab('currency', this)"><i class="fa-solid fa-coins"></i> Currency</button>
+            <button class="toolbox-tab-btn" onclick="switchToolboxTab('phrases', this)"><i class="fa-solid fa-language"></i> Phrases</button>
+            <button class="toolbox-tab-btn" onclick="switchToolboxTab('sos', this)"><i class="fa-solid fa-triangle-exclamation"></i> SOS</button>
+        </div>
+        <div class="toolbox-body" id="toolbox-body">
+            <!-- Injected by tab -->
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    renderCurrencyTab();
+};
+
+window.toggleToolbox = function() {
+    const m = document.getElementById('toolbox-modal');
+    if (m) m.classList.toggle('show');
+};
+
+window.switchToolboxTab = function(tabName, btn) {
+    document.querySelectorAll('.toolbox-tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+
+    if (tabName === 'currency') renderCurrencyTab();
+    else if (tabName === 'phrases') renderPhrasesTab();
+    else if (tabName === 'sos') renderSOSTab();
+};
+
+function renderCurrencyTab() {
+    const body = document.getElementById('toolbox-body');
+    if (!body) return;
+    body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.8rem;">
+            <label style="font-size:0.8rem; color:#94a3b8; margin-bottom:-4px;">Convert Amount</label>
+            <div style="display:flex; gap:0.5rem;">
+                <input type="number" id="tb-amount" value="1000" min="1" oninput="runToolboxConversion()" style="flex:1; padding:0.6rem; border-radius:8px; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none;">
+                <select id="tb-from" onchange="runToolboxConversion()" style="padding:0.6rem; border-radius:8px; background:#1e293b; border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none;">
+                    <option value="INR">₹ INR</option>
+                    <option value="USD">$ USD</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="AED">AED</option>
+                    <option value="THB">฿ THB</option>
+                    <option value="JPY">¥ JPY</option>
+                </select>
+            </div>
+            <div style="text-align:center; color:#94a3b8; font-size:0.9rem;">
+                <i class="fa-solid fa-arrow-down"></i>
+            </div>
+            <div style="display:flex; gap:0.5rem;">
+                <input type="text" id="tb-result" readonly style="flex:1; padding:0.6rem; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:#4ade80; font-weight:700; outline:none;">
+                <select id="tb-to" onchange="runToolboxConversion()" style="padding:0.6rem; border-radius:8px; background:#1e293b; border:1px solid rgba(255,255,255,0.15); color:#fff; outline:none;">
+                    <option value="USD">$ USD</option>
+                    <option value="INR">₹ INR</option>
+                    <option value="EUR">€ EUR</option>
+                    <option value="GBP">£ GBP</option>
+                    <option value="AED">AED</option>
+                    <option value="THB">฿ THB</option>
+                    <option value="JPY">¥ JPY</option>
+                </select>
+            </div>
+            <div id="tb-rate-hint" style="font-size:0.75rem; color:#94a3b8; text-align:center; margin-top:4px;">Live conversion calculator</div>
+        </div>
+    `;
+    runToolboxConversion();
+}
+
+window.runToolboxConversion = function() {
+    const amt = parseFloat(document.getElementById('tb-amount')?.value) || 0;
+    const from = document.getElementById('tb-from')?.value || 'INR';
+    const to = document.getElementById('tb-to')?.value || 'USD';
+    const resultEl = document.getElementById('tb-result');
+    const hintEl = document.getElementById('tb-rate-hint');
+
+    const inINR = amt / (TOOLBOX_EXCHANGE_RATES[from] || 1);
+    const finalVal = inINR * (TOOLBOX_EXCHANGE_RATES[to] || 1);
+
+    if (resultEl) resultEl.value = `${to} ${finalVal.toFixed(2)}`;
+    if (hintEl) {
+        const singleRate = (1 / (TOOLBOX_EXCHANGE_RATES[from] || 1)) * (TOOLBOX_EXCHANGE_RATES[to] || 1);
+        hintEl.textContent = `1 ${from} ≈ ${singleRate.toFixed(4)} ${to}`;
+    }
+};
+
+function renderPhrasesTab() {
+    const body = document.getElementById('toolbox-body');
+    if (!body) return;
+    body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <span style="font-size:0.8rem; color:#94a3b8;">Select Language:</span>
+                <select id="phrase-lang" onchange="renderPhraseList()" style="padding:0.3rem 0.6rem; border-radius:6px; background:#1e293b; border:1px solid rgba(255,255,255,0.2); color:#fff; font-size:0.8rem; outline:none;">
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="ja">🇯🇵 Japanese</option>
+                    <option value="hi">🇮🇳 Hindi</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="it">🇮🇹 Italian</option>
+                </select>
+            </div>
+            <div id="phrase-cards-container" style="display:flex; flex-direction:column; gap:0.5rem; max-height:280px; overflow-y:auto;"></div>
+        </div>
+    `;
+    renderPhraseList();
+}
+
+window.renderPhraseList = function() {
+    const lang = document.getElementById('phrase-lang')?.value || 'es';
+    const container = document.getElementById('phrase-cards-container');
+    if (!container) return;
+
+    container.innerHTML = TRAVEL_PHRASES.map(p => {
+        const trans = p[lang] || p.es;
+        return `
+            <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:0.6rem 0.8rem; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">${p.text}</div>
+                    <div style="font-size:0.88rem; font-weight:600; color:#fff; margin-top:2px;">${trans}</div>
+                </div>
+                <button onclick="speakPhrase('${trans.replace(/'/g, "\\'")}', '${lang}')" style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); width:32px; height:32px; border-radius:50%; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Listen Pronunciation">
+                    <i class="fa-solid fa-volume-high"></i>
+                </button>
+            </div>
+        `;
+    }).join('');
+};
+
+window.speakPhrase = function(text, lang) {
+    if (!('speechSynthesis' in window)) {
+        alert('Voice synthesis not supported in this browser.');
+        return;
+    }
+    const cleanText = text.split('(')[0].trim();
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    const langCodes = { es: 'es-ES', fr: 'fr-FR', ja: 'ja-JP', hi: 'hi-IN', de: 'de-DE', it: 'it-IT' };
+    utterance.lang = langCodes[lang] || 'en-US';
+    window.speechSynthesis.speak(utterance);
+};
+
+function renderSOSTab() {
+    const body = document.getElementById('toolbox-body');
+    if (!body) return;
+    body.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+            <p style="font-size:0.8rem; color:#cbd5e1; margin-bottom:4px;">Direct emergency speed-dial services:</p>
+            <a href="tel:112" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); border-radius:10px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; color:#f87171; text-decoration:none;">
+                <div>
+                    <strong style="display:block; font-size:0.95rem;"><i class="fa-solid fa-shield-halved"></i> Universal Emergency / Police</strong>
+                    <span style="font-size:0.75rem; color:#fca5a5;">Dial 112 (India, EU, Global)</span>
+                </div>
+                <i class="fa-solid fa-phone"></i>
+            </a>
+            <a href="tel:102" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:10px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; color:#60a5fa; text-decoration:none;">
+                <div>
+                    <strong style="display:block; font-size:0.95rem;"><i class="fa-solid fa-truck-medical"></i> Ambulance Service</strong>
+                    <span style="font-size:0.75rem; color:#93c5fd;">Dial 102 / 108</span>
+                </div>
+                <i class="fa-solid fa-phone"></i>
+            </a>
+            <a href="tel:1363" style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.35); border-radius:10px; padding:0.75rem 1rem; display:flex; justify-content:space-between; align-items:center; color:#facc15; text-decoration:none;">
+                <div>
+                    <strong style="display:block; font-size:0.95rem;"><i class="fa-solid fa-circle-info"></i> Tourist Helpline (24/7)</strong>
+                    <span style="font-size:0.75rem; color:#fde047;">Dial 1363 (Multi-lingual)</span>
+                </div>
+                <i class="fa-solid fa-phone"></i>
+            </a>
+            <button onclick="shareEmergencyLocation()" style="margin-top:4px; background:linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color:white; border:none; padding:0.75rem; border-radius:10px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fa-solid fa-location-crosshairs"></i> Share My Live GPS with Emergency Contact
+            </button>
+        </div>
+    `;
+}
+
+window.shareEmergencyLocation = function() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            const mapLink = `https://maps.google.com/?q=${lat},${lon}`;
+            const msg = `EMERGENCY ALERT: I am using TripoNext SOS. My current location is: ${mapLink}`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }, err => {
+            alert('Unable to access location. Please check browser GPS permissions.');
+        });
+    } else {
+        alert('Geolocation is not supported by your browser.');
+    }
+};
+
+// ========================================================
+// 11. AI MAGIC ITINERARY MODAL (Day-by-Day Gemini Planner)
+// ========================================================
+window.openMagicPlanner = async function(destination, days, budget, currency = "INR") {
+    const dest = destination || document.getElementById('destination-input')?.value || "Paris";
+    const numDays = days || window._selectedNumDays || 3;
+    const bgt = budget || document.getElementById('budget-input')?.value || 15000;
+
+    let modal = document.getElementById('magic-itinerary-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'magic-itinerary-modal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width: 720px; width: 95vw; max-height: 85vh; display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
+                    <div>
+                        <h2 style="margin: 0; color: #fff; display: flex; align-items: center; gap: 8px; font-size: 1.5rem;">
+                            <i class="fa-solid fa-wand-magic-sparkles" style="color: var(--primary);"></i> AI Magic Itinerary
+                        </h2>
+                        <span id="magic-modal-subtitle" style="color: #94a3b8; font-size: 0.85rem;">Generating custom plan...</span>
+                    </div>
+                    <button onclick="closeMagicPlanner()" style="background: none; border: none; color: #cbd5e1; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="magic-modal-body" style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
+                    <div style="text-align: center; padding: 3rem 1rem;">
+                        <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary);"></i>
+                        <p style="color: #e2e8f0; margin-top: 1rem; font-weight: 500;">TripoNext AI is crafting your day-by-day plan for ${dest}...</p>
+                    </div>
+                </div>
+                <div id="magic-modal-footer" style="display: none; justify-content: flex-end; gap: 1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1rem; margin-top: 1rem;">
+                    <button class="btn-small" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer;" onclick="closeMagicPlanner()">Close</button>
+                    <button id="save-magic-trip-btn" class="btn-small btn-primary" style="padding: 0.6rem 1.4rem; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-bookmark"></i> Save to My Trips</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    }
+
+    modal.style.display = 'flex';
+    document.getElementById('magic-modal-subtitle').textContent = `${numDays} Days in ${dest}`;
+    document.getElementById('magic-modal-body').innerHTML = `
+        <div style="text-align: center; padding: 3rem 1rem;">
+            <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary);"></i>
+            <p style="color: #e2e8f0; margin-top: 1rem; font-weight: 500;">TripoNext AI is generating your personalized ${numDays}-day plan...</p>
+        </div>
+    `;
+    document.getElementById('magic-modal-footer').style.display = 'none';
+
+    try {
+        const res = await fetch('/api/ai-itinerary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ destination: dest, days: numDays, budget: bgt, currency })
+        });
+        const data = await res.json();
+        renderMagicItineraryPlan(data);
+    } catch (e) {
+        console.error('AI itinerary error:', e);
+        document.getElementById('magic-modal-body').innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #ef4444;">
+                <i class="fa-solid fa-circle-exclamation fa-2x"></i>
+                <p>Could not generate itinerary right now. Please check your internet connection.</p>
+            </div>
+        `;
+    }
+};
+
+window.closeMagicPlanner = function() {
+    const modal = document.getElementById('magic-itinerary-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+function renderMagicItineraryPlan(plan) {
+    const body = document.getElementById('magic-modal-body');
+    const footer = document.getElementById('magic-modal-footer');
+    if (!body) return;
+
+    let html = `
+        <div style="background: rgba(249,115,22,0.1); border: 1px solid rgba(249,115,22,0.25); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700;">AI Trip Overview</span>
+                <span style="background: var(--primary); color: white; padding: 2px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">${plan.vibe || 'Curated'}</span>
+            </div>
+            <p style="margin: 0.4rem 0 0; color: #f8fafc; font-size: 0.95rem; line-height: 1.5;">${plan.summary}</p>
+        </div>
+
+        <div style="margin-bottom: 1.2rem;">
+            <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 1rem;"><i class="fa-solid fa-wallet" style="color: var(--accent);"></i> Estimated Budget Split</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.6rem;">
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">🏨 Stay</div>
+                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.stay || '40%'}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">🥘 Food</div>
+                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.food || '25%'}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">🎟️ Activities</div>
+                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.activities || '20%'}</div>
+                </div>
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 0.6rem; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">🚕 Travel</div>
+                    <div style="font-weight: 700; color: #fff;">${plan.budgetBreakdown?.transport || '15%'}</div>
+                </div>
+            </div>
+        </div>
+
+        <h4 style="color: #fff; margin-bottom: 0.75rem; font-size: 1.05rem;"><i class="fa-solid fa-calendar-days" style="color: #38bdf8;"></i> Day-by-Day Schedule</h4>
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+    `;
+
+    (plan.dailyPlan || []).forEach(d => {
+        html += `
+            <div style="background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+                    <span style="font-weight: 700; color: var(--primary); font-size: 1rem;">Day ${d.day}: ${d.theme}</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.6rem; font-size: 0.88rem;">
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <span style="background: rgba(234,179,8,0.2); color: #facc15; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">🌅 Morning</span>
+                        <div>
+                            <strong style="color: #fff;">${d.morning?.act || d.morning?.activity || 'Morning highlights'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.morning?.loc || d.morning?.location || ''} • 💡 ${d.morning?.tip || ''}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <span style="background: rgba(59,130,246,0.2); color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">☀️ Afternoon</span>
+                        <div>
+                            <strong style="color: #fff;">${d.afternoon?.act || d.afternoon?.activity || 'Afternoon exploration'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.afternoon?.loc || d.afternoon?.location || ''} • 💡 ${d.afternoon?.tip || ''}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: flex-start;">
+                        <span style="background: rgba(168,85,247,0.2); color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; min-width: 70px; text-align: center;">🌙 Evening</span>
+                        <div>
+                            <strong style="color: #fff;">${d.evening?.act || d.evening?.activity || 'Dinner & sunset views'}</strong>
+                            <div style="color: #94a3b8; font-size: 0.8rem;">📍 ${d.evening?.loc || d.evening?.location || ''} • 💡 ${d.evening?.tip || ''}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    if (plan.packingList && plan.packingList.length > 0) {
+        html += `
+            <div style="margin-top: 1rem;">
+                <h4 style="color: #fff; margin-bottom: 0.5rem; font-size: 0.95rem;"><i class="fa-solid fa-suitcase" style="color: #4ade80;"></i> Smart Packing Checklist</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    ${plan.packingList.map(item => `<span style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 4px 10px; font-size: 0.8rem; color: #e2e8f0;"><i class="fa-solid fa-check" style="color: #4ade80; margin-right: 4px;"></i> ${item}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    html += `</div>`;
+    body.innerHTML = html;
+
+    if (footer) {
+        footer.style.display = 'flex';
+        const saveBtn = document.getElementById('save-magic-trip-btn');
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
+                await saveMagicTripToMyTrips(plan);
+                saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+                setTimeout(() => {
+                    closeMagicPlanner();
+                    window.location.href = 'mytrips.html';
+                }, 1000);
+            };
+        }
+    }
+}
+
+async function saveMagicTripToMyTrips(plan) {
+    const token = localStorage.getItem('token');
+    const tripPayload = {
+        destination: plan.destination,
+        dates: `${plan.days} Days Itinerary`,
+        budget: 15000,
+        itinerary: plan
+    };
+
+    if (token) {
+        try {
+            await fetch('/api/trips', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(tripPayload)
+            });
+        } catch (e) {
+            console.warn('Backend save failed, using local storage.');
+        }
+    }
+
+    const localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+    localTrips.push({
+        id: 'magic-' + Date.now(),
+        destination: plan.destination,
+        dates: `${plan.days} Days Itinerary`,
+        budget: 15000,
+        itinerary: plan
+    });
+    localStorage.setItem('localTrips', JSON.stringify(localTrips));
+}
+

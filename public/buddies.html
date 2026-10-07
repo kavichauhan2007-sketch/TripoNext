@@ -250,30 +250,60 @@
     <div id="create-trip-modal" class="modal-overlay">
         <div class="modal-card">
             <h3 style="margin-top:0; color:white;"><i class="fa-solid fa-map-location-dot"></i> Post a Trip</h3>
-            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1.5rem;">Looking for travel buddies? Share your plan.</p>
+            <p style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 1.5rem;">Looking for travel buddies? Share your plan with the community.</p>
             
-            <input type="text" placeholder="Destination (e.g. Manali)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white; margin-bottom: 1rem;">
+            <input type="text" id="post-dest" placeholder="Destination (e.g. Manali, Himachal)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white; margin-bottom: 1rem;">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <input type="text" placeholder="Start Date" onfocus="(this.type='date')" onblur="(this.type='text')" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
-                <input type="text" placeholder="End Date" onfocus="(this.type='date')" onblur="(this.type='text')" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+                <input type="text" id="post-dates" placeholder="Dates (e.g. 15 Oct - 20 Oct)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+                <input type="number" id="post-seats" placeholder="Seats (e.g. 2)" min="1" max="10" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-                <input type="number" placeholder="Seats Available" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
-                <input type="text" placeholder="Budget (e.g. ₹8,000/person)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+            <div style="margin-bottom: 1rem;">
+                <input type="text" id="post-budget" placeholder="Budget (e.g. ₹8,000 / person)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white;">
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <textarea id="post-desc" rows="3" placeholder="Describe the trip vibe (e.g. Driving down from Delhi, splitting fuel & hotel. Solang valley trek!)" style="width: 100%; padding: 0.8rem; border-radius: 8px; background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.15); color: white; font-family: inherit; resize: vertical;"></textarea>
             </div>
             
             <div style="display: flex; gap: 1rem;">
                 <button class="btn-small" style="background: transparent; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 0.8rem; border-radius: 8px; flex: 1; cursor: pointer;" onclick="closeCreateTripModal()">Cancel</button>
-                <button class="btn-small" style="background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer;" onclick="closeCreateTripModal()">Post Trip</button>
+                <button class="btn-small" style="background: var(--primary); color: white; border: none; padding: 0.8rem; border-radius: 8px; flex: 1; font-weight: 600; cursor: pointer;" onclick="submitCreateTrip()">Post Trip</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Modal -->
+    <div id="chat-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center;">
+        <div class="chat-modal-content">
+            <div class="chat-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div id="chat-avatar" class="user-avatar" style="width: 38px; height: 38px; font-size: 1rem;">R</div>
+                    <div>
+                        <h4 id="chat-organizer-name" style="margin: 0; color: #fff; font-size: 0.95rem;">Rahul S.</h4>
+                        <span id="chat-trip-desc" style="font-size: 0.75rem; color: #4ade80;"><i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i> Active • Manali Trip</span>
+                    </div>
+                </div>
+                <button onclick="closeChatModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.2rem; cursor: pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="chat-messages" class="chat-messages-container"></div>
+            <!-- Quick Prompts -->
+            <div style="display: flex; gap: 6px; padding: 6px 12px; background: rgba(0,0,0,0.3); overflow-x: auto;">
+                <button onclick="sendQuickPrompt('Hey! Is there still a seat available?')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Seats available? 💺</button>
+                <button onclick="sendQuickPrompt('What is the pickup point and time?')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Pickup location? 🚗</button>
+                <button onclick="sendQuickPrompt('Can we split hotel & fuel expenses equally?')" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; white-space: nowrap; cursor: pointer;">Split expenses? 💸</button>
+            </div>
+            <div class="chat-input-bar">
+                <input type="text" id="chat-input" placeholder="Type a message to organizer..." style="flex: 1; padding: 0.7rem 1rem; border-radius: 8px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); color: white; outline: none;" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                <button onclick="sendChatMessage()" style="background: var(--primary); color: white; border: none; padding: 0.7rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer;"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
 
     <script src="script.js"></script>
     <script>
-        const trips = [
+        let trips = [
             {
                 id: 1,
                 user: "Rahul S.",
@@ -320,20 +350,28 @@
             }
         ];
 
+        let currentChatBuddy = "Rahul S.";
+        let currentChatTrip = "Manali, Himachal";
+
         function renderTrips() {
             const container = document.getElementById('buddies-container');
             container.innerHTML = '';
             
-            trips.forEach(trip => {
+            // Merge with any custom posted trips stored in localStorage
+            const localCustomTrips = JSON.parse(localStorage.getItem('postedTrips') || '[]');
+            const allTrips = [...localCustomTrips, ...trips];
+
+            allTrips.forEach(trip => {
                 const verifiedIcon = trip.verified ? `<i class="fa-solid fa-circle-check" style="color: #3b82f6; font-size: 0.9rem;" title="Verified Traveler"></i>` : '';
-                
-                const inclusionsHTML = trip.inclusions.map(inc => `<span class="inclusion-tag">${inc}</span>`).join('');
+                const inclusionsHTML = (trip.inclusions || []).map(inc => `<span class="inclusion-tag">${inc}</span>`).join('');
+                const safeDest = (trip.destination || '').replace(/'/g, "\\'");
+                const safeUser = (trip.user || '').replace(/'/g, "\\'");
                 
                 const cardHTML = `
                     <div class="buddy-card">
                         <div class="buddy-header">
                             <div class="user-info">
-                                <div class="user-avatar">${trip.user.charAt(0)}</div>
+                                <div class="user-avatar">${(trip.user || 'U').charAt(0)}</div>
                                 <div class="user-details">
                                     <h4>${trip.user} ${verifiedIcon}</h4>
                                     <span>Trip Organizer</span>
@@ -361,9 +399,14 @@
                             </div>
                         </div>
                         
-                        <button class="join-btn" onclick="openJoinModal(${trip.id})">
-                            <i class="fa-solid fa-paper-plane"></i> Send Join Request
-                        </button>
+                        <div style="display: flex; gap: 0.6rem; margin-top: auto;">
+                            <button class="join-btn" onclick="openJoinModal(${trip.id})" style="flex: 1;">
+                                <i class="fa-solid fa-paper-plane"></i> Join Request
+                            </button>
+                            <button onclick="openChatModal('${safeUser}', '${safeDest}')" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.8rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" title="Chat with Organizer">
+                                <i class="fa-solid fa-comments"></i> Chat
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.innerHTML += cardHTML;
@@ -380,7 +423,7 @@
         }
 
         function submitJoinRequest() {
-            alert('Your join request has been sent to the organizer!');
+            alert('🎉 Your join request has been sent to the organizer! You can now also message them directly via Chat.');
             closeJoinModal();
         }
 
@@ -390,6 +433,134 @@
 
         function closeCreateTripModal() {
             document.getElementById('create-trip-modal').style.display = 'none';
+        }
+
+        function submitCreateTrip() {
+            const dest = document.getElementById('post-dest').value.trim();
+            const dates = document.getElementById('post-dates').value.trim();
+            const seats = document.getElementById('post-seats').value.trim() || '2';
+            const budget = document.getElementById('post-budget').value.trim() || '₹10,000 / person';
+            const desc = document.getElementById('post-desc').value.trim() || 'Looking for great travel buddies to explore!';
+
+            if (!dest) {
+                alert('Please enter a destination.');
+                return;
+            }
+
+            const currentUser = JSON.parse(localStorage.getItem('user')) || { name: 'You' };
+            const newTrip = {
+                id: Date.now(),
+                user: currentUser.name,
+                verified: true,
+                destination: dest,
+                dates: dates || "Next Month",
+                seats: parseInt(seats),
+                budget: budget,
+                inclusions: ["🚗 Transport", "🏨 Hotel"],
+                desc: desc
+            };
+
+            const localCustomTrips = JSON.parse(localStorage.getItem('postedTrips') || '[]');
+            localCustomTrips.unshift(newTrip);
+            localStorage.setItem('postedTrips', JSON.stringify(localCustomTrips));
+
+            closeCreateTripModal();
+            renderTrips();
+            alert('🎉 Your trip has been posted! Buddies can now see and join it.');
+        }
+
+        // ==========================================
+        // BUDDY CHAT SYSTEM
+        // ==========================================
+        async function openChatModal(organizerName, tripDest) {
+            currentChatBuddy = organizerName;
+            currentChatTrip = tripDest;
+            document.getElementById('chat-organizer-name').textContent = organizerName;
+            document.getElementById('chat-avatar').textContent = organizerName.charAt(0);
+            document.getElementById('chat-trip-desc').innerHTML = `<i class="fa-solid fa-circle" style="font-size: 0.5rem;"></i> Active • ${tripDest}`;
+            document.getElementById('chat-modal').style.display = 'flex';
+            await loadChatMessages();
+        }
+
+        function closeChatModal() {
+            document.getElementById('chat-modal').style.display = 'none';
+        }
+
+        async function loadChatMessages() {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Loading messages...</div>';
+
+            let msgs = [];
+            try {
+                const res = await fetch(`/api/messages?buddy=${encodeURIComponent(currentChatBuddy)}`);
+                if (res.ok) msgs = await res.json();
+            } catch(e) {}
+
+            if (!msgs || msgs.length === 0) {
+                msgs = [
+                    { sender_name: currentChatBuddy, message: `Hey there! Super glad you are interested in the ${currentChatTrip} trip. Feel free to ask anything!` }
+                ];
+            }
+
+            renderMessageBubbles(msgs);
+        }
+
+        function renderMessageBubbles(msgs) {
+            const container = document.getElementById('chat-messages');
+            container.innerHTML = msgs.map(m => {
+                const isMine = m.sender_name === 'You' || m.sender_name === (JSON.parse(localStorage.getItem('user'))?.name);
+                return `
+                    <div class="chat-bubble ${isMine ? 'mine' : 'theirs'}">
+                        ${m.message}
+                    </div>
+                `;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            const container = document.getElementById('chat-messages');
+            
+            // Optimistic render
+            container.innerHTML += `<div class="chat-bubble mine">${text}</div>`;
+            container.scrollTop = container.scrollHeight;
+
+            const currentUser = JSON.parse(localStorage.getItem('user'))?.name || 'You';
+
+            try {
+                const res = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender_name: currentUser,
+                        receiver_name: currentChatBuddy,
+                        trip_destination: currentChatTrip,
+                        message: text
+                    })
+                });
+                if (res.ok) {
+                    // Check for simulated auto reply after 1.5s
+                    setTimeout(async () => {
+                        const r = await fetch(`/api/messages?buddy=${encodeURIComponent(currentChatBuddy)}`);
+                        if (r.ok) {
+                            const updated = await r.json();
+                            renderMessageBubbles(updated);
+                        }
+                    }, 1500);
+                }
+            } catch(e) {
+                console.warn('Backend chat offline');
+            }
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('chat-input').value = promptText;
+            sendChatMessage();
         }
 
         // Initialize

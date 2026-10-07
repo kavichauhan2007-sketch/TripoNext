@@ -89,6 +89,19 @@
                     <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="btn_plan">Plan It</span>
                 </button>
             </div>
+
+            <!-- Quick Feature Launchers / AI Magic Planner -->
+            <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem; justify-content: center; flex-wrap: wrap;">
+                <button onclick="openMagicPlanner()" class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 20px rgba(139,92,246,0.4); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Magic Planner
+                </button>
+                <a href="buddies.html" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-user-group" style="color: #38bdf8;"></i> Find Travel Buddies
+                </a>
+                <a href="community.html" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-camera-retro" style="color: #f59e0b;"></i> Trip Moments Wall
+                </a>
+            </div>
         </div>
     </header>
 
@@ -200,7 +213,10 @@
             <div class="card ai-itinerary-card glassmorphism" style="grid-column: 1 / -1;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                     <h3><i class="fa-solid fa-map-location-dot" style="color: var(--primary);"></i> TripoNext Auto-Planner</h3>
-                    <button id="generate-ai-btn" class="btn-primary" onclick="generateAIItinerary()" style="background: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 8px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Build My Trip</button>
+                    <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+                        <button class="btn-primary" onclick="openMagicPlanner()" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Modal</button>
+                        <button id="generate-ai-btn" class="btn-primary" onclick="generateAIItinerary()" style="background: var(--primary); border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-list-check"></i> Build Inline Plan</button>
+                    </div>
                 </div>
                 <div id="ai-loading" style="display: none; text-align: center; padding: 2rem;">
                     <i class="fa-solid fa-compass fa-spin fa-2x" style="color: var(--primary); margin-bottom: 1rem;"></i>
