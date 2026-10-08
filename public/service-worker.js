@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v3';
+const CACHE_NAME = 'triponext-cache-v4';
 const STATIC_ASSETS = [
   '/',
   '/login.html',
@@ -13,6 +13,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/apple-touch-icon.png',
   '/favicon.png'
 ];
 
@@ -84,8 +85,8 @@ self.addEventListener('push', event => {
 
   const options = {
     body: data.body,
-    icon: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
-    badge: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
     vibrate: [100, 50, 100],
     data: {
       url: data.url || '/index.html'
