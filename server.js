@@ -31,6 +31,51 @@ const db = new sqlite3.Database(dbPath, (err) => {
             name TEXT,
             email TEXT UNIQUE,
             password TEXT
+        )`, () => {
+            ['phone', 'bio', 'avatar', 'home_city', 'travel_style', 'referral_code', 'referral_credits'].forEach(col => {
+                db.run(`ALTER TABLE users ADD COLUMN ${col} TEXT`, () => {});
+            });
+        });
+
+        // Create Bookings table (Hotels, Cabs, Flights, Buses)
+        db.run(`CREATE TABLE IF NOT EXISTS bookings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            type TEXT,
+            title TEXT,
+            subtitle TEXT,
+            details TEXT,
+            price REAL,
+            currency TEXT DEFAULT 'INR',
+            status TEXT DEFAULT 'Confirmed',
+            booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+            travel_date TEXT,
+            booking_ref TEXT,
+            origin TEXT,
+            destination TEXT
+        )`);
+
+        // Create Feedback and Reviews table
+        db.run(`CREATE TABLE IF NOT EXISTS feedback_reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            user_name TEXT,
+            category TEXT,
+            rating INTEGER,
+            comment TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        // Create Support Tickets table
+        db.run(`CREATE TABLE IF NOT EXISTS support_tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            user_name TEXT,
+            user_email TEXT,
+            subject TEXT,
+            message TEXT,
+            status TEXT DEFAULT 'Open',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )`);
 
         // Create Trips table
@@ -544,9 +589,9 @@ app.post('/api/ai-chat', async (req, res) => {
             return res.json({ reply: reply });
         }
         
-        const ai = new GoogleGenAI({});
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3.8-flash',
             contents: `You are the TripoNext Support AI, a friendly and helpful travel assistant.
 You help users navigate the TripoNext app (e.g., finding buddies, calculating budgets, checking out famous destinations, reporting bugs). 
 Keep your answers brief, friendly, and helpful. Do not use markdown since it will be rendered as plain text in the chatbox.
@@ -569,7 +614,7 @@ app.post('/api/ai-itinerary', async (req, res) => {
     // If Gemini API Key exists, try generating with Gemini
     if (process.env.GEMINI_API_KEY) {
         try {
-            const ai = new GoogleGenAI({});
+            const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
             const prompt = `Generate a realistic and exciting ${numDays}-day travel itinerary for ${destination}.
 Travel style: ${style}, Travelers: ${travelers}, Total Budget: ${currency} ${budget}.
 Include actual famous landmarks, authentic local food specialties, and realistic morning/afternoon/evening schedule.
@@ -593,7 +638,7 @@ Return strictly valid JSON only without markdown or backticks in this exact sche
   ]
 }`;
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: 'gemini-3.8-flash',
                 contents: prompt
             });
             let cleanText = response.text.trim();
@@ -738,6 +783,653 @@ app.post('/api/notifications/read-all', (req, res) => {
         if (err) return res.status(500).json({ error: 'Database error' });
         res.json({ success: true });
     });
+});
+
+// ========================================================
+// 1. USER PROFILE & REFERRAL APIS
+// ========================================================
+app.get('/api/user/profile', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) {
+        return res.json({
+            name: "Rahul Sharma",
+            email: "rahul.traveler@triponext.com",
+            phone: "+91 98765 43210",
+            bio: "Passionate road-tripper, mountain lover & culture explorer.",
+            avatar: "avatar-1",
+            home_city: "Delhi, India",
+            travel_style: "Adventure & Cultural",
+            referral_code: "TRIP-7492",
+            referral_credits: 500
+        });
+    }
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        db.get('SELECT id, name, email, phone, bio, avatar, home_city, travel_style, referral_code, referral_credits FROM users WHERE id = ?', [decoded.id], (dbErr, user) => {
+            if (dbErr || !user) {
+                return res.json({
+                    id: decoded.id,
+                    name: decoded.name || "Rahul Sharma",
+                    email: decoded.email,
+                    phone: "+91 98765 43210",
+                    bio: "Wanderlust-driven explorer discovering secret gems.",
+                    avatar: "avatar-1",
+                    home_city: "Delhi, India",
+                    travel_style: "Balanced",
+                    referral_code: "TRIP-" + (decoded.id * 73 + 1204),
+                    referral_credits: 500
+                });
+            }
+            if (!user.referral_code) {
+                const refCode = "TRIP-" + (user.id * 73 + 1204);
+                db.run('UPDATE users SET referral_code = ?, referral_credits = 500 WHERE id = ?', [refCode, user.id]);
+                user.referral_code = refCode;
+                user.referral_credits = 500;
+            }
+            res.json(user);
+        });
+    });
+});
+
+app.put('/api/user/profile', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    const { name, phone, bio, avatar, home_city, travel_style } = req.body;
+
+    if (!token) {
+        return res.json({ success: true, message: "Profile saved locally", user: req.body });
+    }
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(403).json({ error: 'Invalid token' });
+        db.run(
+            'UPDATE users SET name = COALESCE(?, name), phone = ?, bio = ?, avatar = ?, home_city = ?, travel_style = ? WHERE id = ?',
+            [name, phone, bio, avatar, home_city, travel_style, decoded.id],
+            function(dbErr) {
+                if (dbErr) return res.status(500).json({ error: 'Database update failed' });
+                res.json({ success: true, user: { id: decoded.id, name, phone, bio, avatar, home_city, travel_style } });
+            }
+        );
+    });
+});
+
+app.get('/api/user/referrals', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let userId = 1;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            userId = decoded.id;
+        } catch(e) {}
+    }
+
+    const refCode = "TRIP-" + (userId * 137 + 1024);
+    res.json({
+        referral_code: refCode,
+        share_url: `https://triponext.com/join?ref=${refCode}`,
+        referral_credits: 500,
+        currency: "₹",
+        per_invite_bonus: 250,
+        friends_invited: 2,
+        invited_list: [
+            { name: "Aarav Sharma", status: "Joined & Booked", reward: "+₹250", date: "2 days ago" },
+            { name: "Pooja Verma", status: "Registered", reward: "+₹250", date: "Last week" }
+        ]
+    });
+});
+
+// ========================================================
+// 2. HOTEL, CAB, FLIGHT & BUS BOOKING APIS
+// ========================================================
+
+// Hotels API
+app.get('/api/bookings/hotels', (req, res) => {
+    const { city = "Manali" } = req.query;
+    const cleanCity = city.trim();
+
+    const hotelCatalog = [
+        {
+            id: 'htl-1',
+            name: `${cleanCity} Grand Heritage Resort & Spa`,
+            city: cleanCity,
+            rating: 4.8,
+            reviewsCount: 420,
+            pricePerNight: 3499,
+            currency: 'INR',
+            stars: 5,
+            tag: 'Top Rated',
+            image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
+            amenities: ['Free WiFi', 'Infinity Pool', 'Complimentary Breakfast', 'Mountain View', 'Spa'],
+            cancellation: 'Free Cancellation before 24h',
+            address: `Near Mall Road, ${cleanCity}`
+        },
+        {
+            id: 'htl-2',
+            name: `Zostel & Backpacker Hub ${cleanCity}`,
+            city: cleanCity,
+            rating: 4.6,
+            reviewsCount: 910,
+            pricePerNight: 899,
+            currency: 'INR',
+            stars: 3,
+            tag: 'Backpacker Favorite',
+            image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=800&q=80',
+            amenities: ['Free WiFi', 'Co-working Cafe', 'Community Lounge', 'Bicycle Rental', 'Bonfire'],
+            cancellation: 'Free Cancellation up to 48h',
+            address: `Old Town Ridge, ${cleanCity}`
+        },
+        {
+            id: 'htl-3',
+            name: `The Royal Vista Boutique Suites`,
+            city: cleanCity,
+            rating: 4.7,
+            reviewsCount: 280,
+            pricePerNight: 2199,
+            currency: 'INR',
+            stars: 4,
+            tag: 'Best Value',
+            image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80',
+            amenities: ['Free High-Speed WiFi', 'Rooftop Dining', 'Airport Shuttle', 'King Bed', 'AC'],
+            cancellation: 'Instant Confirmation Deal',
+            address: `Central Plaza, ${cleanCity}`
+        },
+        {
+            id: 'htl-4',
+            name: `Serene Alpine Pine Cottages`,
+            city: cleanCity,
+            rating: 4.9,
+            reviewsCount: 165,
+            pricePerNight: 4899,
+            currency: 'INR',
+            stars: 5,
+            tag: 'Luxury Pick',
+            image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80',
+            amenities: ['Wooden Fireplace', 'Private Balcony', 'Butler Service', 'Organic Farm Breakfast', 'Jacuzzi'],
+            cancellation: 'Free Cancellation anytime',
+            address: `Valley Road, Upper ${cleanCity}`
+        }
+    ];
+
+    res.json({
+        city: cleanCity,
+        count: hotelCatalog.length,
+        hotels: hotelCatalog
+    });
+});
+
+// Cabs API
+app.get('/api/bookings/cabs', (req, res) => {
+    const { pickup = "Current Location", drop = "Destination" } = req.query;
+
+    const cabOptions = [
+        {
+            id: 'cab-mini',
+            category: 'Go Mini',
+            vehicle: 'Maruti WagonR / Swift',
+            eta: '3 mins away',
+            capacity: '4 Seats • 1 Small Bag',
+            rating: 4.8,
+            driverTrips: 1840,
+            baseFare: 120,
+            perKm: 14,
+            estimatedFare: 380,
+            currency: 'INR',
+            icon: 'fa-car-side',
+            tag: 'Cheapest',
+            badgeColor: '#10b981',
+            features: ['AC Cab', 'Clean & Sanitized', 'Top-rated Driver']
+        },
+        {
+            id: 'cab-sedan',
+            category: 'Prime Sedan',
+            vehicle: 'Maruti Dzire / Honda Amaze',
+            eta: '4 mins away',
+            capacity: '4 Seats • 2 Large Bags',
+            rating: 4.9,
+            driverTrips: 2450,
+            baseFare: 160,
+            perKm: 18,
+            estimatedFare: 490,
+            currency: 'INR',
+            icon: 'fa-car',
+            tag: 'Most Popular',
+            badgeColor: '#f97316',
+            features: ['Extra Legroom', 'Free In-Cab WiFi', 'Zero Driver Cancellation']
+        },
+        {
+            id: 'cab-suv',
+            category: 'Outstation & Airport SUV',
+            vehicle: 'Toyota Innova Crysta / Ertiga',
+            eta: '6 mins away',
+            capacity: '6 Seats • 4 Large Bags',
+            rating: 4.9,
+            driverTrips: 3100,
+            baseFare: 250,
+            perKm: 24,
+            estimatedFare: 780,
+            currency: 'INR',
+            icon: 'fa-van-shuttle',
+            tag: 'Family & Luggage',
+            badgeColor: '#8b5cf6',
+            features: ['Spacious 6-7 Seater', 'Roof Luggage Carrier', 'Highway Specialist']
+        },
+        {
+            id: 'cab-ev',
+            category: 'Eco Green EV',
+            vehicle: 'Tata Nexon EV / Tigor EV',
+            eta: '5 mins away',
+            capacity: '4 Seats • 2 Bags',
+            rating: 4.9,
+            driverTrips: 980,
+            baseFare: 140,
+            perKm: 16,
+            estimatedFare: 430,
+            currency: 'INR',
+            icon: 'fa-charging-station',
+            tag: 'Zero Emission',
+            badgeColor: '#059669',
+            features: ['100% Electric Silent Ride', 'Eco Carbon-Neutral', 'AC']
+        },
+        {
+            id: 'cab-auto',
+            category: 'Quick Auto',
+            vehicle: 'Bajaj RE Auto',
+            eta: '2 mins away',
+            capacity: '3 Seats • Handbag',
+            rating: 4.7,
+            driverTrips: 4200,
+            baseFare: 40,
+            perKm: 11,
+            estimatedFare: 160,
+            currency: 'INR',
+            icon: 'fa-motorcycle',
+            tag: 'Budget Quick',
+            badgeColor: '#eab308',
+            features: ['Fast city maneuvering', 'No traffic hassle', 'Metered fair rates']
+        }
+    ];
+
+    res.json({
+        pickup,
+        drop,
+        cabs: cabOptions
+    });
+});
+
+// Flights API
+app.get('/api/bookings/flights', (req, res) => {
+    const { from = "DEL", to = "BOM", date = "Tomorrow" } = req.query;
+
+    const flightsList = [
+        {
+            id: 'flt-1',
+            airline: 'IndiGo',
+            flightNumber: '6E-2143',
+            departureTime: '06:15 AM',
+            arrivalTime: '08:30 AM',
+            origin: from.toUpperCase(),
+            destination: to.toUpperCase(),
+            duration: '2h 15m',
+            stops: 'Non-stop',
+            price: 4350,
+            currency: 'INR',
+            seatsLeft: 4,
+            baggage: '15 Kg Check-in • 7 Kg Cabin',
+            tag: 'Fastest & On-Time'
+        },
+        {
+            id: 'flt-2',
+            airline: 'Air India',
+            flightNumber: 'AI-805',
+            departureTime: '09:45 AM',
+            arrivalTime: '12:05 PM',
+            origin: from.toUpperCase(),
+            destination: to.toUpperCase(),
+            duration: '2h 20m',
+            stops: 'Non-stop',
+            price: 4890,
+            currency: 'INR',
+            seatsLeft: 8,
+            baggage: '25 Kg Check-in • 7 Kg Cabin • Free Meal',
+            tag: 'Free Hot Meal'
+        },
+        {
+            id: 'flt-3',
+            airline: 'Vistara',
+            flightNumber: 'UK-942',
+            departureTime: '02:30 PM',
+            arrivalTime: '04:45 PM',
+            origin: from.toUpperCase(),
+            destination: to.toUpperCase(),
+            duration: '2h 15m',
+            stops: 'Non-stop',
+            price: 5200,
+            currency: 'INR',
+            seatsLeft: 6,
+            baggage: '15 Kg Check-in • 7 Kg Cabin • In-flight Media',
+            tag: 'Premium Luxury'
+        },
+        {
+            id: 'flt-4',
+            airline: 'Akasa Air',
+            flightNumber: 'QP-1304',
+            departureTime: '07:20 PM',
+            arrivalTime: '09:40 PM',
+            origin: from.toUpperCase(),
+            destination: to.toUpperCase(),
+            duration: '2h 20m',
+            stops: 'Non-stop',
+            price: 3890,
+            currency: 'INR',
+            seatsLeft: 2,
+            baggage: '15 Kg Check-in • 7 Kg Cabin',
+            tag: 'Lowest Price Today'
+        }
+    ];
+
+    res.json({
+        from: from.toUpperCase(),
+        to: to.toUpperCase(),
+        date,
+        flights: flightsList
+    });
+});
+
+// Buses API
+app.get('/api/bookings/buses', (req, res) => {
+    const { from = "Delhi", to = "Manali", date = "Today" } = req.query;
+
+    const busCatalog = [
+        {
+            id: 'bus-1',
+            operator: 'Zingbus Maxx AC',
+            busType: 'Volvo 9600 Multi-Axle Luxury Sleeper (2+1)',
+            rating: 4.8,
+            reviews: 1420,
+            departureTime: '08:30 PM',
+            arrivalTime: '07:30 AM',
+            duration: '11h 00m',
+            fromCity: from,
+            toCity: to,
+            boardingPoint: 'Kashmere Gate ISBT / Majnu Ka Tila',
+            dropPoint: 'Private Bus Stand, Mall Road',
+            price: 1199,
+            currency: 'INR',
+            seatsAvailable: 7,
+            amenities: ['Blanket & Pillow', 'Charging Socket', 'Live GPS Tracking', 'Emergency SOS', 'Water Bottle'],
+            tag: 'Top Rated Volvo'
+        },
+        {
+            id: 'bus-2',
+            operator: 'IntrCity SmartBus',
+            busType: 'BharatBenz AC Sleeper with Washroom',
+            rating: 4.7,
+            reviews: 890,
+            departureTime: '09:15 PM',
+            arrivalTime: '08:15 AM',
+            duration: '11h 00m',
+            fromCity: from,
+            toCity: to,
+            boardingPoint: 'RK Ashram Metro / Dhaula Kuan',
+            dropPoint: 'Volvoparking Mall Road',
+            price: 1399,
+            currency: 'INR',
+            seatsAvailable: 11,
+            amenities: ['In-Bus Washroom', 'Smart Lounge Access', 'WiFi', 'Luggage Tagging'],
+            tag: 'Washroom Onboard'
+        },
+        {
+            id: 'bus-3',
+            operator: 'NueGo Electric AC Express',
+            busType: '100% Electric AC Semi-Sleeper',
+            rating: 4.9,
+            reviews: 520,
+            departureTime: '07:00 PM',
+            arrivalTime: '06:00 AM',
+            duration: '11h 00m',
+            fromCity: from,
+            toCity: to,
+            boardingPoint: 'Anand Vihar ISBT',
+            dropPoint: 'Main Bus Terminal',
+            price: 999,
+            currency: 'INR',
+            seatsAvailable: 14,
+            amenities: ['Zero Emission Silent Ride', 'Reclining Seats', 'CCTV Security', 'USB Port'],
+            tag: 'Eco Friendly'
+        },
+        {
+            id: 'bus-4',
+            operator: 'City Land Travels Gold',
+            busType: 'Scania AC Multi-Axle Semi-Sleeper (2+2)',
+            rating: 4.5,
+            reviews: 310,
+            departureTime: '10:00 PM',
+            arrivalTime: '09:00 AM',
+            duration: '11h 00m',
+            fromCity: from,
+            toCity: to,
+            boardingPoint: 'Kashmere Gate Metro Gate 1',
+            dropPoint: 'Mall Road Entrance',
+            price: 799,
+            currency: 'INR',
+            seatsAvailable: 18,
+            amenities: ['AC', 'Reading Light', 'Charging Plug'],
+            tag: 'Budget Express'
+        }
+    ];
+
+    res.json({
+        from,
+        to,
+        date,
+        buses: busCatalog
+    });
+});
+
+// Create / Confirm Booking
+app.post('/api/bookings/create', (req, res) => {
+    const { type, title, item_name, subtitle, details, price, currency = 'INR', travel_date, origin, destination } = req.body;
+    const bookingTitle = title || item_name;
+    if (!type || !bookingTitle || !price) {
+        return res.status(400).json({ error: 'Missing type, title, or price for booking' });
+    }
+
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let userId = 1;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            userId = decoded.id;
+        } catch(e) {}
+    }
+
+    const refPrefix = type.toUpperCase().slice(0, 3);
+    const booking_ref = `${refPrefix}-${Math.floor(100000 + Math.random() * 900000)}`;
+
+    db.run(
+        `INSERT INTO bookings (user_id, type, title, subtitle, details, price, currency, status, travel_date, booking_ref, origin, destination) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'Confirmed', ?, ?, ?, ?)`,
+        [userId, type, bookingTitle, subtitle || '', typeof details === 'object' ? JSON.stringify(details) : (details || ''), price, currency, travel_date || 'Upcoming', booking_ref, origin || '', destination || ''],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to record booking in database' });
+            res.json({
+                success: true,
+                id: this.lastID,
+                booking_ref,
+                status: 'Confirmed',
+                type,
+                title: bookingTitle,
+                item_name: bookingTitle,
+                subtitle,
+                price,
+                currency,
+                travel_date: travel_date || 'Upcoming',
+                message: `Booking confirmed successfully! Your booking reference is ${booking_ref}.`
+            });
+        }
+    );
+});
+
+// Get My Bookings
+app.get('/api/bookings/my-bookings', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    let userId = 1;
+    if (token) {
+        try {
+            const decoded = jwt.verify(token, SECRET_KEY);
+            userId = decoded.id;
+        } catch(e) {}
+    }
+
+    db.all('SELECT * FROM bookings WHERE user_id = ? ORDER BY id DESC', [userId], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error fetching bookings' });
+        const mapped = (rows || []).map(r => ({
+            ...r,
+            title: r.title || r.item_name || 'Travel Booking',
+            item_name: r.title || r.item_name || 'Travel Booking'
+        }));
+        res.json(mapped);
+    });
+});
+
+// Cancel Booking
+app.delete('/api/bookings/:id', (req, res) => {
+    const bookingId = req.params.id;
+    db.run('UPDATE bookings SET status = "Cancelled" WHERE id = ?', [bookingId], function(err) {
+        if (err) return res.status(500).json({ error: 'Failed to cancel booking' });
+        res.json({ success: true, message: 'Booking has been cancelled.' });
+    });
+});
+
+// ========================================================
+// 3. FEEDBACK & RATINGS APIS
+// ========================================================
+app.post('/api/feedback', (req, res) => {
+    const { name, rating, category, comment } = req.body;
+    if (!rating) return res.status(400).json({ error: 'Rating is required' });
+
+    db.run(
+        'INSERT INTO feedback_reviews (user_name, rating, category, comment) VALUES (?, ?, ?, ?)',
+        [name || 'Anonymous Traveler', parseInt(rating), category || 'General App', comment || ''],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to save feedback' });
+            res.json({ success: true, id: this.lastID, message: 'Thank you for your valuable feedback and rating!' });
+        }
+    );
+});
+
+app.get('/api/feedback', (req, res) => {
+    db.all('SELECT * FROM feedback_reviews ORDER BY id DESC LIMIT 20', [], (err, rows) => {
+        if (err) return res.status(500).json({ error: 'Database error' });
+        res.json(rows || []);
+    });
+});
+
+// ========================================================
+// 4. OFFERS & DISCOUNTS APIS
+// ========================================================
+app.get('/api/offers', (req, res) => {
+    const offers = [
+        {
+            code: 'AIRFLY25',
+            title: 'Flat 25% OFF Flights',
+            desc: 'Save up to ₹2,500 on all domestic & international flight tickets.',
+            type: 'flight',
+            discount: '25% OFF',
+            minBooking: '₹4,000',
+            expiry: 'Valid till 30 Nov'
+        },
+        {
+            code: 'STAYLUXE',
+            title: 'Flat ₹1,500 OFF Hotels',
+            desc: 'Applicable on 4-star & 5-star resorts, boutique hotels and homestays.',
+            type: 'hotel',
+            discount: '₹1,500 OFF',
+            minBooking: '₹3,500',
+            expiry: 'Valid till 15 Dec'
+        },
+        {
+            code: 'CABSAFE',
+            title: '20% OFF Airport & Cabs',
+            desc: 'Get instant 20% discount on Sedan and SUV intercity outstation rides.',
+            type: 'cab',
+            discount: '20% OFF',
+            minBooking: '₹300',
+            expiry: 'Always Active'
+        },
+        {
+            code: 'BUSWAY150',
+            title: 'Flat ₹150 OFF AC Volvo Buses',
+            desc: 'Save on long-distance Volvo, BharatBenz & electric sleeper bus seats.',
+            type: 'bus',
+            discount: '₹150 OFF',
+            minBooking: '₹600',
+            expiry: 'Valid this month'
+        },
+        {
+            code: 'TRIPNEXT500',
+            title: 'Welcome Bonus: ₹500 Instant Credit',
+            desc: 'Special new user welcome voucher applicable across all transit & hotel bookings.',
+            type: 'general',
+            discount: '₹500 OFF',
+            minBooking: '₹1,000',
+            expiry: 'Lifetime for New Users'
+        }
+    ];
+    res.json({ count: offers.length, offers });
+});
+
+// ========================================================
+// 5. HELP & SUPPORT APIS
+// ========================================================
+app.get('/api/support/faqs', (req, res) => {
+    const faqs = [
+        {
+            q: "How do I cancel or reschedule my hotel or flight booking?",
+            a: "Go to Profile > My Trips or Bookings Hub, select the booking, and tap 'Cancel Booking'. Free cancellations are processed automatically within 2-4 business days."
+        },
+        {
+            q: "How does the Offline Mode work without internet?",
+            a: "When you have internet, tap 'Save for Offline' on any itinerary in Dashboard or My Trips. The app stores all details locally on your phone so you can navigate without WiFi or cellular data."
+        },
+        {
+            q: "How does the Refer and Earn program reward me?",
+            a: "Share your unique referral code with friends. When they sign up and plan or book their first adventure, both of you receive ₹250 wallet credits instantly."
+        },
+        {
+            q: "Can I connect and chat with verified travel buddies?",
+            a: "Yes! Use the 'Find Buddies' section. All verified organizers have blue checkmarks. You can chat directly, split fuel or stays, and share trip photos on the Community wall."
+        },
+        {
+            q: "How do I clear cached offline trips if old data is showing?",
+            a: "Open Settings > Offline Manager, and click 'Clear Offline Cache'. This purges all old cached records and syncs freshly with the cloud."
+        }
+    ];
+    res.json({ faqs });
+});
+
+app.post('/api/support/ticket', (req, res) => {
+    const { name, email, subject, message } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message is required' });
+
+    db.run(
+        'INSERT INTO support_tickets (user_name, user_email, subject, message) VALUES (?, ?, ?, ?)',
+        [name || 'Traveler', email || 'user@example.com', subject || 'Help Request', message],
+        function(err) {
+            if (err) return res.status(500).json({ error: 'Failed to record support ticket' });
+            res.json({
+                success: true,
+                ticketId: `TICK-${this.lastID + 100}`,
+                message: "Our 24x7 support team has received your ticket and will respond within 30 minutes!"
+            });
+        }
+    );
 });
 
 // Fallback to serve index.html for SPA-like behavior if needed

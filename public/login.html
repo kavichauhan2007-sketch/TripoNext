@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Login - TripoNext</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -34,6 +37,13 @@
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.5);
             padding: 3rem;
+        }
+        @media (max-width: 480px) {
+            .auth-wrapper {
+                padding: 1.8rem 1.2rem;
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
         }
         .auth-form-container {
             width: 100%;

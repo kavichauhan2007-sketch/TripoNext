@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v4';
+const CACHE_NAME = 'triponext-cache-v8';
 const STATIC_ASSETS = [
   '/',
   '/login.html',
@@ -40,23 +40,21 @@ self.addEventListener('fetch', event => {
 
   const url = new URL(event.request.url);
 
-  // For API calls, try network first, fallback to cached response if offline
+  // For API calls: Always fetch fresh from network. Never serve stale cached user data.
+  // If offline, let it fail cleanly so the app UI can display a dedicated offline state.
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response && response.status === 200) {
-            const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-          }
-          return response;
-        })
-        .catch(() => caches.match(event.request))
+      fetch(event.request).catch(() => {
+        return new Response(
+          JSON.stringify({ offline: true, error: 'Offline Mode: Network unavailable. Please check your internet connection.' }),
+          { status: 503, headers: { 'Content-Type': 'application/json' } }
+        );
+      })
     );
     return;
   }
 
-  // For HTML, CSS, JS and static assets: Cache First with Network Fallback & revalidate
+  // For HTML, CSS, JS and static assets: Cache First with Network Revalidation
   event.respondWith(
     caches.match(event.request).then(cached => {
       const fetchPromise = fetch(event.request).then(networkResponse => {
@@ -70,6 +68,19 @@ self.addEventListener('fetch', event => {
       return cached || fetchPromise;
     })
   );
+});
+
+// Message listener to handle manual cache purging
+self.addEventListener('message', event => {
+  if (event.data && event.data.action === 'CLEAR_OFFLINE_CACHE') {
+    caches.keys().then(keys => {
+      return Promise.all(keys.map(k => caches.delete(k)));
+    }).then(() => {
+      if (event.ports && event.ports[0]) {
+        event.ports[0].postMessage({ success: true });
+      }
+    });
+  }
 });
 
 // Push Notifications handler

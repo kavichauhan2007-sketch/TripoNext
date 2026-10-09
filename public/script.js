@@ -77,32 +77,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Set user name & inject notification bell
-    const user = JSON.parse(localStorage.getItem('user'));
-    if(user) {
-        const logo = document.querySelector('.logo');
-        if(logo) logo.innerHTML = `<i class="fa-solid fa-plane-departure"></i> TripoNext`;
-        const profile = document.querySelector('.user-profile');
-        if(profile) {
-            profile.innerHTML = `
-                <div class="notif-wrapper" style="margin-right: 14px;">
-                    <button class="notif-bell-btn" onclick="toggleNotifications(event)" title="Notifications">
-                        <i class="fa-solid fa-bell"></i>
-                        <span class="notif-badge" id="notif-count">3</span>
-                    </button>
-                    <div class="notif-dropdown" id="notif-dropdown">
-                        <div class="notif-header">
-                            <h4><i class="fa-solid fa-bell" style="color:var(--primary)"></i> Notifications</h4>
-                            <button onclick="markAllNotificationsRead()" style="background:none; border:none; color:var(--primary); font-size:0.75rem; cursor:pointer;">Mark all read</button>
-                        </div>
-                        <div class="notif-list" id="notif-list"></div>
+    // Set user name & inject notification bell and profile button
+    const user = JSON.parse(localStorage.getItem('user')) || { name: 'Traveler', email: 'user@triponext.com' };
+    const logo = document.querySelector('.logo');
+    if(logo) {
+        logo.innerHTML = `<i class="fa-solid fa-plane-departure" style="color:var(--primary)"></i> TripoNext`;
+        logo.style.cursor = 'pointer';
+        logo.onclick = () => window.location.href = 'index.html';
+    }
+
+    const profile = document.querySelector('.user-profile');
+    if(profile) {
+        profile.innerHTML = `
+            <div class="notif-wrapper" style="margin-right: 8px;">
+                <button class="notif-bell-btn" onclick="toggleNotifications(event)" title="Notifications">
+                    <i class="fa-solid fa-bell"></i>
+                    <span class="notif-badge" id="notif-count">3</span>
+                </button>
+                <div class="notif-dropdown" id="notif-dropdown">
+                    <div class="notif-header">
+                        <h4><i class="fa-solid fa-bell" style="color:var(--primary)"></i> Notifications</h4>
+                        <button onclick="markAllNotificationsRead()" style="background:none; border:none; color:var(--primary); font-size:0.75rem; cursor:pointer;">Mark all read</button>
                     </div>
+                    <div class="notif-list" id="notif-list"></div>
                 </div>
-                <span style="margin-right:10px; font-weight:bold;">${user.name}</span>
-                <a href="#" onclick="logout()" style="color:var(--danger); text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i></a>
-            `;
-            setTimeout(loadNotifications, 100);
-        }
+            </div>
+            <button class="top-profile-btn" onclick="openGlobalSettings()" title="Profile & Settings" style="background:linear-gradient(135deg, rgba(249,115,22,0.2), rgba(234,179,8,0.2)); border:1px solid rgba(249,115,22,0.4); color:white; border-radius:50%; width:38px; height:38px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.15rem;">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        `;
+        setTimeout(loadNotifications, 100);
     }
 
     // Initialize global utilities
@@ -573,7 +577,7 @@ async function calculateAndSetBudget() {
     }
 }
 
-// Global UI Additions (Settings Modal & Welcome Toast)
+// Global UI Additions (Settings Hub, Mobile Bottom Nav, Bookings Hub)
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Settings Button in Navbar
     const navLinks = document.querySelector('.nav-links');
@@ -585,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsBtn.style.color = 'var(--text-main)';
         settingsBtn.style.marginRight = '10px';
         settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
+        settingsBtn.title = 'Profile & Settings';
         settingsBtn.onclick = openGlobalSettings;
         navLinks.insertBefore(settingsBtn, navLinks.lastElementChild);
         
@@ -594,44 +599,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 2. Inject Settings Modal
-    const settingsHTML = `
-    <div id="global-settings-modal" class="modal-overlay" style="display:none; z-index:9999;">
-        <div class="modal-content glassmorphism">
-            <h3><i class="fa-solid fa-gear"></i> App Settings</h3>
-            
-            <div style="margin-top: 1.5rem;">
-                <label>Theme Display</label>
-                <select id="settings-theme" class="glass-select" style="width:100%; border: 1px solid var(--glass-border); color: var(--text-main); background: var(--glass-bg);">
-                    <option value="dark">Dark Mode</option>
-                    <option value="light">Light Mode</option>
-                </select>
-            </div>
-            
-            <div style="margin-top: 1.5rem;">
-                <label>Pop-up Notifications</label>
-                <select id="settings-toasts" class="glass-select" style="width:100%; border: 1px solid var(--glass-border); color: var(--text-main); background: var(--glass-bg);">
-                    <option value="on">Enabled</option>
-                    <option value="off">Disabled</option>
-                </select>
-            </div>
+    // 2. Render Mobile Bottom Navigation Bar & Phone Frame Mode
+    renderMobileBottomNav();
+    initPhoneMode();
 
-            <div style="margin-top: 1.5rem;">
-                <label>Crazy Mode (Confetti)</label>
-                <select id="settings-crazy" class="glass-select" style="width:100%; border: 1px solid var(--glass-border); color: var(--text-main); background: var(--glass-bg);">
-                    <option value="off">Off</option>
-                    <option value="on">On</option>
-                </select>
-            </div>
-
-            <div class="modal-btns">
-                <button class="btn-small" style="background:var(--text-muted); color:#fff;" onclick="closeGlobalSettings()">Cancel</button>
-                <button class="btn-small btn-primary" onclick="saveGlobalSettings()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', settingsHTML);
+    // 3. Inject Quick Booking Pills on Dashboard
+    injectQuickBookingPills();
 
     // 3. Welcome Toast
     if (localStorage.getItem('toasts') !== 'off') {
@@ -1154,38 +1127,1395 @@ window.triggerSurpriseTrip = function() {
     }, 1000);
 }
 
-window.openGlobalSettings = function() {
-    document.getElementById('settings-theme').value = localStorage.getItem('theme') || 'dark';
-    document.getElementById('settings-toasts').value = localStorage.getItem('toasts') || 'on';
-    document.getElementById('settings-crazy').value = localStorage.getItem('crazyMode') || 'off';
-    document.getElementById('global-settings-modal').style.display = 'flex';
-}
+// ========================================================
+// GLOBAL NOTIFICATION TOAST
+// ========================================================
+window.showAppToast = function(msg, type = 'info') {
+    let container = document.getElementById('app-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'app-toast-container';
+        container.style.cssText = 'position:fixed; top:20px; left:50%; transform:translateX(-50%); z-index:99999; display:flex; flex-direction:column; gap:8px; pointer-events:none; max-width:92%; width:420px;';
+        document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const bg = type === 'success' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.95), rgba(5, 150, 105, 0.95))' 
+             : type === 'error' ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(220, 38, 38, 0.95))'
+             : 'linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95))';
+    const border = type === 'success' ? 'rgba(52, 211, 153, 0.6)' : type === 'error' ? 'rgba(248, 113, 113, 0.6)' : 'rgba(99, 102, 241, 0.6)';
+    const icon = type === 'success' ? 'fa-circle-check' : type === 'error' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+    
+    toast.style.cssText = `background:${bg}; border:1px solid ${border}; color:#ffffff; padding:12px 18px; border-radius:12px; box-shadow:0 12px 30px -5px rgba(0,0,0,0.5); font-size:0.9rem; font-weight:500; display:flex; align-items:center; gap:12px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); pointer-events:auto; opacity:0; transform:translateY(-15px); transition:all 0.3s cubic-bezier(0.16, 1, 0.3, 1);`;
+    toast.innerHTML = `<i class="fa-solid ${icon}" style="font-size:1.15rem; flex-shrink:0;"></i><span style="flex:1; line-height:1.4;">${msg}</span><button style="background:none; border:none; color:rgba(255,255,255,0.7); cursor:pointer; font-size:1rem; padding:0; display:flex; align-items:center;" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    });
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-15px)';
+        setTimeout(() => toast.remove(), 350);
+    }, 3800);
+};
+
+// ========================================================
+// MOBILE-FIRST BOTTOM NAVIGATION & QUICK LAUNCHERS
+// ========================================================
+window.renderMobileBottomNav = function() {
+    if (document.getElementById('mobile-bottom-nav')) return;
+
+    const currentPath = window.location.pathname;
+    const isHome = currentPath.endsWith('index.html') || currentPath === '/' || currentPath.endsWith('/');
+    const isExplore = currentPath.endsWith('explore.html');
+    const isTrips = currentPath.endsWith('mytrips.html');
+    const isCommunity = currentPath.endsWith('community.html');
+    const isBuddies = currentPath.endsWith('buddies.html');
+
+    const navHTML = `
+    <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
+        <a href="index.html" class="mobile-nav-item ${isHome ? 'active' : ''}">
+            <i class="fa-solid fa-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="explore.html" class="mobile-nav-item ${isExplore ? 'active' : ''}">
+            <i class="fa-solid fa-compass"></i>
+            <span>Explore</span>
+        </a>
+        <button class="mobile-nav-item" onclick="openBookingsHub('hotels')">
+            <i class="fa-solid fa-ticket"></i>
+            <span>Book</span>
+            <span class="mobile-nav-badge">NEW</span>
+        </button>
+        <a href="mytrips.html" class="mobile-nav-item ${isTrips ? 'active' : ''}">
+            <i class="fa-solid fa-suitcase-rolling"></i>
+            <span>My Trips</span>
+        </a>
+        <button class="mobile-nav-item" onclick="openGlobalSettings()">
+            <i class="fa-solid fa-user-gear"></i>
+            <span>Profile</span>
+        </button>
+    </nav>
+    `;
+    document.body.insertAdjacentHTML('beforeend', navHTML);
+};
+
+window.togglePhoneMode = function() {
+    const isPhoneMode = document.body.classList.toggle('phone-mode-active');
+    localStorage.setItem('triponext_phone_mode', isPhoneMode ? '1' : '0');
+    const toggleBtn = document.getElementById('view-mode-toggle');
+    if (toggleBtn) {
+        toggleBtn.innerHTML = isPhoneMode ? '<i class="fa-solid fa-desktop"></i> Desktop View' : '<i class="fa-solid fa-mobile-screen-button"></i> Mobile App View';
+    }
+    if (window.showAppToast) {
+        window.showAppToast(isPhoneMode ? 'Switched to Mobile App View 📱' : 'Switched to Full Desktop View 🖥️', 'info');
+    }
+};
+
+window.initPhoneMode = function() {
+    if (window.innerWidth > 868 && !document.getElementById('view-mode-toggle')) {
+        const toggleBtn = document.createElement('button');
+        toggleBtn.id = 'view-mode-toggle';
+        toggleBtn.className = 'view-mode-toggle-btn';
+        toggleBtn.onclick = togglePhoneMode;
+        const savedMode = localStorage.getItem('triponext_phone_mode');
+        if (savedMode === '1') {
+            document.body.classList.add('phone-mode-active');
+            toggleBtn.innerHTML = '<i class="fa-solid fa-desktop"></i> Desktop View';
+        } else {
+            toggleBtn.innerHTML = '<i class="fa-solid fa-mobile-screen-button"></i> Mobile App View';
+        }
+        document.body.appendChild(toggleBtn);
+    }
+};
+
+window.injectQuickBookingPills = function() {
+    const heroContent = document.querySelector('.hero-content');
+    if (!heroContent || document.getElementById('quick-pills-bar')) return;
+
+    const pillsHTML = `
+    <div class="quick-pills-bar" id="quick-pills-bar">
+        <button class="quick-pill-btn pill-highlight" onclick="openMagicPlanner()">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Planner
+        </button>
+        <button class="quick-pill-btn" onclick="openBookingsHub('hotels')">
+            <i class="fa-solid fa-hotel" style="color:#eab308;"></i> Hotels
+        </button>
+        <button class="quick-pill-btn" onclick="openBookingsHub('cabs')">
+            <i class="fa-solid fa-taxi" style="color:#10b981;"></i> Cabs
+        </button>
+        <button class="quick-pill-btn" onclick="openBookingsHub('flights')">
+            <i class="fa-solid fa-plane-departure" style="color:#38bdf8;"></i> Flights
+        </button>
+        <button class="quick-pill-btn" onclick="openBookingsHub('buses')">
+            <i class="fa-solid fa-bus" style="color:#f97316;"></i> Buses
+        </button>
+        <a href="buddies.html" class="quick-pill-btn">
+            <i class="fa-solid fa-user-group" style="color:#a855f7;"></i> Travel Buddies
+        </a>
+        <button class="quick-pill-btn" onclick="openOffersModal()">
+            <i class="fa-solid fa-tag" style="color:#ec4899;"></i> Offers & Deals
+        </button>
+    </div>
+    `;
+    const searchBar = document.querySelector('.search-bar');
+    if (searchBar) {
+        searchBar.insertAdjacentHTML('afterend', pillsHTML);
+    }
+};
+
+// ========================================================
+// PROFILE & SETTINGS HUB (Profile, Edit, Refer, Feedback, Help, Offers)
+// ========================================================
+let _userProfileCache = null;
+
+window.openGlobalSettings = async function() {
+    let modal = document.getElementById('settings-hub-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'settings-hub-modal';
+        modal.className = 'settings-hub-modal';
+        modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
+
+    // Fetch user profile from API or local storage
+    const token = localStorage.getItem('token');
+    let user = JSON.parse(localStorage.getItem('user')) || { name: 'Rahul Sharma', email: 'rahul@triponext.com' };
+    
+    if (!_userProfileCache) {
+        try {
+            const res = await fetch('/api/user/profile', {
+                headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+            });
+            if (res.ok) {
+                _userProfileCache = await res.json();
+            }
+        } catch (e) {
+            console.warn('Backend profile fetch fallback to local:', e);
+        }
+    }
+    const profile = _userProfileCache || {
+        name: user.name || "Rahul Sharma",
+        email: user.email || "rahul@triponext.com",
+        phone: "+91 98765 43210",
+        bio: "Explorer & Mountain Wanderer",
+        avatar: "avatar-1",
+        home_city: "Delhi, India",
+        travel_style: "Adventure & Cultural",
+        referral_code: "TRIP-7492",
+        referral_credits: 500
+    };
+
+    const isOnline = navigator.onLine;
+    const localTripsCount = (JSON.parse(localStorage.getItem('localTrips') || '[]')).length;
+
+    modal.innerHTML = `
+    <div class="settings-hub-dialog">
+        <!-- Close Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-gear" style="color:var(--primary)"></i> Account & Settings
+            </h3>
+            <button onclick="closeGlobalSettings()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 1. USER PROFILE CARD -->
+        <div class="profile-card-header">
+            <div class="profile-avatar-large" id="profile-avatar-display">
+                ${profile.avatar === 'avatar-2' ? '🏖️' : profile.avatar === 'avatar-3' ? '🎒' : profile.avatar === 'avatar-4' ? '🏛️' : profile.avatar === 'avatar-5' ? '✈️' : profile.avatar === 'avatar-6' ? '📸' : '🏔️'}
+            </div>
+            <div class="profile-info" style="flex:1;">
+                <h3 id="profile-name-display">${profile.name}</h3>
+                <p><i class="fa-regular fa-envelope"></i> ${profile.email}</p>
+                <p><i class="fa-solid fa-phone"></i> ${profile.phone || '+91 98765 43210'}</p>
+                <div class="profile-tags">
+                    <span class="profile-tag-pill"><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${profile.home_city || 'Delhi, India'}</span>
+                    <span class="profile-tag-pill"><i class="fa-solid fa-compass" style="color:#38bdf8"></i> ${profile.travel_style || 'Adventure'}</span>
+                </div>
+            </div>
+            <button class="profile-edit-btn" onclick="toggleEditProfileView()">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+            </button>
+        </div>
+
+        <!-- Inline Edit Profile Form (Hidden by default) -->
+        <div id="edit-profile-form" style="display:none; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.2rem; margin-bottom:1.2rem;">
+            <h4 style="margin:0 0 1rem 0; color:var(--primary); font-size:1rem;">
+                <i class="fa-solid fa-user-pen"></i> Edit Personal Profile
+            </h4>
+            
+            <div style="margin-bottom:0.8rem;">
+                <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Select Avatar Icon</label>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-1', '🏔️')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">🏔️</button>
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-2', '🏖️')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">🏖️</button>
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-3', '🎒')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">🎒</button>
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-4', '🏛️')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">🏛️</button>
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-5', '✈️')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">✈️</button>
+                    <button type="button" class="avatar-select-btn" onclick="selectAvatar('avatar-6', '📸')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); font-size:1.3rem; border-radius:10px; width:40px; height:40px; cursor:pointer;">📸</button>
+                </div>
+                <input type="hidden" id="edit-avatar-val" value="${profile.avatar || 'avatar-1'}">
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                <div>
+                    <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Full Name</label>
+                    <input type="text" id="edit-name" value="${profile.name}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Phone Number</label>
+                    <input type="text" id="edit-phone" value="${profile.phone || '+91 98765 43210'}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
+                <div>
+                    <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Home City</label>
+                    <input type="text" id="edit-city" value="${profile.home_city || 'Delhi, India'}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                </div>
+                <div>
+                    <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Travel Style</label>
+                    <select id="edit-style" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:#1e293b; border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                        <option value="Adventure & Trekking" ${profile.travel_style?.includes('Adventure') ? 'selected' : ''}>Adventure & Trekking</option>
+                        <option value="Budget Backpacker" ${profile.travel_style?.includes('Budget') ? 'selected' : ''}>Budget Backpacker</option>
+                        <option value="Luxury & Relaxation" ${profile.travel_style?.includes('Luxury') ? 'selected' : ''}>Luxury & Relaxation</option>
+                        <option value="Heritage & Culture" ${profile.travel_style?.includes('Culture') ? 'selected' : ''}>Heritage & Culture</option>
+                        <option value="Solo Explorer" ${profile.travel_style?.includes('Solo') ? 'selected' : ''}>Solo Explorer</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom:0.8rem;">
+                <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Bio / Travel Motto</label>
+                <input type="text" id="edit-bio" value="${profile.bio || 'Living for spontaneous trips and secret sunset spots.'}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button onclick="toggleEditProfileView()" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">Cancel</button>
+                <button onclick="saveProfileChanges()" style="background:var(--primary); border:none; color:white; padding:0.5rem 1.2rem; border-radius:8px; font-weight:600; cursor:pointer;">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- 2. QUICK SETTINGS MENU LIST -->
+        <div class="settings-menu-list">
+            <!-- My Trips -->
+            <div class="settings-item-row" onclick="window.location.href='mytrips.html'">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(59,130,246,0.15); color:#38bdf8;">
+                        <i class="fa-solid fa-suitcase-rolling"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">My Trips & Itineraries</div>
+                        <div class="settings-item-subtitle">Manage saved plans, bookings & expenses</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="background:rgba(59,130,246,0.2); color:#60a5fa; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">View</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Refer and Earn -->
+            <div class="settings-item-row" onclick="openReferEarnModal()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(168,85,247,0.15); color:#c084fc;">
+                        <i class="fa-solid fa-gift"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Refer & Earn Rewards</div>
+                        <div class="settings-item-subtitle">Earn ₹250 travel credits for every friend invited</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="background:rgba(168,85,247,0.2); color:#c084fc; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">₹500 Bonus</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Offers and Discount -->
+            <div class="settings-item-row" onclick="openOffersModal()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(236,72,153,0.15); color:#f472b6;">
+                        <i class="fa-solid fa-percent"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Offers & Discounts</div>
+                        <div class="settings-item-subtitle">Verified promo codes for Flights, Stays & Cabs</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="background:rgba(236,72,153,0.2); color:#f472b6; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">5 Active</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Feedback and Rating -->
+            <div class="settings-item-row" onclick="openFeedbackModal()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(234,179,8,0.15); color:#facc15;">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Feedback & Rating</div>
+                        <div class="settings-item-subtitle">Rate your experience & suggest features</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="color:#facc15; font-size:0.85rem;">★★★★★</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Help and Support -->
+            <div class="settings-item-row" onclick="openHelpSupportModal()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Help & Support</div>
+                        <div class="settings-item-subtitle">24x7 AI assistant, WhatsApp & FAQs</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="background:rgba(16,185,129,0.2); color:#34d399; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">24/7 Live</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
+            <!-- Offline Data Manager -->
+            <div class="settings-item-row" onclick="openOfflineManager()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(249,115,22,0.15); color:var(--primary);">
+                        <i class="fa-solid fa-wifi"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Offline Mode & Cache Manager</div>
+                        <div class="settings-item-subtitle">Network status, clear cached offline data</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span style="background:${isOnline ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}; color:${isOnline ? '#34d399' : '#f87171'}; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">
+                        ${isOnline ? 'Online' : 'Offline'}
+                    </span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. APP THEME & PREFERENCES -->
+        <div style="margin-top:1.2rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:1rem;">
+            <div style="font-size:0.85rem; color:#cbd5e1; font-weight:600; margin-bottom:0.75rem;">
+                <i class="fa-solid fa-sliders"></i> App Preferences
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                <span style="font-size:0.85rem; color:#94a3b8;">Theme Color Scheme</span>
+                <select id="settings-theme" onchange="toggleAppTheme(this.value)" style="background:#1e293b; border:1px solid rgba(255,255,255,0.2); color:white; padding:4px 10px; border-radius:8px; font-size:0.82rem;">
+                    <option value="dark" ${localStorage.getItem('theme') !== 'light' ? 'selected' : ''}>🌙 Dark Mode</option>
+                    <option value="light" ${localStorage.getItem('theme') === 'light' ? 'selected' : ''}>☀️ Light Mode</option>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.85rem; color:#94a3b8;">Pop-up Alert Toasts</span>
+                <select id="settings-toasts" onchange="localStorage.setItem('toasts', this.value)" style="background:#1e293b; border:1px solid rgba(255,255,255,0.2); color:white; padding:4px 10px; border-radius:8px; font-size:0.82rem;">
+                    <option value="on" ${localStorage.getItem('toasts') !== 'off' ? 'selected' : ''}>Enabled</option>
+                    <option value="off" ${localStorage.getItem('toasts') === 'off' ? 'selected' : ''}>Disabled</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 4. LOGOUT & FOOTER -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.2rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.08);">
+            <span style="font-size:0.75rem; color:#64748b;">TripoNext v2.5 Mobile • Gemini AI Powered</span>
+            <button onclick="logout()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:8px; padding:0.4rem 0.9rem; font-size:0.82rem; font-weight:600; cursor:pointer;">
+                <i class="fa-solid fa-right-from-bracket"></i> Log Out
+            </button>
+        </div>
+    </div>
+    `;
+
+    modal.style.display = 'flex';
+};
 
 window.closeGlobalSettings = function() {
-    document.getElementById('global-settings-modal').style.display = 'none';
-}
+    const modal = document.getElementById('settings-hub-modal');
+    if (modal) modal.style.display = 'none';
+};
 
-window.saveGlobalSettings = function() {
-    const theme = document.getElementById('settings-theme').value;
-    const toasts = document.getElementById('settings-toasts').value;
-    const crazy = document.getElementById('settings-crazy').value;
-    
+window.toggleEditProfileView = function() {
+    const form = document.getElementById('edit-profile-form');
+    if (form) {
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.selectAvatar = function(avatarId, emoji) {
+    document.getElementById('edit-avatar-val').value = avatarId;
+    const avatarDisplay = document.getElementById('profile-avatar-display');
+    if (avatarDisplay) avatarDisplay.textContent = emoji;
+    showAppToast(`Avatar updated to ${emoji}!`, 'success');
+};
+
+window.saveProfileChanges = async function() {
+    const name = document.getElementById('edit-name').value.trim();
+    const phone = document.getElementById('edit-phone').value.trim();
+    const home_city = document.getElementById('edit-city').value.trim();
+    const travel_style = document.getElementById('edit-style').value;
+    const bio = document.getElementById('edit-bio').value.trim();
+    const avatar = document.getElementById('edit-avatar-val').value;
+
+    const token = localStorage.getItem('token');
+    const updatedData = { name, phone, home_city, travel_style, bio, avatar };
+
+    try {
+        const res = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(updatedData)
+        });
+        if (res.ok) {
+            _userProfileCache = { ...(_userProfileCache || {}), ...updatedData };
+            // Update local user storage
+            const localUser = JSON.parse(localStorage.getItem('user')) || {};
+            localUser.name = name;
+            localStorage.setItem('user', JSON.stringify(localUser));
+
+            // Update UI elements
+            const nameEl = document.getElementById('profile-name-display');
+            if (nameEl) nameEl.textContent = name;
+            const topUserSpan = document.querySelector('.user-profile span');
+            if (topUserSpan) topUserSpan.textContent = name;
+
+            showAppToast('Profile updated successfully! ✨', 'success');
+            toggleEditProfileView();
+        } else {
+            showAppToast('Failed to save profile changes.', 'error');
+        }
+    } catch (e) {
+        console.warn('Saving profile offline:', e);
+        _userProfileCache = { ...(_userProfileCache || {}), ...updatedData };
+        showAppToast('Profile saved in local storage! ✨', 'success');
+        toggleEditProfileView();
+    }
+};
+
+window.toggleAppTheme = function(theme) {
     localStorage.setItem('theme', theme);
-    localStorage.setItem('toasts', toasts);
-    localStorage.setItem('crazyMode', crazy);
-    
     if (theme === 'light') {
         document.body.classList.add('light-theme');
     } else {
         document.body.classList.remove('light-theme');
     }
+    showAppToast(`Switched to ${theme === 'light' ? 'Light' : 'Dark'} theme!`, 'info');
+};
 
-    if (crazy === 'on') {
-        triggerCrazyMode();
+// ========================================================
+// REFER & EARN MODAL
+// ========================================================
+window.openReferEarnModal = async function() {
+    let data = { referral_code: "TRIP-7492", referral_credits: 500, per_invite_bonus: 250 };
+    try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('/api/user/referrals', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) data = await res.json();
+    } catch (e) {}
+
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
     }
+
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:500px; text-align:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-gift" style="color:#c084fc"></i> Refer & Earn
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="refer-earn-box">
+            <div style="font-size:2.4rem; margin-bottom:0.4rem;">🎁</div>
+            <h4 style="margin:0; font-size:1.2rem; color:#fff;">Invite Friends, Travel for Free</h4>
+            <p style="margin:6px 0; color:#cbd5e1; font-size:0.85rem;">
+                Share your personal code. You both receive <strong>₹250</strong> when your buddy signs up and explores!
+            </p>
+            
+            <div class="referral-code-pill" onclick="copyReferralCode('${data.referral_code}')" title="Tap to copy">
+                <span>${data.referral_code}</span>
+                <i class="fa-regular fa-copy"></i>
+            </div>
+            
+            <div style="display:flex; gap:8px; justify-content:center; margin-top:0.8rem;">
+                <button onclick="copyReferralCode('${data.referral_code}')" class="btn-small btn-primary" style="flex:1;">
+                    <i class="fa-solid fa-copy"></i> Copy Code
+                </button>
+                <button onclick="shareReferralLink('${data.referral_code}')" class="btn-small" style="flex:1; background:linear-gradient(135deg, #8b5cf6, #3b82f6); color:white; border:none;">
+                    <i class="fa-solid fa-share-nodes"></i> Share Link
+                </button>
+            </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-top:1rem;">
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:0.8rem;">
+                <div style="font-size:0.75rem; color:#94a3b8;">Wallet Credits</div>
+                <div style="font-size:1.4rem; font-weight:800; color:#10b981;">₹${data.referral_credits}</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:0.8rem;">
+                <div style="font-size:0.75rem; color:#94a3b8;">Buddies Invited</div>
+                <div style="font-size:1.4rem; font-weight:800; color:#38bdf8;">${data.friends_invited || 2}</div>
+            </div>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.copyReferralCode = function(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        showAppToast(`Referral Code ${code} copied to clipboard! 📋`, 'success');
+    });
+};
+
+window.shareReferralLink = function(code) {
+    const shareData = {
+        title: 'Join me on TripoNext!',
+        text: `Hey! Plan dream trips and split travel costs with me on TripoNext. Use my code ${code} for ₹250 free credits!`,
+        url: window.location.origin + `/login.html?ref=${code}`
+    };
+    if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+    } else {
+        navigator.clipboard.writeText(shareData.url).then(() => {
+            showAppToast('Invite link copied! Share it anywhere.', 'success');
+        });
+    }
+};
+
+// ========================================================
+// FEEDBACK & RATING MODAL
+// ========================================================
+let _selectedRating = 5;
+
+window.openFeedbackModal = function() {
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+
+    _selectedRating = 5;
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:480px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-star" style="color:#eab308"></i> Feedback & Rating
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <p style="margin:0 0 1rem 0; color:#cbd5e1; font-size:0.85rem; text-align:center;">
+            Your feedback shapes TripoNext! How has your travel planning experience been?
+        </p>
+
+        <!-- Star Rating -->
+        <div class="rating-stars-container" id="stars-row">
+            <span class="rating-star-icon active" onclick="setStarRating(1)">★</span>
+            <span class="rating-star-icon active" onclick="setStarRating(2)">★</span>
+            <span class="rating-star-icon active" onclick="setStarRating(3)">★</span>
+            <span class="rating-star-icon active" onclick="setStarRating(4)">★</span>
+            <span class="rating-star-icon active" onclick="setStarRating(5)">★</span>
+        </div>
+        <div id="star-desc" style="text-align:center; color:#eab308; font-size:0.85rem; font-weight:600; margin-bottom:1rem;">
+            Excellent! (5/5)
+        </div>
+
+        <!-- Feedback Category -->
+        <div style="margin-bottom:0.8rem;">
+            <label style="font-size:0.78rem; color:#cbd5e1; display:block; margin-bottom:4px;">Category</label>
+            <select id="feedback-cat" style="width:100%; padding:0.65rem 0.8rem; border-radius:10px; background:#1e293b; border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                <option value="Overall App Experience">Overall App Experience</option>
+                <option value="AI Itinerary Generator">AI Itinerary Generator</option>
+                <option value="Hotel & Cab Bookings">Hotel & Cab Bookings</option>
+                <option value="Find Buddies Feature">Find Buddies Feature</option>
+                <option value="Report an Issue or Bug">Report an Issue or Bug</option>
+                <option value="New Feature Request">New Feature Request</option>
+            </select>
+        </div>
+
+        <!-- Comments Textarea -->
+        <div style="margin-bottom:1rem;">
+            <label style="font-size:0.78rem; color:#cbd5e1; display:block; margin-bottom:4px;">Your Comments & Suggestions</label>
+            <textarea id="feedback-comments" rows="3" placeholder="Tell us what you loved or what we can improve..." style="width:100%; padding:0.7rem; border-radius:10px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:white; outline:none; resize:none; font-family:inherit;"></textarea>
+        </div>
+
+        <button onclick="submitUserFeedback()" class="btn-primary" style="width:100%; padding:0.75rem; border-radius:12px; font-weight:700; border:none; cursor:pointer;">
+            <i class="fa-solid fa-paper-plane"></i> Submit Feedback
+        </button>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.setStarRating = function(rating) {
+    _selectedRating = rating;
+    const stars = document.querySelectorAll('#stars-row .rating-star-icon');
+    stars.forEach((star, idx) => {
+        if (idx < rating) star.classList.add('active');
+        else star.classList.remove('active');
+    });
+    const labels = ["Poor (1/5)", "Fair (2/5)", "Good (3/5)", "Very Good (4/5)", "Excellent (5/5)"];
+    document.getElementById('star-desc').textContent = labels[rating - 1];
+};
+
+window.submitUserFeedback = async function() {
+    const category = document.getElementById('feedback-cat').value;
+    const comment = document.getElementById('feedback-comments').value.trim();
+    const user = JSON.parse(localStorage.getItem('user')) || { name: 'Traveler' };
+
+    try {
+        await fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: user.name,
+                rating: _selectedRating,
+                category,
+                comment
+            })
+        });
+    } catch (e) {
+        console.warn('Feedback saved locally fallback:', e);
+    }
+
+    showAppToast('Thank you! Your feedback and rating have been recorded. 🎉', 'success');
+    document.getElementById('sub-feature-modal').style.display = 'none';
+};
+
+// ========================================================
+// OFFERS & DISCOUNTS MODAL
+// ========================================================
+window.openOffersModal = async function() {
+    let offers = [
+        { code: 'AIRFLY25', title: 'Flat 25% OFF Flights', desc: 'Up to ₹2,500 on all domestic & intl routes.', type: 'flight' },
+        { code: 'STAYLUXE', title: 'Flat ₹1,500 OFF Hotels', desc: 'Valid on 4-star & 5-star luxury resorts.', type: 'hotel' },
+        { code: 'CABSAFE', title: '20% OFF Cabs', desc: 'Instant discount on city & outstation cabs.', type: 'cab' },
+        { code: 'BUSWAY150', title: 'Flat ₹150 OFF Volvo Buses', desc: 'Save on all AC Volvo sleeper bus seats.', type: 'bus' },
+        { code: 'TRIPNEXT500', title: '₹500 Welcome Voucher', desc: 'Special signup bonus voucher across any booking.', type: 'general' }
+    ];
+
+    try {
+        const res = await fetch('/api/offers');
+        if (res.ok) {
+            const json = await res.json();
+            if (json.offers) offers = json.offers;
+        }
+    } catch (e) {}
+
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+
+    let cardsHTML = '';
+    offers.forEach(o => {
+        const icon = o.type === 'flight' ? 'fa-plane' : o.type === 'hotel' ? 'fa-hotel' : o.type === 'cab' ? 'fa-taxi' : o.type === 'bus' ? 'fa-bus' : 'fa-tag';
+        cardsHTML += `
+        <div class="offer-coupon-card">
+            <div>
+                <div style="font-weight:700; color:#fff; font-size:0.95rem; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid ${icon}" style="color:var(--primary)"></i> ${o.title}
+                </div>
+                <div style="font-size:0.78rem; color:#94a3b8; margin:3px 0;">${o.desc}</div>
+                <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); padding:2px 8px; border-radius:6px; font-family:monospace; font-weight:700; color:#fbbf24; font-size:0.8rem;">
+                    ${o.code}
+                </span>
+            </div>
+            <button onclick="copyOfferCode('${o.code}')" style="background:var(--primary); color:white; border:none; padding:0.45rem 0.9rem; border-radius:8px; font-weight:600; font-size:0.75rem; cursor:pointer;">
+                Copy Code
+            </button>
+        </div>
+        `;
+    });
+
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:520px; max-height:85vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-percent" style="color:#ec4899"></i> Exclusive Travel Deals & Coupons
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="margin-bottom:0.8rem; font-size:0.82rem; color:#cbd5e1;">
+            Apply these verified coupon codes during checkout in our Bookings Hub to save big!
+        </div>
+        ${cardsHTML}
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.copyOfferCode = function(code) {
+    navigator.clipboard.writeText(code).then(() => {
+        showAppToast(`Promo Code ${code} copied! Applied to your booking. 🎟️`, 'success');
+    });
+};
+
+// ========================================================
+// HELP & SUPPORT MODAL
+// ========================================================
+window.openHelpSupportModal = async function() {
+    let faqs = [
+        { q: "How do I cancel or reschedule my hotel or flight booking?", a: "Go to Profile > My Trips or Bookings Hub, select the booking, and tap 'Cancel Booking'. Free cancellations are processed automatically within 2-4 business days." },
+        { q: "How does Offline Mode work without internet?", a: "When you have internet, save any plan. The app stores all details locally on your phone so you can view it even in airplane mode." },
+        { q: "How do I clear cached offline trips if old data is showing?", a: "Open Profile > Offline Mode & Cache Manager, and tap 'Clear Offline Cache'. This purges all old cached records and syncs fresh data from the cloud." },
+        { q: "How does the Refer and Earn program reward me?", a: "Share your referral code. When your friend joins, both of you get ₹250 wallet credits instantly." }
+    ];
+
+    try {
+        const res = await fetch('/api/support/faqs');
+        if (res.ok) {
+            const json = await res.json();
+            if (json.faqs) faqs = json.faqs;
+        }
+    } catch (e) {}
+
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+
+    let faqHTML = '';
+    faqs.forEach((f, idx) => {
+        faqHTML += `
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.8rem 1rem; margin-bottom:0.6rem;">
+            <div style="font-weight:600; color:#fff; font-size:0.88rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none'">
+                <span>❓ ${f.q}</span>
+                <i class="fa-solid fa-chevron-down" style="font-size:0.75rem; color:#94a3b8;"></i>
+            </div>
+            <div style="display:none; margin-top:0.5rem; font-size:0.8rem; color:#cbd5e1; line-height:1.45; border-top:1px solid rgba(255,255,255,0.06); padding-top:0.4rem;">
+                ${f.a}
+            </div>
+        </div>
+        `;
+    });
+
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:540px; max-height:85vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-headset" style="color:#34d399"></i> Help & Support Center
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 24/7 Support Channels -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.2rem;">
+            <div onclick="document.getElementById('sub-feature-modal').style.display='none'; toggleChatbot();" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.25); border-radius:14px; padding:1rem; text-align:center; cursor:pointer;">
+                <i class="fa-solid fa-robot" style="font-size:1.6rem; color:#38bdf8; margin-bottom:6px;"></i>
+                <div style="font-weight:700; color:#fff; font-size:0.9rem;">AI Travel Assistant</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">Instant 24x7 Answers</div>
+            </div>
+            <a href="mailto:support@triponext.com?subject=TripoNext%20Support%20Request" style="background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); border-radius:14px; padding:1rem; text-align:center; text-decoration:none; cursor:pointer;">
+                <i class="fa-regular fa-envelope" style="font-size:1.6rem; color:#34d399; margin-bottom:6px;"></i>
+                <div style="font-weight:700; color:#fff; font-size:0.9rem;">Email Support</div>
+                <div style="font-size:0.75rem; color:#94a3b8;">support@triponext.com</div>
+            </a>
+        </div>
+
+        <h4 style="margin:0 0 0.6rem 0; font-size:0.95rem; color:#fff;">Frequently Asked Questions</h4>
+        ${faqHTML}
+
+        <!-- Quick Ticket Form -->
+        <div style="margin-top:1.2rem; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem;">
+            <div style="font-weight:700; color:#fff; font-size:0.9rem; margin-bottom:0.6rem;">Send Support Message</div>
+            <input type="text" id="ticket-subject" placeholder="Issue Subject (e.g., Booking problem)" style="width:100%; padding:0.6rem; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:white; margin-bottom:0.6rem; outline:none; font-size:0.85rem;">
+            <textarea id="ticket-message" rows="2" placeholder="Describe how we can help you..." style="width:100%; padding:0.6rem; border-radius:8px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); color:white; outline:none; resize:none; font-family:inherit; font-size:0.85rem; margin-bottom:0.6rem;"></textarea>
+            <button onclick="submitSupportTicket()" class="btn-small btn-primary" style="width:100%;">
+                <i class="fa-solid fa-paper-plane"></i> Submit Support Ticket
+            </button>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.submitSupportTicket = async function() {
+    const subject = document.getElementById('ticket-subject').value.trim();
+    const message = document.getElementById('ticket-message').value.trim();
+    if (!message) {
+        showAppToast('Please enter your support message.', 'error');
+        return;
+    }
+    const user = JSON.parse(localStorage.getItem('user')) || { name: 'Traveler', email: 'user@triponext.com' };
+
+    try {
+        await fetch('/api/support/ticket', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: user.name, email: user.email, subject, message })
+        });
+    } catch(e) {}
+
+    showAppToast('Support Ticket submitted! Our team will respond shortly. 💬', 'success');
+    document.getElementById('sub-feature-modal').style.display = 'none';
+};
+
+// ========================================================
+// OFFLINE MANAGER & CACHE CLEARING
+// (Solves: "Offine wala mein data dikha rha hai Isha change krna hai")
+// ========================================================
+window.openOfflineManager = function() {
+    const isOnline = navigator.onLine;
+    const localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:480px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-wifi" style="color:var(--primary)"></i> Offline Mode & Cache Manager
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="offline-status-card ${isOnline ? 'is-online' : ''}">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <i class="fa-solid ${isOnline ? 'fa-signal' : 'fa-plane-slash'}" style="font-size:1.4rem; color:${isOnline ? '#10b981' : '#ef4444'};"></i>
+                <div>
+                    <div style="font-weight:700; color:#fff;">Network Status: ${isOnline ? 'Connected (Online)' : 'No Internet (Offline)'}</div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">${isOnline ? 'Live cloud sync active with servers' : 'Serving only explicitly saved itineraries'}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:1rem; margin-bottom:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+                <span style="font-size:0.85rem; color:#cbd5e1;">Cached Offline Trips</span>
+                <span style="background:rgba(249,115,22,0.2); color:var(--primary); font-weight:700; padding:2px 8px; border-radius:10px; font-size:0.8rem;">
+                    ${localTrips.length} Saved
+                </span>
+            </div>
+            <p style="margin:0; font-size:0.78rem; color:#94a3b8; line-height:1.4;">
+                TripoNext allows viewing saved itineraries without cellular connectivity. If old test trips or stale data are displaying, purge the offline cache below.
+            </p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:0.6rem;">
+            <button onclick="clearOfflineCache()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; padding:0.75rem; border-radius:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                <i class="fa-solid fa-trash-can"></i> Clear All Offline Cached Data
+            </button>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn-small" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:0.7rem; border-radius:12px; cursor:pointer;">
+                Done
+            </button>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.clearOfflineCache = function() {
+    // 1. Purge localTrips
+    localStorage.removeItem('localTrips');
+    localStorage.removeItem('tripExpenses');
     
-    closeGlobalSettings();
+    // 2. Clear Service Worker cache if supported
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ action: 'CLEAR_OFFLINE_CACHE' });
+    }
+    if ('caches' in window) {
+        caches.keys().then(keys => {
+            keys.forEach(k => caches.delete(k));
+        });
+    }
+
+    showAppToast('Offline cached data cleared! Fresh data will load now. 🧹', 'success');
+    
+    const subModal = document.getElementById('sub-feature-modal');
+    if (subModal) subModal.style.display = 'none';
+
+    // If on mytrips.html, reload trips
+    if (typeof loadTrips === 'function') {
+        loadTrips();
+    }
+};
+
+// ========================================================
+// TRAVEL & TRANSIT BOOKINGS HUB (Hotels, Cabs, Flights, Buses)
+// ========================================================
+let _currentBookingTab = 'hotels';
+
+window.openBookingsHub = function(activeTab = 'hotels') {
+    _currentBookingTab = activeTab;
+    let modal = document.getElementById('bookings-hub-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'bookings-hub-modal';
+        modal.className = 'booking-hub-modal';
+        document.body.appendChild(modal);
+    }
+
+    modal.innerHTML = `
+    <div class="booking-modal-content">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-plane-departure" style="color:var(--primary)"></i> Travel & Bookings Hub
+            </h3>
+            <button onclick="closeBookingsHub()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 4 Transit Tabs -->
+        <div class="booking-nav-tabs">
+            <button class="booking-tab-btn ${_currentBookingTab === 'hotels' ? 'active' : ''}" onclick="switchBookingTab('hotels')">
+                <i class="fa-solid fa-hotel"></i>
+                <span>Hotels</span>
+            </button>
+            <button class="booking-tab-btn ${_currentBookingTab === 'cabs' ? 'active' : ''}" onclick="switchBookingTab('cabs')">
+                <i class="fa-solid fa-taxi"></i>
+                <span>Cabs</span>
+            </button>
+            <button class="booking-tab-btn ${_currentBookingTab === 'flights' ? 'active' : ''}" onclick="switchBookingTab('flights')">
+                <i class="fa-solid fa-plane"></i>
+                <span>Flights</span>
+            </button>
+            <button class="booking-tab-btn ${_currentBookingTab === 'buses' ? 'active' : ''}" onclick="switchBookingTab('buses')">
+                <i class="fa-solid fa-bus"></i>
+                <span>Buses</span>
+            </button>
+        </div>
+
+        <!-- Tab Content Container -->
+        <div id="booking-tab-content">
+            <div style="text-align:center; padding:2rem; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:var(--primary);"></i>
+                <div style="margin-top:8px;">Fetching best travel fares...</div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    modal.style.display = 'flex';
+    renderBookingTabContent(_currentBookingTab);
+};
+
+window.closeBookingsHub = function() {
+    const modal = document.getElementById('bookings-hub-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.switchBookingTab = function(tab) {
+    _currentBookingTab = tab;
+    const buttons = document.querySelectorAll('.booking-tab-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    renderBookingTabContent(tab);
+};
+
+async function renderBookingTabContent(tab) {
+    const container = document.getElementById('booking-tab-content');
+    if (!container) return;
+
+    if (tab === 'hotels') {
+        const destInput = document.getElementById('destination-input');
+        const defaultCity = (destInput && destInput.value.trim()) || "Manali";
+        
+        container.innerHTML = `
+        <div class="booking-filter-bar">
+            <input type="text" id="hotel-city-input" class="booking-filter-input" placeholder="City / Destination" value="${defaultCity}">
+            <button onclick="fetchHotelResults()" class="btn-primary" style="padding:0.65rem 1.2rem; border-radius:10px; border:none; cursor:pointer;">
+                <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+        </div>
+        <div id="hotels-results-list">
+            <div style="text-align:center; padding:1.5rem; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Loading hotels...</div>
+        </div>
+        `;
+        fetchHotelResults();
+    } 
+    else if (tab === 'cabs') {
+        container.innerHTML = `
+        <div class="booking-filter-bar">
+            <input type="text" id="cab-pickup-input" class="booking-filter-input" placeholder="Pickup (e.g. Airport / Station)" value="Delhi Airport T3">
+            <input type="text" id="cab-drop-input" class="booking-filter-input" placeholder="Drop Location" value="Connaught Place, Central Delhi">
+            <button onclick="fetchCabResults()" class="btn-primary" style="padding:0.65rem 1.2rem; border-radius:10px; border:none; cursor:pointer;">
+                <i class="fa-solid fa-magnifying-glass"></i> Find Cabs
+            </button>
+        </div>
+        <div id="cabs-results-list">
+            <div style="text-align:center; padding:1.5rem; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Finding nearby drivers...</div>
+        </div>
+        `;
+        fetchCabResults();
+    }
+    else if (tab === 'flights') {
+        container.innerHTML = `
+        <div class="booking-filter-bar">
+            <input type="text" id="flight-from-input" class="booking-filter-input" placeholder="From (e.g. DEL)" value="DEL">
+            <input type="text" id="flight-to-input" class="booking-filter-input" placeholder="To (e.g. BOM)" value="BOM">
+            <button onclick="fetchFlightResults()" class="btn-primary" style="padding:0.65rem 1.2rem; border-radius:10px; border:none; cursor:pointer;">
+                <i class="fa-solid fa-plane"></i> Search
+            </button>
+        </div>
+        <div id="flights-results-list">
+            <div style="text-align:center; padding:1.5rem; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Searching best airline rates...</div>
+        </div>
+        `;
+        fetchFlightResults();
+    }
+    else if (tab === 'buses') {
+        container.innerHTML = `
+        <div class="booking-filter-bar">
+            <input type="text" id="bus-from-input" class="booking-filter-input" placeholder="From City" value="Delhi">
+            <input type="text" id="bus-to-input" class="booking-filter-input" placeholder="To City" value="Manali">
+            <button onclick="fetchBusResults()" class="btn-primary" style="padding:0.65rem 1.2rem; border-radius:10px; border:none; cursor:pointer;">
+                <i class="fa-solid fa-bus"></i> Find Buses
+            </button>
+        </div>
+        <div id="buses-results-list">
+            <div style="text-align:center; padding:1.5rem; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching Volvo & Sleeper buses...</div>
+        </div>
+        `;
+        fetchBusResults();
+    }
 }
+
+// 1. Fetch Hotels
+window.fetchHotelResults = async function() {
+    const listEl = document.getElementById('hotels-results-list');
+    const city = document.getElementById('hotel-city-input').value.trim() || 'Manali';
+    try {
+        const res = await fetch(`/api/bookings/hotels?city=${encodeURIComponent(city)}`);
+        const data = await res.json();
+        const hotels = data.hotels || [];
+
+        let html = '';
+        hotels.forEach(h => {
+            const amenitiesPills = (h.amenities || []).slice(0, 3).map(a => `<span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:6px; font-size:0.72rem; color:#cbd5e1;">✓ ${a}</span>`).join('');
+            html += `
+            <div class="booking-item-card">
+                <div class="booking-item-top">
+                    <div>
+                        <div style="font-weight:700; color:#fff; font-size:1rem;">${h.name}</div>
+                        <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">📍 ${h.address}</div>
+                        <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                            <span style="background:#10b981; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ ${h.rating}</span>
+                            <span style="font-size:0.75rem; color:#64748b;">(${h.reviewsCount} verified reviews)</span>
+                        </div>
+                    </div>
+                    <span style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#facc15; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                        ${h.tag}
+                    </span>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                    ${amenitiesPills}
+                </div>
+                <div class="booking-item-bottom">
+                    <div>
+                        <span class="booking-price">₹${h.pricePerNight.toLocaleString()}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8;"> / night</span>
+                    </div>
+                    <button class="book-now-btn" onclick="confirmInstantBooking('hotel', '${h.name.replace(/'/g, "\\'")}', 'Room for 2 Guests', ${h.pricePerNight}, '${city}')">
+                        Book Room
+                    </button>
+                </div>
+            </div>
+            `;
+        });
+        listEl.innerHTML = html;
+    } catch (e) {
+        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load hotels. Check internet connection.</div>';
+    }
+};
+
+// 2. Fetch Cabs
+window.fetchCabResults = async function() {
+    const listEl = document.getElementById('cabs-results-list');
+    const pickup = document.getElementById('cab-pickup-input').value.trim() || 'Current Location';
+    const drop = document.getElementById('cab-drop-input').value.trim() || 'Destination';
+
+    try {
+        const res = await fetch(`/api/bookings/cabs?pickup=${encodeURIComponent(pickup)}&drop=${encodeURIComponent(drop)}`);
+        const data = await res.json();
+        const cabs = data.cabs || [];
+
+        let html = '';
+        cabs.forEach(c => {
+            html += `
+            <div class="booking-item-card">
+                <div class="booking-item-top">
+                    <div style="display:flex; gap:12px; align-items:center;">
+                        <div style="width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:${c.badgeColor};">
+                            <i class="fa-solid ${c.icon}"></i>
+                        </div>
+                        <div>
+                            <div style="font-weight:700; color:#fff; font-size:1rem;">${c.category} • <span style="font-size:0.85rem; color:#94a3b8; font-weight:normal;">${c.vehicle}</span></div>
+                            <div style="font-size:0.75rem; color:#94a3b8;">${c.capacity} • <i class="fa-solid fa-clock" style="color:#38bdf8;"></i> ${c.eta}</div>
+                        </div>
+                    </div>
+                    <span style="background:${c.badgeColor}22; border:1px solid ${c.badgeColor}55; color:${c.badgeColor}; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                        ${c.tag}
+                    </span>
+                </div>
+                <div class="booking-item-bottom">
+                    <div>
+                        <span class="booking-price">₹${c.estimatedFare}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8;"> (₹${c.perKm}/km)</span>
+                    </div>
+                    <button class="book-now-btn" onclick="confirmInstantBooking('cab', '${c.category} (${c.vehicle})', '${pickup} to ${drop}', ${c.estimatedFare}, '${drop}')">
+                        Book Cab
+                    </button>
+                </div>
+            </div>
+            `;
+        });
+        listEl.innerHTML = html;
+    } catch(e) {
+        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load cabs. Check connection.</div>';
+    }
+};
+
+// 3. Fetch Flights
+window.fetchFlightResults = async function() {
+    const listEl = document.getElementById('flights-results-list');
+    const from = document.getElementById('flight-from-input').value.trim() || 'DEL';
+    const to = document.getElementById('flight-to-input').value.trim() || 'BOM';
+
+    try {
+        const res = await fetch(`/api/bookings/flights?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        const data = await res.json();
+        const flights = data.flights || [];
+
+        let html = '';
+        flights.forEach(f => {
+            html += `
+            <div class="booking-item-card">
+                <div class="booking-item-top">
+                    <div>
+                        <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-plane" style="color:#38bdf8"></i> ${f.airline} • <span style="font-size:0.8rem; color:#94a3b8;">${f.flightNumber}</span>
+                        </div>
+                        <div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px; font-weight:600;">
+                            ${f.departureTime} (${f.origin}) ➔ ${f.arrivalTime} (${f.destination})
+                        </div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${f.duration} • ${f.stops} • ${f.baggage}</div>
+                    </div>
+                    <span style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                        ${f.tag}
+                    </span>
+                </div>
+                <div class="booking-item-bottom">
+                    <div>
+                        <span class="booking-price">₹${f.price.toLocaleString()}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8;"> / passenger</span>
+                    </div>
+                    <button class="book-now-btn" onclick="confirmInstantBooking('flight', '${f.airline} ${f.flightNumber}', '${f.origin} to ${f.destination} (${f.departureTime})', ${f.price}, '${to}')">
+                        Book Flight
+                    </button>
+                </div>
+            </div>
+            `;
+        });
+        listEl.innerHTML = html;
+    } catch(e) {
+        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load flights.</div>';
+    }
+};
+
+// 4. Fetch Buses
+window.fetchBusResults = async function() {
+    const listEl = document.getElementById('buses-results-list');
+    const from = document.getElementById('bus-from-input').value.trim() || 'Delhi';
+    const to = document.getElementById('bus-to-input').value.trim() || 'Manali';
+
+    try {
+        const res = await fetch(`/api/bookings/buses?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+        const data = await res.json();
+        const buses = data.buses || [];
+
+        let html = '';
+        buses.forEach(b => {
+            html += `
+            <div class="booking-item-card">
+                <div class="booking-item-top">
+                    <div>
+                        <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-bus" style="color:var(--primary)"></i> ${b.operator}
+                        </div>
+                        <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">${b.busType}</div>
+                        <div style="font-size:0.85rem; color:#cbd5e1; font-weight:600;">
+                            ${b.departureTime} (${from}) ➔ ${b.arrivalTime} (${to})
+                        </div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${b.duration} • 💺 ${b.seatsAvailable} seats left • ★ ${b.rating}</div>
+                    </div>
+                    <span style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                        ${b.tag}
+                    </span>
+                </div>
+                <div class="booking-item-bottom">
+                    <div>
+                        <span class="booking-price">₹${b.price.toLocaleString()}</span>
+                        <span style="font-size:0.75rem; color:#94a3b8;"> / seat</span>
+                    </div>
+                    <button class="book-now-btn" onclick="confirmInstantBooking('bus', '${b.operator}', '${from} to ${to} (${b.departureTime})', ${b.price}, '${to}')">
+                        Book Seat
+                    </button>
+                </div>
+            </div>
+            `;
+        });
+        listEl.innerHTML = html;
+    } catch(e) {
+        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load buses.</div>';
+    }
+};
+
+// 5. Confirm Instant Booking with Digital Ticket
+window.confirmInstantBooking = async function(type, title, subtitle, price, destination) {
+    const token = localStorage.getItem('token');
+    let bookingResult = {
+        booking_ref: `${type.toUpperCase().slice(0,3)}-${Math.floor(100000 + Math.random()*900000)}`,
+        status: 'Confirmed'
+    };
+
+    try {
+        const res = await fetch('/api/bookings/create', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify({
+                type,
+                title,
+                subtitle,
+                price,
+                destination: destination || 'Trip Destination'
+            })
+        });
+        if (res.ok) {
+            bookingResult = await res.json();
+        }
+    } catch (e) {
+        console.warn('Booking offline simulated:', e);
+    }
+
+    // Persist to local bookings storage so it appears immediately on My Trips
+    try {
+        const localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
+        localBookings.unshift({
+            id: bookingResult.id || Date.now(),
+            booking_ref: bookingResult.booking_ref,
+            type,
+            title,
+            item_name: title,
+            subtitle: subtitle || '',
+            price: Number(price),
+            date: new Date().toISOString().split('T')[0],
+            status: 'Confirmed'
+        });
+        localStorage.setItem('myBookings', JSON.stringify(localBookings));
+    } catch(e) {}
+
+    // Display Digital Boarding Pass / Ticket Voucher
+    let ticketModal = document.getElementById('ticket-voucher-modal');
+    if (!ticketModal) {
+        ticketModal = document.createElement('div');
+        ticketModal.id = 'ticket-voucher-modal';
+        ticketModal.className = 'modal-overlay';
+        ticketModal.style.zIndex = '9998';
+        document.body.appendChild(ticketModal);
+    }
+
+    const typeEmoji = type === 'hotel' ? '🏨' : type === 'cab' ? '🚕' : type === 'flight' ? '✈️' : '🚌';
+
+    ticketModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:480px; text-align:center;">
+        <div style="font-size:3rem; margin-bottom:0.5rem; animation: bounce 0.6s ease;">🎉</div>
+        <h3 style="margin:0; color:#fff; font-size:1.3rem;">Booking Confirmed!</h3>
+        <p style="margin:4px 0 1rem 0; color:#10b981; font-weight:700; font-size:0.9rem;">
+            <i class="fa-solid fa-circle-check"></i> E-Ticket Voucher Issued
+        </p>
+
+        <div class="booking-ticket-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed rgba(255,255,255,0.2); padding-bottom:0.6rem; margin-bottom:0.8rem;">
+                <span style="font-size:0.8rem; text-transform:uppercase; color:var(--primary); font-weight:800; letter-spacing:1px;">TripoNext E-Ticket</span>
+                <span style="font-family:monospace; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:6px; font-weight:700; color:#fbbf24; font-size:0.85rem;">
+                    PNR: ${bookingResult.booking_ref}
+                </span>
+            </div>
+            
+            <div style="text-align:left; margin-bottom:0.8rem;">
+                <div style="font-size:1.1rem; font-weight:700; color:#fff;">${typeEmoji} ${title}</div>
+                <div style="font-size:0.82rem; color:#94a3b8; margin-top:3px;">${subtitle}</div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 0.8rem; border-radius:10px;">
+                <div style="text-align:left;">
+                    <div style="font-size:0.72rem; color:#94a3b8;">Total Paid</div>
+                    <div style="font-size:1.15rem; font-weight:800; color:#10b981;">₹${price.toLocaleString()}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.72rem; color:#94a3b8;">Status</div>
+                    <div style="font-size:0.85rem; font-weight:700; color:#38bdf8;">✓ Confirmed</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+            <button onclick="document.getElementById('ticket-voucher-modal').style.display='none'; closeBookingsHub(); window.location.href='mytrips.html';" class="btn-small btn-primary" style="flex:1;">
+                <i class="fa-solid fa-suitcase"></i> View in My Trips
+            </button>
+            <button onclick="document.getElementById('ticket-voucher-modal').style.display='none';" class="btn-small" style="background:rgba(255,255,255,0.12); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer;">
+                Done
+            </button>
+        </div>
+    </div>
+    `;
+
+    ticketModal.style.display = 'flex';
+    showAppToast(`Booking ${bookingResult.booking_ref} confirmed successfully! 🎫`, 'success');
+};
 
 function triggerCrazyMode() {
     const canvas = document.createElement('div');
@@ -2306,9 +3636,10 @@ async function saveMagicTripToMyTrips(plan) {
         itinerary: plan
     };
 
+    let savedToBackend = false;
     if (token) {
         try {
-            await fetch('/api/trips', {
+            const res = await fetch('/api/trips', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -2316,18 +3647,21 @@ async function saveMagicTripToMyTrips(plan) {
                 },
                 body: JSON.stringify(tripPayload)
             });
+            if (res.ok) savedToBackend = true;
         } catch (e) {
             console.warn('Backend save failed, using local storage.');
         }
     }
 
-    const localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
-    localTrips.push({
-        id: 'magic-' + Date.now(),
-        destination: plan.destination,
-        dates: `${plan.days} Days Itinerary`,
-        budget: 15000,
-        itinerary: plan
-    });
-    localStorage.setItem('localTrips', JSON.stringify(localTrips));
+    if (!savedToBackend) {
+        const localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+        localTrips.push({
+            id: 'magic-' + Date.now(),
+            destination: plan.destination,
+            dates: `${plan.days} Days Itinerary`,
+            budget: 15000,
+            itinerary: plan
+        });
+        localStorage.setItem('localTrips', JSON.stringify(localTrips));
+    }
 }

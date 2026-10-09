@@ -2,44 +2,204 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Trips - TripoNext</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>My Trips & Bookings - TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .trips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
+        /* Mobile-First Page Styles */
+        .mytrips-main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem 6rem 1rem;
         }
-        .trip-card {
-            padding: 1.5rem;
-            border-radius: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-        .trip-header {
+
+        .mytrips-header-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
-        .trip-header h3 {
+
+        .mytrips-title-area h1 {
+            font-size: 1.8rem;
             margin: 0;
-            color: #fff;
-            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(135deg, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
-        .trip-budget {
-            color: var(--success);
+        .mytrips-title-area p {
+            margin: 4px 0 0 0;
+            color: #94a3b8;
+            font-size: 0.88rem;
+        }
+
+        /* Network Status Bar */
+        .network-status-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .network-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-weight: 600;
-            font-size: 1.2rem;
+            padding: 4px 10px;
+            border-radius: 20px;
         }
-        .trip-details p {
-            margin: 0.2rem 0;
-            color: #cbd5e1;
-            font-size: 0.95rem;
+        .badge-online {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-offline {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* Pill Tabs Switcher */
+        .mytrips-tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 5px;
+            gap: 6px;
+            margin-bottom: 1.5rem;
+        }
+        .mytrips-tab-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.25s ease;
+        }
+        .mytrips-tab-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);
+        }
+
+        /* Responsive Grid */
+        .trips-grid, .bookings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.25rem;
+        }
+
+        @media (max-width: 640px) {
+            .trips-grid, .bookings-grid {
+                grid-template-columns: 1fr;
+            }
+            .mytrips-title-area h1 {
+                font-size: 1.45rem;
+            }
+            .mytrips-header-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .trip-card {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 1.3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            position: relative;
+            backdrop-filter: blur(14px);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .trip-card:hover {
+            border-color: rgba(249, 115, 22, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .booking-card {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 1.3rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+            backdrop-filter: blur(14px);
+            position: relative;
+        }
+
+        .empty-state-box {
+            text-align: center;
+            padding: 3.5rem 1.5rem;
+            background: rgba(15, 23, 42, 0.5);
+            border: 2px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            grid-column: 1 / -1;
+        }
+        .empty-state-box i {
+            font-size: 3rem;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+        .empty-state-box h3 {
+            color: #fff;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.25rem;
+        }
+        .empty-state-box p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            max-width: 420px;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        /* Floating buttons */
+        .btn-clear-cache {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            padding: 0.45rem 0.9rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-clear-cache:hover {
+            background: rgba(239, 68, 68, 0.3);
         }
     </style>
 
@@ -49,8 +209,9 @@
     <link rel="icon" type="image/png" href="/favicon.png">
 </head>
 <body class="mytrips-bg">
+    <!-- Navbar -->
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <div class="logo">
+        <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
             <i class="fa-solid fa-plane-departure"></i> TripoNext
         </div>
         <div class="nav-links">
@@ -60,31 +221,287 @@
             <a href="community.html">Community</a>
             <a href="buddies.html">Find Buddies</a>
         </div>
-        <div class="user-profile">
-            <!-- User name injected via JS -->
+        <div class="settings-group" style="display:flex; align-items:center; gap:8px;">
+            <button onclick="openGlobalSettings()" class="btn-small" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; border-radius:10px; padding:0.5rem 0.8rem; cursor:pointer;" title="Account & Settings">
+                <i class="fa-solid fa-gear"></i>
+            </button>
         </div>
     </nav>
 
-    <main class="page-container mt-4">
-        <h1 class="text-center" style="font-size: 2.5rem; margin-bottom: 0.5rem;">My Planned Trips</h1>
-        <p class="text-center text-muted">All your upcoming and past adventures.</p>
+    <!-- Main Content -->
+    <main class="mytrips-main">
+        <!-- Header Bar -->
+        <div class="mytrips-header-bar">
+            <div class="mytrips-title-area">
+                <h1><i class="fa-solid fa-suitcase-rolling" style="color:var(--primary);"></i> My Trips & Bookings</h1>
+                <p>Manage your AI itineraries, travel bookings, and split group expenses.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button onclick="openBookingsHub('hotels')" class="btn-small" style="background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:0.6rem 1rem; border-radius:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <i class="fa-solid fa-ticket"></i> Book Hotel / Flight
+                </button>
+                <button onclick="window.location.href='index.html'" class="btn-small btn-primary" style="display:flex; align-items:center; gap:6px; border-radius:12px; padding:0.6rem 1rem;">
+                    <i class="fa-solid fa-plus"></i> Plan New Trip
+                </button>
+            </div>
+        </div>
 
-        <div id="trips-container" class="trips-grid">
-            <p style="text-align:center; width:100%;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i> Loading trips...</p>
+        <!-- Network & Offline Status Banner -->
+        <div class="network-status-banner" id="network-status-banner">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="network-status-badge badge-online" id="net-status-badge">
+                    <i class="fa-solid fa-circle-dot"></i> <span id="net-status-text">Online • Cloud Connected</span>
+                </span>
+                <span style="color:#94a3b8; font-size:0.82rem;" id="net-status-desc">Trips and bookings synced in real-time.</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="btn-clear-cache" onclick="clearOfflineDataManually()" title="Clear offline cached data">
+                    <i class="fa-solid fa-broom"></i> Clear Offline Cache
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Tabs Switcher -->
+        <div class="mytrips-tabs">
+            <button class="mytrips-tab-btn active" id="tab-btn-trips" onclick="switchMyTripsTab('trips')">
+                <i class="fa-solid fa-map-location-dot"></i> Planned Itineraries <span id="trips-count-badge" style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-size:0.75rem;">0</span>
+            </button>
+            <button class="mytrips-tab-btn" id="tab-btn-bookings" onclick="switchMyTripsTab('bookings')">
+                <i class="fa-solid fa-receipt"></i> Confirmed Bookings <span id="bookings-count-badge" style="background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; font-size:0.75rem;">0</span>
+            </button>
+        </div>
+
+        <!-- 1. PLANNED TRIPS SECTION -->
+        <div id="section-planned-trips">
+            <div id="trips-container" class="trips-grid">
+                <div style="text-align:center; width:100%; grid-column:1/-1; padding:3rem; color:#94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:10px;">Loading your travel plans...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. TRAVEL BOOKINGS SECTION (HOTELS, CABS, FLIGHTS, BUSES) -->
+        <div id="section-travel-bookings" style="display:none;">
+            <div id="bookings-container" class="bookings-grid">
+                <div style="text-align:center; width:100%; grid-column:1/-1; padding:3rem; color:#94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top:10px;">Loading your confirmed tickets & bookings...</p>
+                </div>
+            </div>
         </div>
     </main>
 
+    <!-- Modals (Edit, Expense, Itinerary) -->
+    <!-- Edit Trip Modal -->
+    <div id="editTripModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
+        <div class="modal-content glassmorphism" style="width: 90%; max-width: 420px; padding: 1.8rem; border-radius: 20px; position: relative;">
+            <button onclick="closeEditModal()" class="close-btn" style="position: absolute; right: 18px; top: 18px; background: transparent; border: none; color: white; font-size: 1.4rem; cursor: pointer;">&times;</button>
+            <h2 style="margin-bottom: 1.2rem; font-size: 1.35rem; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-pen-to-square" style="color:var(--primary);"></i> Edit Trip Details
+            </h2>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display:block; margin-bottom: 0.4rem; color: #cbd5e1; font-size:0.85rem;">Destination</label>
+                <input type="text" id="edit-dest" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2); padding:0.65rem; border-radius:10px; color:white; background:rgba(255,255,255,0.06); outline:none;">
+            </div>
+            
+            <div style="margin-bottom: 1rem;">
+                <label style="display:block; margin-bottom: 0.4rem; color: #cbd5e1; font-size:0.85rem;">Dates / Duration</label>
+                <input type="text" id="edit-dates" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2); padding:0.65rem; border-radius:10px; color:white; background:rgba(255,255,255,0.06); outline:none;">
+            </div>
+            
+            <div style="margin-bottom: 1.5rem;">
+                <label style="display:block; margin-bottom: 0.4rem; color: #cbd5e1; font-size:0.85rem;">Budget (INR)</label>
+                <input type="number" id="edit-budget" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2); padding:0.65rem; border-radius:10px; color:white; background:rgba(255,255,255,0.06); outline:none;">
+            </div>
+            
+            <div style="display: flex; gap: 0.8rem;">
+                <button onclick="saveTripChanges()" class="btn-primary" style="flex: 1; border-radius: 10px; padding:0.7rem;">Save Changes</button>
+                <button onclick="deleteTrip()" class="btn-primary" style="flex: 1; border-radius: 10px; padding:0.7rem; background: var(--danger); border-color: var(--danger);">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Splitter Modal -->
+    <div id="expenseModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
+        <div class="modal-content glassmorphism" style="width: 95%; max-width: 600px; max-height: 85vh; padding: 1.6rem; border-radius: 20px; position: relative; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.8rem; margin-bottom: 1rem;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.3rem; color: #fff; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-receipt" style="color:var(--primary);"></i> Expense Splitter
+                    </h2>
+                    <span id="expense-trip-title" style="color: #94a3b8; font-size: 0.82rem;">Split costs equally with travel buddies</span>
+                </div>
+                <button onclick="closeExpenseModal()" class="close-btn" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; padding-right: 0.3rem;">
+                <!-- Summary Card -->
+                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; text-align: center;">
+                    <div>
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform:uppercase;">Total Spent</div>
+                        <div id="expense-total-disp" style="font-size: 1.25rem; font-weight: 700; color: #4ade80;">₹0</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform:uppercase;">Group Size</div>
+                        <div style="font-size: 1.25rem; font-weight: 700; color: #60a5fa;" id="expense-pax-count">3 Buddies</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.72rem; color: #94a3b8; text-transform:uppercase;">Per Person</div>
+                        <div id="expense-per-person" style="font-size: 1.25rem; font-weight: 700; color: #facc15;">₹0</div>
+                    </div>
+                </div>
+
+                <!-- Settlement Card -->
+                <div id="expense-settlement-box" style="background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 12px; padding: 0.8rem 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: #cbd5e1;">
+                    <strong style="color: #60a5fa; display: block; margin-bottom: 4px;"><i class="fa-solid fa-scale-balanced"></i> Settlement Breakdown</strong>
+                    <div id="settlement-details">No expenses recorded yet.</div>
+                </div>
+
+                <!-- Add Expense Form -->
+                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;">
+                    <h4 style="margin: 0 0 0.8rem 0; color: #fff; font-size: 0.92rem;"><i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Add New Expense</h4>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
+                        <input type="text" id="new-exp-desc" placeholder="Expense description (e.g. Hotel deposit, Taxi)" style="padding: 0.65rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                        <input type="number" id="new-exp-amt" placeholder="Amount (₹)" min="1" style="padding: 0.65rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.8rem;">
+                        <select id="new-exp-category" style="padding: 0.65rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                            <option value="Food & Dining">🥘 Food & Dining</option>
+                            <option value="Hotel & Stay">🏨 Hotel & Stay</option>
+                            <option value="Cab & Fuel">🚕 Cab & Fuel</option>
+                            <option value="Activities">🎟️ Activities & Tickets</option>
+                            <option value="General">🛍️ Miscellaneous</option>
+                        </select>
+                        <select id="new-exp-payer" style="padding: 0.65rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
+                            <option value="You">Paid by: You</option>
+                            <option value="Rahul S.">Paid by: Rahul S.</option>
+                            <option value="Ananya D.">Paid by: Ananya D.</option>
+                        </select>
+                    </div>
+                    <button onclick="submitNewExpense()" class="btn-small btn-primary" style="width: 100%; padding: 0.65rem; border-radius: 10px; font-weight: 600; cursor: pointer;">
+                        <i class="fa-solid fa-plus"></i> Record Expense
+                    </button>
+                </div>
+
+                <!-- Expenses List -->
+                <h4 style="margin: 0 0 0.6rem 0; color: #fff; font-size: 0.92rem;">Recorded Expenses</h4>
+                <div id="expenses-list-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking Ticket Details Modal -->
+    <div id="booking-detail-modal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 10001; align-items: center; justify-content: center; backdrop-filter: blur(12px);">
+        <div class="modal-content glassmorphism" style="width: 95%; max-width: 480px; padding: 1.8rem; border-radius: 22px; position: relative;" id="booking-detail-body">
+            <!-- Injected via JS -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
+        <p>&copy; 2026 TripoNext. Designed for Smart Mobile Explorers.</p>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="script.js"></script>
+
     <script>
-        document.addEventListener('DOMContentLoaded', loadTrips);
-
         let allTripsData = [];
+        let allBookingsData = [];
 
+        document.addEventListener('DOMContentLoaded', () => {
+            initNetworkStatus();
+            loadTrips();
+            loadBookings();
+        });
+
+        // 1. NETWORK STATUS MONITOR
+        function initNetworkStatus() {
+            const badge = document.getElementById('net-status-badge');
+            const text = document.getElementById('net-status-text');
+            const desc = document.getElementById('net-status-desc');
+
+            function updateStatus() {
+                if (navigator.onLine) {
+                    badge.className = 'network-status-badge badge-online';
+                    text.textContent = 'Online • Cloud Connected';
+                    desc.textContent = 'Trips and bookings synced in real-time.';
+                } else {
+                    badge.className = 'network-status-badge badge-offline';
+                    text.textContent = 'Offline Mode';
+                    desc.textContent = 'Showing cached trips. Connect to internet to sync changes.';
+                }
+            }
+
+            window.addEventListener('online', () => {
+                updateStatus();
+                if (window.showAppToast) window.showAppToast('You are back online! Syncing...', 'success');
+                loadTrips();
+                loadBookings();
+            });
+
+            window.addEventListener('offline', () => {
+                updateStatus();
+                if (window.showAppToast) window.showAppToast('You are offline. Showing cached trips.', 'info');
+            });
+
+            updateStatus();
+        }
+
+        // 2. CLEAR OFFLINE DATA ACTION
+        async function clearOfflineDataManually() {
+            if (!confirm('Clear all offline cached trips and browser storage? Fresh data will reload from the server.')) return;
+            
+            // Clear localStorage trips and bookings cache
+            localStorage.removeItem('localTrips');
+            
+            // Clear Service Worker Cache if available
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                for (const key of keys) {
+                    await caches.delete(key);
+                }
+            }
+
+            if (window.showAppToast) {
+                window.showAppToast('Offline cache cleared successfully! 🧹', 'success');
+            }
+
+            // Reload data
+            loadTrips();
+            loadBookings();
+        }
+
+        // 3. TAB SWITCHING
+        function switchMyTripsTab(tab) {
+            const tabTrips = document.getElementById('tab-btn-trips');
+            const tabBookings = document.getElementById('tab-btn-bookings');
+            const secTrips = document.getElementById('section-planned-trips');
+            const secBookings = document.getElementById('section-travel-bookings');
+
+            if (tab === 'trips') {
+                tabTrips.classList.add('active');
+                tabBookings.classList.remove('active');
+                secTrips.style.display = 'block';
+                secBookings.style.display = 'none';
+            } else {
+                tabBookings.classList.add('active');
+                tabTrips.classList.remove('active');
+                secBookings.style.display = 'block';
+                secTrips.style.display = 'none';
+            }
+        }
+
+        // 4. LOAD PLANNED TRIPS
         async function loadTrips() {
             const token = localStorage.getItem('token');
             const container = document.getElementById('trips-container');
+            const countBadge = document.getElementById('trips-count-badge');
 
             let dbTrips = [];
-            if (token) {
+            if (token && navigator.onLine) {
                 try {
                     const res = await fetch('/api/trips', {
                         headers: { 'Authorization': `Bearer ${token}` }
@@ -97,62 +514,277 @@
                 }
             }
 
+            // In offline mode or if local drafts exist
             let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
-            allTripsData = [...(Array.isArray(dbTrips) ? dbTrips : []), ...localTrips];
+            
+            // Deduplicate if identical destination and dates
+            const combined = [...(Array.isArray(dbTrips) ? dbTrips : [])];
+            localTrips.forEach(lt => {
+                const alreadyExists = combined.some(ct => String(ct.id) === String(lt.id) || (ct.destination === lt.destination && ct.dates === lt.dates));
+                if (!alreadyExists) {
+                    lt.is_offline_draft = true;
+                    combined.push(lt);
+                }
+            });
 
-            try {
-                if (allTripsData.length > 0) {
-                    let html = '';
-                    const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+            allTripsData = combined;
+            if (countBadge) countBadge.textContent = allTripsData.length;
 
-                    allTripsData.slice().reverse().forEach(trip => {
-                        const safeId = String(trip.id || Math.random());
-                        const safeDest = (trip.destination || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        const safeDates = (trip.dates || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        const budgetVal = Number(trip.budget) || 0;
+            if (allTripsData.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state-box">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                    <h3>No Planned Trips Found</h3>
+                    <p>${navigator.onLine ? "You haven't planned any trips yet! Use our AI planner or browse top destinations to start your journey." : "No offline trips saved. Connect to internet to load your cloud trips or plan a trip."}</p>
+                    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                        <button onclick="window.location.href='index.html'" class="btn-small btn-primary">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Plan Trip with AI
+                        </button>
+                        <button onclick="window.location.href='explore.html'" class="btn-small" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;">
+                            <i class="fa-solid fa-compass"></i> Explore Destinations
+                        </button>
+                    </div>
+                </div>
+                `;
+                return;
+            }
 
-                        html += `
-                            <div class="trip-card glassmorphism" style="position:relative;">
-                                <div class="trip-header" style="display:flex; justify-content:space-between; align-items:center;">
-                                    <h3 style="display:flex; align-items:center; gap:8px;">
-                                        <i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${trip.destination || 'Unspecified'}
-                                    </h3>
-                                    <div style="display:flex; align-items:center; gap:8px;">
-                                        <span class="trip-budget">${formatter.format(budgetVal)}</span>
-                                        <button onclick="deleteSingleTrip('${safeId}')" style="background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.4); color:#f87171; border-radius:8px; width:34px; height:34px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all 0.2s;" title="Delete Trip">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </button>
-                                    </div>
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+            let html = '';
+
+            allTripsData.slice().reverse().forEach(trip => {
+                const safeId = String(trip.id || Math.random());
+                const safeDest = (trip.destination || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const safeDates = (trip.dates || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const budgetVal = Number(trip.budget) || 0;
+                const isOfflineDraft = trip.is_offline_draft || false;
+
+                html += `
+                    <div class="trip-card">
+                        <div class="trip-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <h3 style="margin:0; font-size:1.25rem; color:#fff; display:flex; align-items:center; gap:6px;">
+                                    <i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${trip.destination || 'Unspecified'}
+                                </h3>
+                                <div style="margin-top:4px;">
+                                    ${isOfflineDraft ? 
+                                        '<span style="background:rgba(245,158,11,0.2); color:#fbbf24; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-arrow-up"></i> Offline Draft</span>' : 
+                                        '<span style="background:rgba(16,185,129,0.2); color:#34d399; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-check"></i> Cloud Synced</span>'
+                                    }
                                 </div>
-                                <div class="trip-details">
-                                    <p><i class="fa-regular fa-calendar"></i> <strong>Dates:</strong> ${trip.dates || 'Not specified'}</p>
-                                    <div style="background: rgba(59,130,246,0.15); padding: 5px 12px; border-radius: 20px; font-size: 0.85rem; color: #60a5fa; display: inline-block; margin-top: 0.5rem; border: 1px solid rgba(59,130,246,0.3);">
-                                        <i class="fa-solid fa-plane"></i> Upcoming Trip
-                                    </div>
-                                </div>
-                                <div style="display:flex; gap:0.6rem; margin-top:1rem;">
-                                    <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="flex:1; border-radius: 8px;">Edit</button>
-                                    <button onclick="openExpenseModal('${safeId}', '${safeDest}')" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Split Expenses">
-                                        <i class="fa-solid fa-receipt"></i> Split Expenses
-                                    </button>
-                                </div>
-                                <button onclick="viewTripItinerary('${safeId}', '${safeDest}')" style="background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.25); color:var(--primary); padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:0.5rem; width:100%;">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> View AI Day-by-Day Plan
+                            </div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <span style="color:#10b981; font-weight:700; font-size:1.15rem;">${formatter.format(budgetVal)}</span>
+                                <button onclick="deleteSingleTrip('${safeId}')" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:8px; width:32px; height:32px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Delete Trip">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                } else {
-                    container.innerHTML = '<p style="text-align:center; width:100%; padding:3rem; color:#94a3b8;">You have no planned trips yet! Go to the Dashboard to create one.</p>';
-                }
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = '<p style="text-align:center; width:100%; color: var(--danger);">Failed to load trips. Make sure the server is running.</p>';
-            }
+                        </div>
+
+                        <div style="color:#cbd5e1; font-size:0.88rem;">
+                            <p style="margin:4px 0;"><i class="fa-regular fa-calendar" style="color:#38bdf8; margin-right:6px;"></i> ${trip.dates || 'Dates not specified'}</p>
+                        </div>
+
+                        <div style="display:flex; gap:0.6rem; margin-top:0.4rem;">
+                            <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="flex:1; border-radius: 8px;">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                            </button>
+                            <button onclick="openExpenseModal('${safeId}', '${safeDest}')" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;" title="Split Expenses">
+                                <i class="fa-solid fa-receipt"></i> Split Expenses
+                            </button>
+                        </div>
+
+                        <button onclick="viewTripItinerary('${safeId}', '${safeDest}')" style="background:rgba(249,115,22,0.12); border:1px solid rgba(249,115,22,0.25); color:var(--primary); padding:0.65rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; width:100%;">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> View AI Day-by-Day Plan
+                        </button>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         }
 
-        // Edit Trip Modal Logic
+        // 5. LOAD CONFIRMED BOOKINGS (HOTELS, CABS, FLIGHTS, BUSES)
+        async function loadBookings() {
+            const token = localStorage.getItem('token');
+            const container = document.getElementById('bookings-container');
+            const countBadge = document.getElementById('bookings-count-badge');
+
+            let serverBookings = [];
+            if (token && navigator.onLine) {
+                try {
+                    const res = await fetch('/api/bookings/my-bookings', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res.ok) {
+                        serverBookings = await res.json();
+                    }
+                } catch (e) {
+                    console.warn('Backend bookings fetch failed:', e);
+                }
+            }
+
+            // LocalStorage bookings fallback
+            const localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
+            const combined = [...(Array.isArray(serverBookings) ? serverBookings : [])];
+            localBookings.forEach(lb => {
+                if (!combined.some(cb => cb.booking_ref === lb.booking_ref)) {
+                    combined.push(lb);
+                }
+            });
+
+            allBookingsData = combined;
+            if (countBadge) countBadge.textContent = allBookingsData.length;
+
+            if (allBookingsData.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state-box">
+                    <i class="fa-solid fa-ticket"></i>
+                    <h3>No Bookings Found</h3>
+                    <p>You haven't booked any Hotels, Cabs, Flights, or Buses yet! Book in seconds with instant digital confirmation.</p>
+                    <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+                        <button onclick="openBookingsHub('hotels')" class="btn-small btn-primary">
+                            <i class="fa-solid fa-hotel"></i> Book Hotel
+                        </button>
+                        <button onclick="openBookingsHub('flights')" class="btn-small" style="background:#0284c7; color:white; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;">
+                            <i class="fa-solid fa-plane"></i> Book Flight
+                        </button>
+                        <button onclick="openBookingsHub('cabs')" class="btn-small" style="background:#059669; color:white; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;">
+                            <i class="fa-solid fa-taxi"></i> Book Cab
+                        </button>
+                        <button onclick="openBookingsHub('buses')" class="btn-small" style="background:#d97706; color:white; border:none; padding:0.6rem 1rem; border-radius:10px; cursor:pointer;">
+                            <i class="fa-solid fa-bus"></i> Book Bus
+                        </button>
+                    </div>
+                </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+
+            allBookingsData.slice().reverse().forEach(b => {
+                const icon = b.type === 'flight' ? 'fa-plane-departure' : b.type === 'hotel' ? 'fa-hotel' : b.type === 'cab' ? 'fa-taxi' : 'fa-bus';
+                const typeColor = b.type === 'flight' ? '#38bdf8' : b.type === 'hotel' ? '#fbbf24' : b.type === 'cab' ? '#34d399' : '#fb923c';
+                const statusColor = b.status === 'Confirmed' ? '#34d399' : '#f87171';
+
+                html += `
+                <div class="booking-card">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="background:rgba(255,255,255,0.08); width:42px; height:42px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:${typeColor}; font-size:1.25rem;">
+                                <i class="fa-solid ${icon}"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0; font-size:1.1rem; color:#fff;">${b.title || b.item_name || 'Travel Booking'}</h3>
+                                <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">
+                                    Ref: <strong style="color:#cbd5e1;">${b.booking_ref}</strong> • ${b.type.toUpperCase()}
+                                </div>
+                            </div>
+                        </div>
+                        <span style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:${statusColor}; padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:700;">
+                            ${b.status || 'Confirmed'}
+                        </span>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); padding:0.6rem 0.8rem; border-radius:10px; font-size:0.85rem; color:#cbd5e1;">
+                        <div>
+                            <i class="fa-regular fa-calendar" style="color:var(--primary); margin-right:4px;"></i> Travel Date: <strong>${b.travel_date || b.date || 'Upcoming'}</strong>
+                        </div>
+                        <div style="color:#10b981; font-weight:700; font-size:1.05rem;">
+                            ${formatter.format(b.price || 0)}
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:8px;">
+                        <button onclick="viewBookingDetails('${b.booking_ref}')" class="btn-small" style="flex:1; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; padding:0.55rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                            <i class="fa-solid fa-receipt"></i> View Ticket
+                        </button>
+                        <button onclick="cancelBooking('${b.id}', '${b.booking_ref}')" class="btn-small" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:0.55rem 0.8rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                            <i class="fa-solid fa-ban"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // View ticket modal
+        function viewBookingDetails(ref) {
+            const b = allBookingsData.find(item => item.booking_ref === ref);
+            if (!b) return;
+
+            const modal = document.getElementById('booking-detail-modal');
+            const body = document.getElementById('booking-detail-body');
+            const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
+
+            body.innerHTML = `
+            <button onclick="document.getElementById('booking-detail-modal').style.display='none'" style="position:absolute; right:18px; top:18px; background:none; border:none; color:white; font-size:1.4rem; cursor:pointer;">&times;</button>
+            <div style="text-align:center; margin-bottom:1.2rem;">
+                <div style="background:rgba(16,185,129,0.15); color:#34d399; width:54px; height:54px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:1.6rem; margin-bottom:0.6rem;">
+                    <i class="fa-solid fa-circle-check"></i>
+                </div>
+                <h3 style="margin:0; font-size:1.3rem;">Digital Travel Voucher</h3>
+                <p style="margin:4px 0 0 0; color:#94a3b8; font-size:0.85rem;">PNR / Ref: <strong style="color:#fff;">${b.booking_ref}</strong></p>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.3); border:1px dashed rgba(255,255,255,0.2); border-radius:14px; padding:1.2rem; margin-bottom:1.2rem; font-size:0.88rem;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8;">Service:</span>
+                    <strong style="color:#fff;">${b.title || b.item_name || 'Travel Service'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8;">Category:</span>
+                    <strong style="color:var(--primary); text-transform:uppercase;">${b.type}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8;">Passenger:</span>
+                    <strong style="color:#fff;">${b.passenger_name || 'Primary Traveler'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span style="color:#94a3b8;">Date:</span>
+                    <strong style="color:#fff;">${b.travel_date || b.date || 'Upcoming'}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; border-top:1px solid rgba(255,255,255,0.1); padding-top:8px; margin-top:8px;">
+                    <span style="color:#94a3b8; font-weight:600;">Amount Paid:</span>
+                    <strong style="color:#34d399; font-size:1.1rem;">${formatter.format(b.price || 0)}</strong>
+                </div>
+            </div>
+
+            <button onclick="window.print()" class="btn-small btn-primary" style="width:100%; padding:0.75rem; border-radius:10px; font-weight:600; cursor:pointer;">
+                <i class="fa-solid fa-print"></i> Print / Save Ticket PDF
+            </button>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        // Cancel booking
+        async function cancelBooking(id, ref) {
+            if (!confirm(`Are you sure you want to cancel booking ${ref}?`)) return;
+
+            const token = localStorage.getItem('token');
+            if (token && id) {
+                try {
+                    await fetch(`/api/bookings/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch(e) {}
+            }
+
+            // Also clean local storage
+            let localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
+            localBookings = localBookings.filter(b => b.booking_ref !== ref);
+            localStorage.setItem('myBookings', JSON.stringify(localBookings));
+
+            if (window.showAppToast) window.showAppToast(`Booking ${ref} cancelled.`, 'info');
+            loadBookings();
+        }
+
+        // Edit Trip Modal
         let editingTripId = null;
         function openEditModal(id, dest, dates, budget) {
             editingTripId = String(id);
@@ -203,6 +835,7 @@
 
             closeEditModal();
             loadTrips();
+            if (window.showAppToast) window.showAppToast('Trip changes saved! ✨', 'success');
         }
 
         async function deleteTrip() {
@@ -215,13 +848,10 @@
             if(!confirm("Are you sure you want to delete this trip?")) return;
             
             const targetIdStr = String(id);
-
-            // 1. Delete from localStorage localTrips if present
             let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
             localTrips = localTrips.filter(t => String(t.id) !== targetIdStr);
             localStorage.setItem('localTrips', JSON.stringify(localTrips));
 
-            // 2. Delete from database via API if logged in
             const token = localStorage.getItem('token');
             if (token) {
                 try {
@@ -229,31 +859,17 @@
                         method: 'DELETE',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
-                } catch(e) {
-                    console.warn("Backend request failed, but local trip removed.", e);
-                }
+                } catch(e) {}
             }
 
-            // Reload UI
             loadTrips();
-
-            // Toast feedback
-            const toast = document.createElement('div');
-            toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#ef4444;color:white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:bold;z-index:99999;box-shadow:0 8px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
-            toast.innerHTML = '<i class="fa-solid fa-trash-can"></i> Trip deleted successfully!';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+            if (window.showAppToast) window.showAppToast('Trip removed successfully.', 'info');
         }
 
-        // ==========================================
-        // EXPENSE SPLITTER (SPLITWISE SYSTEM)
-        // ==========================================
+        // Expense Splitter
         let currentExpenseTripId = null;
-        let currentExpenseTripDest = '';
-
         async function openExpenseModal(tripId, dest) {
             currentExpenseTripId = String(tripId);
-            currentExpenseTripDest = dest;
             document.getElementById('expense-trip-title').textContent = `Manage & Split Expenses for ${dest}`;
             document.getElementById('expenseModal').style.display = 'flex';
             await loadTripExpenses(tripId);
@@ -273,26 +889,12 @@
                 if (res.ok) {
                     expenses = await res.json();
                 }
-            } catch(e) {
-                console.warn('Backend expense fetch failed, checking local');
-            }
+            } catch(e) {}
 
-            // Fallback / local storage sync
             const allLocalExpenses = JSON.parse(localStorage.getItem('tripExpenses') || '{}');
             const localList = allLocalExpenses[tripId] || [];
             if (!expenses || expenses.length === 0) {
                 expenses = localList;
-            }
-
-            // If empty, seed initial realistic expenses so user sees how it works!
-            if (!expenses || expenses.length === 0) {
-                expenses = [
-                    { id: 'sample-1', paid_by: 'You', amount: 4500, description: 'Resort & Stay Deposit', category: 'Hotel & Stay', date: '2026-10-15' },
-                    { id: 'sample-2', paid_by: 'Rahul S.', amount: 1800, description: 'Highway Fuel & Tolls', category: 'Cab & Fuel', date: '2026-10-16' },
-                    { id: 'sample-3', paid_by: 'Ananya D.', amount: 2100, description: 'Cafe dinner & snacks', category: 'Food & Dining', date: '2026-10-16' }
-                ];
-                allLocalExpenses[tripId] = expenses;
-                localStorage.setItem('tripExpenses', JSON.stringify(allLocalExpenses));
             }
 
             renderExpenses(expenses);
@@ -305,54 +907,50 @@
             const settlementBox = document.getElementById('settlement-details');
 
             const total = (expenses || []).reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
-            const numBuddies = 3; // You + 2 travel buddies
+            const numBuddies = 3;
             const perPerson = total / numBuddies;
 
             const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
             if (totalDisp) totalDisp.textContent = formatter.format(total);
             if (perPersonDisp) perPersonDisp.textContent = formatter.format(perPerson);
 
-            // Calculate paid per person
             const paidTotals = { 'You': 0, 'Rahul S.': 0, 'Ananya D.': 0 };
             (expenses || []).forEach(e => {
                 const p = e.paid_by || 'You';
                 paidTotals[p] = (paidTotals[p] || 0) + Number(e.amount);
             });
 
-            // Settlement calculations
             let settlementHTML = '';
             for (const [person, paid] of Object.entries(paidTotals)) {
                 const diff = paid - perPerson;
                 if (diff > 0) {
-                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#4ade80; font-weight:600;">Gets back ${formatter.format(diff)}</span></div>`;
+                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#4ade80; font-weight:600;">Gets back ${formatter.format(diff)}</span></div>`;
                 } else if (diff < 0) {
-                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#f87171; font-weight:600;">Owes ${formatter.format(Math.abs(diff))}</span></div>`;
-                } else {
-                    settlementHTML += `<div><strong>${person}</strong> is completely settled up!</div>`;
+                    settlementHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:3px;"><span><strong>${person}</strong> paid ${formatter.format(paid)}</span> <span style="color:#f87171; font-weight:600;">Owes ${formatter.format(Math.abs(diff))}</span></div>`;
                 }
             }
+            if (!settlementHTML) settlementHTML = '<div>No debts outstanding. Group is settled!</div>';
             if (settlementBox) settlementBox.innerHTML = settlementHTML;
 
-            // Render list
             if (!expenses || expenses.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;">No expenses added yet.</div>';
+                container.innerHTML = '<div style="text-align:center; padding:1.5rem; color:#94a3b8;">No expenses recorded yet. Add one above!</div>';
                 return;
             }
 
             container.innerHTML = expenses.map(e => `
-                <div class="expense-item">
+                <div class="expense-item" style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.75rem 0.9rem; margin-bottom:0.5rem;">
                     <div>
-                        <div style="font-weight:600; color:#fff; font-size:0.92rem; display:flex; align-items:center; gap:8px;">
+                        <div style="font-weight:600; color:#fff; font-size:0.9rem;">
                             ${e.description}
-                            <span class="expense-category-tag">${e.category || 'General'}</span>
+                            <span style="background:rgba(249,115,22,0.15); color:var(--primary); padding:2px 8px; border-radius:10px; font-size:0.72rem; margin-left:6px;">${e.category || 'General'}</span>
                         </div>
-                        <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">
-                            Paid by <strong>${e.paid_by}</strong> • Split with 3 buddies • ${e.date || ''}
+                        <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
+                            Paid by <strong>${e.paid_by}</strong>
                         </div>
                     </div>
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="font-weight:700; color:#4ade80; font-size:1.05rem;">${formatter.format(e.amount)}</span>
-                        <button onclick="deleteExpenseItem('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.9rem;" title="Delete Expense">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:700; color:#4ade80; font-size:0.95rem;">${formatter.format(e.amount)}</span>
+                        <button onclick="deleteExpenseItem('${e.id}')" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:0.85rem;" title="Delete">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
@@ -364,24 +962,22 @@
             const desc = document.getElementById('new-exp-desc').value.trim();
             const amt = parseFloat(document.getElementById('new-exp-amt').value);
             const category = document.getElementById('new-exp-category').value;
-            const payer = document.getElementById('new-exp-payer').value;
+            const paid_by = document.getElementById('new-exp-payer').value;
 
-            if (!desc || !amt || amt <= 0) {
+            if (!desc || isNaN(amt) || amt <= 0) {
                 alert('Please enter a description and valid amount.');
                 return;
             }
 
             const newExp = {
                 id: 'exp-' + Date.now(),
-                trip_id: currentExpenseTripId,
-                paid_by: payer,
-                amount: amt,
                 description: desc,
-                category: category,
+                amount: amt,
+                category,
+                paid_by,
                 date: new Date().toISOString().split('T')[0]
             };
 
-            // Backend sync
             try {
                 await fetch(`/api/trips/${currentExpenseTripId}/expenses`, {
                     method: 'POST',
@@ -390,14 +986,12 @@
                 });
             } catch(e) {}
 
-            // LocalStorage sync
             const allLocalExpenses = JSON.parse(localStorage.getItem('tripExpenses') || '{}');
             const list = allLocalExpenses[currentExpenseTripId] || [];
             list.unshift(newExp);
             allLocalExpenses[currentExpenseTripId] = list;
             localStorage.setItem('tripExpenses', JSON.stringify(allLocalExpenses));
 
-            // Reset inputs
             document.getElementById('new-exp-desc').value = '';
             document.getElementById('new-exp-amt').value = '';
 
@@ -418,136 +1012,24 @@
             loadTripExpenses(currentExpenseTripId);
         }
 
-        // ==========================================
-        // AI DAY-BY-DAY ITINERARY VIEWER
-        // ==========================================
+        // View AI Day-by-Day Plan
         function viewTripItinerary(tripId, dest) {
             const trip = allTripsData.find(t => String(t.id) === String(tripId));
             if (trip && trip.itinerary) {
                 const plan = typeof trip.itinerary === 'object' ? trip.itinerary : JSON.parse(trip.itinerary);
-                window.openMagicPlanner(trip.destination, plan.days || 3, trip.budget || 15000);
+                if (window.openMagicPlanner) {
+                    window.openMagicPlanner(trip.destination, plan.days || 3, trip.budget || 15000);
+                } else {
+                    window.location.href = `index.html?dest=${encodeURIComponent(dest)}`;
+                }
             } else {
-                window.openMagicPlanner(dest, 3, 15000);
+                if (window.openMagicPlanner) {
+                    window.openMagicPlanner(dest, 3, 15000);
+                } else {
+                    window.location.href = `index.html?dest=${encodeURIComponent(dest)}`;
+                }
             }
-        }
-    </script>
-
-    <!-- Edit Trip Modal -->
-    <div id="editTripModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
-        <div class="modal-content glassmorphism" style="width: 90%; max-width: 400px; padding: 2rem; border-radius: 20px; position: relative;">
-            <button onclick="closeEditModal()" class="close-btn" style="position: absolute; right: 20px; top: 20px; background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            <h2 style="margin-bottom: 1.5rem; font-size: 1.5rem;"><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Trip</h2>
-            
-            <div style="margin-bottom: 1rem;">
-                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Destination</label>
-                <input type="text" id="edit-dest" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
-            </div>
-            
-            <div style="margin-bottom: 1rem;">
-                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Dates</label>
-                <input type="text" id="edit-dates" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <label style="display:block; margin-bottom: 0.5rem; color: #cbd5e1;">Budget (INR)</label>
-                <input type="number" id="edit-budget" class="glass-select" style="width: 100%; border: 1px solid rgba(255,255,255,0.2);">
-            </div>
-            
-            <div style="display: flex; gap: 1rem;">
-                <button onclick="saveTripChanges()" class="btn-primary" style="flex: 1; border-radius: 8px;">Save Changes</button>
-                <button onclick="deleteTrip()" class="btn-primary" style="flex: 1; border-radius: 8px; background: var(--danger); border-color: var(--danger);">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Expense Splitter Modal -->
-    <div id="expenseModal" class="modal" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(8px);">
-        <div class="modal-content glassmorphism" style="width: 95%; max-width: 620px; max-height: 85vh; padding: 1.8rem; border-radius: 20px; position: relative; display: flex; flex-direction: column;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem; margin-bottom: 1rem;">
-                <div>
-                    <h2 style="margin: 0; font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-receipt text-primary"></i> Trip Expense Splitter
-                    </h2>
-                    <span id="expense-trip-title" style="color: #94a3b8; font-size: 0.85rem;">Split costs with travel buddies</span>
-                </div>
-                <button onclick="closeExpenseModal()" class="close-btn" style="background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer;">&times;</button>
-            </div>
-
-            <div style="flex: 1; overflow-y: auto; padding-right: 0.5rem;">
-                <!-- Summary Card -->
-                <div style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.8rem; text-align: center;">
-                    <div>
-                        <div style="font-size: 0.75rem; color: #94a3b8;">Total Spent</div>
-                        <div id="expense-total-disp" style="font-size: 1.2rem; font-weight: 700; color: #4ade80;">₹0</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: #94a3b8;">Participants</div>
-                        <div style="font-size: 1.2rem; font-weight: 700; color: #60a5fa;" id="expense-pax-count">3 Buddies</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: #94a3b8;">Per Person</div>
-                        <div id="expense-per-person" style="font-size: 1.2rem; font-weight: 700; color: #facc15;">₹0</div>
-                    </div>
-                </div>
-
-                <!-- Settlement Card -->
-                <div id="expense-settlement-box" style="background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.25); border-radius: 10px; padding: 0.8rem 1rem; margin-bottom: 1.2rem; font-size: 0.85rem; color: #cbd5e1;">
-                    <strong style="color: #60a5fa; display: block; margin-bottom: 4px;"><i class="fa-solid fa-scale-balanced"></i> Who Owes Whom (Settlement)</strong>
-                    <div id="settlement-details">No expenses recorded yet.</div>
-                </div>
-
-                <!-- Add Expense Form -->
-                <div style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 1rem; margin-bottom: 1.2rem;">
-                    <h4 style="margin: 0 0 0.8rem 0; color: #fff; font-size: 0.95rem;"><i class="fa-solid fa-plus-circle" style="color: var(--primary);"></i> Add New Expense</h4>
-                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.6rem; margin-bottom: 0.6rem;">
-                        <input type="text" id="new-exp-desc" placeholder="Description (e.g. Hotel, Taxi, Rooftop Dinner)" style="padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
-                        <input type="number" id="new-exp-amt" placeholder="Amount (₹)" min="1" style="padding: 0.6rem; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
-                    </div>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 0.8rem;">
-                        <select id="new-exp-category" style="padding: 0.6rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
-                            <option value="Food & Dining">🥘 Food & Dining</option>
-                            <option value="Hotel & Stay">🏨 Hotel & Stay</option>
-                            <option value="Cab & Fuel">🚕 Cab & Fuel</option>
-                            <option value="Activities">🎟️ Activities & Tickets</option>
-                            <option value="General">🛍️ Miscellaneous</option>
-                        </select>
-                        <select id="new-exp-payer" style="padding: 0.6rem; border-radius: 8px; background: #1e293b; border: 1px solid rgba(255,255,255,0.15); color: #fff; font-size: 0.85rem; outline: none;">
-                            <option value="You">Paid by: You</option>
-                            <option value="Rahul S.">Paid by: Rahul S.</option>
-                            <option value="Ananya D.">Paid by: Ananya D.</option>
-                        </select>
-                    </div>
-                    <button onclick="submitNewExpense()" class="btn-small btn-primary" style="width: 100%; padding: 0.6rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
-                        <i class="fa-solid fa-plus"></i> Record Expense
-                    </button>
-                </div>
-
-                <!-- Expenses List -->
-                <h4 style="margin: 0 0 0.6rem 0; color: #fff; font-size: 0.95rem;">Recent Expenses</h4>
-                <div id="expenses-list-container"></div>
-            </div>
-        </div>
-    </div>
-    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
-        <div style="margin-bottom: 1rem;">
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-twitter"></i></a>
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
-        </div>
-        <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="#" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
-    </footer>
-    <script src="script.js"></script>
-
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered'))
-                    .catch(err => console.log('Service Worker registration failed: ', err));
-            });
         }
     </script>
 </body>
 </html>
-

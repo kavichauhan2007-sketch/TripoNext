@@ -2,7 +2,7 @@
   "name": "TripoNext Travel Planner",
   "short_name": "TripoNext",
   "description": "Plan your dream trips, manage budgets, and find travel buddies with AI.",
-  "start_url": "/login.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#f97316",
