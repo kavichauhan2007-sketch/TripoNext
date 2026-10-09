@@ -78,7 +78,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Set user name & inject notification bell and profile button
-    const user = JSON.parse(localStorage.getItem('user')) || { name: 'Traveler', email: 'user@triponext.com' };
+    let user = { name: 'Traveler', email: 'user@triponext.com' };
+    try {
+        const rawUser = localStorage.getItem('user');
+        if (rawUser) user = JSON.parse(rawUser);
+    } catch(e) {}
     const logo = document.querySelector('.logo');
     if(logo) {
         logo.innerHTML = `<i class="fa-solid fa-plane-departure" style="color:var(--primary)"></i> TripoNext`;
@@ -109,9 +113,21 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(loadNotifications, 100);
     }
 
-    // Initialize global utilities
-    injectFloatingToolbox();
-    setupOfflineDetection();
+    // Initialize global utilities safely
+    if (typeof injectFloatingToolbox === 'function') injectFloatingToolbox();
+    else if (window.injectFloatingToolbox) window.injectFloatingToolbox();
+
+    if (typeof setupOfflineDetection === 'function') setupOfflineDetection();
+    else if (window.setupOfflineDetection) window.setupOfflineDetection();
+
+    if (typeof renderMobileBottomNav === 'function') renderMobileBottomNav();
+    else if (window.renderMobileBottomNav) window.renderMobileBottomNav();
+
+    if (typeof initPhoneMode === 'function') initPhoneMode();
+    else if (window.initPhoneMode) window.initPhoneMode();
+
+    if (typeof injectQuickBookingPills === 'function') injectQuickBookingPills();
+    else if (window.injectQuickBookingPills) window.injectQuickBookingPills();
 
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
@@ -179,6 +195,7 @@ function updateCurrency() {
         }
     }
 }
+window.updateCurrency = updateCurrency;
 
 async function planTrip() {
     const dest = document.getElementById('destination-input').value;
@@ -590,7 +607,10 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsBtn.style.marginRight = '10px';
         settingsBtn.innerHTML = '<i class="fa-solid fa-gear"></i>';
         settingsBtn.title = 'Profile & Settings';
-        settingsBtn.onclick = openGlobalSettings;
+        settingsBtn.onclick = () => {
+            if (typeof openGlobalSettings === 'function') openGlobalSettings();
+            else if (window.openGlobalSettings) window.openGlobalSettings();
+        };
         navLinks.insertBefore(settingsBtn, navLinks.lastElementChild);
         
         // Restore theme
@@ -600,11 +620,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 2. Render Mobile Bottom Navigation Bar & Phone Frame Mode
-    renderMobileBottomNav();
-    initPhoneMode();
+    if (typeof renderMobileBottomNav === 'function') renderMobileBottomNav();
+    else if (window.renderMobileBottomNav) window.renderMobileBottomNav();
+
+    if (typeof initPhoneMode === 'function') initPhoneMode();
+    else if (window.initPhoneMode) window.initPhoneMode();
 
     // 3. Inject Quick Booking Pills on Dashboard
-    injectQuickBookingPills();
+    if (typeof injectQuickBookingPills === 'function') injectQuickBookingPills();
+    else if (window.injectQuickBookingPills) window.injectQuickBookingPills();
 
     // 3. Welcome Toast
     if (localStorage.getItem('toasts') !== 'off') {
@@ -637,7 +661,10 @@ document.addEventListener('DOMContentLoaded', () => {
         surpriseBtn.style.marginRight = '15px';
         surpriseBtn.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.5)';
         surpriseBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Surprise Me!';
-        surpriseBtn.onclick = triggerSurpriseTrip;
+        surpriseBtn.onclick = () => {
+            if (typeof triggerSurpriseTrip === 'function') triggerSurpriseTrip();
+            else if (window.triggerSurpriseTrip) window.triggerSurpriseTrip();
+        };
         
         navLinks.appendChild(surpriseBtn);
     }
@@ -1219,7 +1246,10 @@ window.initPhoneMode = function() {
         const toggleBtn = document.createElement('button');
         toggleBtn.id = 'view-mode-toggle';
         toggleBtn.className = 'view-mode-toggle-btn';
-        toggleBtn.onclick = togglePhoneMode;
+        toggleBtn.onclick = () => {
+            if (typeof togglePhoneMode === 'function') togglePhoneMode();
+            else if (window.togglePhoneMode) window.togglePhoneMode();
+        };
         const savedMode = localStorage.getItem('triponext_phone_mode');
         if (savedMode === '1') {
             document.body.classList.add('phone-mode-active');
@@ -2977,7 +3007,10 @@ window.injectFloatingToolbox = function() {
     btn.className = 'floating-toolbox-btn';
     btn.title = 'Travel Toolbox (Currency, Translator, SOS)';
     btn.innerHTML = '<i class="fa-solid fa-toolbox"></i>';
-    btn.onclick = toggleToolbox;
+    btn.onclick = () => {
+        if (typeof toggleToolbox === 'function') toggleToolbox();
+        else if (window.toggleToolbox) window.toggleToolbox();
+    };
     document.body.appendChild(btn);
 
     // Modal

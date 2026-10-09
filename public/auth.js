@@ -97,3 +97,20 @@ function toggleAuth() {
     }
 }
 
+window.loginAsGuest = function() {
+    const guestUser = {
+        name: "Rahul Sharma",
+        email: "rahul.traveler@triponext.com",
+        phone: "+91 98765 43210",
+        bio: "Passionate road-tripper, mountain lover & culture explorer.",
+        avatar: "avatar-1",
+        home_city: "Delhi, India",
+        travel_style: "Adventure & Cultural",
+        referral_code: "TRIP-7492",
+        referral_credits: 500
+    };
+    localStorage.setItem('token', 'guest-token-' + Date.now());
+    localStorage.setItem('user', JSON.stringify(guestUser));
+    window.location.href = 'index.html';
+};
+

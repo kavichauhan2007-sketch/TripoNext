@@ -406,35 +406,58 @@
             const text = input.value.trim();
             if(!text) return;
             
-            const user = JSON.parse(localStorage.getItem('user')) || { name: 'Anonymous Traveler' };
+            let user = { name: 'Anonymous Traveler' };
+            try {
+                const u = localStorage.getItem('user');
+                if (u) user = JSON.parse(u);
+            } catch(e) {}
+            
             const timeStr = 'Just now';
             const token = localStorage.getItem('token');
+            const formattedText = `<span style="color: #38bdf8; font-weight: bold; margin-right: 5px;">[${type}]</span> ${text}`;
             
+            // 1. Submit to Backend Feedback API (saves to SQLite feedback_reviews)
             try {
-                if(token) {
+                await fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: user.name || 'Anonymous Traveler', rating: 5, category: type, comment: text })
+                });
+            } catch(e) {
+                console.warn('Backend feedback endpoint unavailable');
+            }
+
+            // 2. Submit to Community Posts if authenticated
+            if (token) {
+                try {
                     await fetch('/api/posts', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`
                         },
-                        body: JSON.stringify({ content: text, author_name: user.name })
+                        body: JSON.stringify({ content: formattedText, author_name: user.name })
                     });
+                } catch(e) {
+                    console.warn('Backend posts save failed');
                 }
-            } catch(e) {
-                console.warn('Failed to save to backend');
-                const savedFeedback = JSON.parse(localStorage.getItem('feedbacks') || '[]');
-                savedFeedback.push({ text, time: new Date().toISOString(), name: user.name });
-                localStorage.setItem('feedbacks', JSON.stringify(savedFeedback));
             }
 
+            // 3. Save to Local Storage fallback
+            const savedFeedback = JSON.parse(localStorage.getItem('feedbacks') || '[]');
+            savedFeedback.unshift({ text: formattedText, time: new Date().toISOString(), name: user.name });
+            localStorage.setItem('feedbacks', JSON.stringify(savedFeedback));
+
+            // 4. Update UI
             const container = document.getElementById('feed-container');
             if(container.innerHTML.includes('Be the first')) container.innerHTML = '';
-            
-            const formattedText = `<span style="color: #38bdf8; font-weight: bold; margin-right: 5px;">[${type}]</span> ${text}`;
             container.innerHTML = createPostHTML(formattedText, timeStr, user.name) + container.innerHTML;
             
             input.value = '';
+
+            if (window.showAppToast) {
+                window.showAppToast('Thank you! Your feedback has been submitted. 💬', 'success');
+            }
         }
 
         function createPostHTML(text, time, name) {
