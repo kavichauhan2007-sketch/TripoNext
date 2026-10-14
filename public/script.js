@@ -66,9 +66,26 @@ let map = null;
 let currentBudget = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Check Auth
+    // Check Auth - Auto-initialize seamless session so app is immediately usable
     if (!localStorage.getItem('token')) {
-        window.location.href = 'login.html';
+        if (sessionStorage.getItem('triponext_explicit_logout') === 'true') {
+            sessionStorage.removeItem('triponext_explicit_logout');
+            window.location.href = 'login.html';
+            return;
+        }
+        const guestUser = {
+            name: "Rahul Sharma",
+            email: "rahul.traveler@triponext.com",
+            phone: "+91 98765 43210",
+            bio: "Passionate road-tripper, mountain lover & culture explorer.",
+            avatar: "avatar-1",
+            home_city: "Delhi, India",
+            travel_style: "Adventure & Cultural",
+            referral_code: "TRIP-7492",
+            referral_credits: 500
+        };
+        localStorage.setItem('token', 'guest-token-' + Date.now());
+        localStorage.setItem('user', JSON.stringify(guestUser));
     }
 
     // Restore Saved Language
@@ -203,6 +220,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.setItem('triponext_explicit_logout', 'true');
     window.location.href = 'login.html';
 }
 

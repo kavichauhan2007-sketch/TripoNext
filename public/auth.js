@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     // Redirect if already logged in
-    if(localStorage.getItem('token')) {
+    if(localStorage.getItem('token') && sessionStorage.getItem('triponext_explicit_logout') !== 'true') {
         window.location.href = 'index.html';
     }
 

@@ -9,7 +9,7 @@ require('dotenv').config();
 const { generateDynamicPlan } = require('./itineraryEngine');
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 const SECRET_KEY = 'super_secret_travel_buddy_key';
 
 // Middleware
@@ -1380,13 +1380,30 @@ app.delete('/api/bookings/:id', (req, res) => {
 
 // Fallback to serve index.html for SPA-like behavior if needed
 app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 if (!process.env.VERCEL) {
-    app.listen(PORT, () => {
+    const mainServer = app.listen(PORT, () => {
         console.log(`Server is running on http://localhost:${PORT}`);
     });
+    mainServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.warn(`[Server] Port ${PORT} already in use, app remains reachable.`);
+        } else {
+            console.error('[Server error]:', err);
+        }
+    });
+
+    // Also listen on port 3000 if PORT is 3001 so users accessing localhost:3000 or localhost:3001 both work
+    if (Number(PORT) !== 3000) {
+        try {
+            const altServer = app.listen(3000, () => {
+                console.log(`Also accessible on http://localhost:3000`);
+            });
+            altServer.on('error', () => { /* port 3000 in use, ignore gracefully */ });
+        } catch(e) {}
+    }
 }
 
 module.exports = app;
