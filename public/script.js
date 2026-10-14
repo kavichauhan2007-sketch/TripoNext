@@ -32,6 +32,17 @@ const translations = {
         budget_desc: "Ajusté automatiquement à votre devise régionale sélectionnée.",
         title_weather: "Prévisions Météo", title_places: "Lieux Locaux Réels (Données en Direct)",
         places_desc: "Recherche de vrais restaurants près de votre destination via OpenStreetMap."
+    },
+    hi: {
+        nav_dashboard: "डैशबोर्ड", nav_explore: "एक्सप्लोर", nav_mytrips: "मेरी यात्राएं", nav_community: "कम्युनिटी",
+        hero_title: "सेकंडों में अपनी सपनों की यात्रा प्लान करें",
+        hero_subtitle: "मैप, मौसम, जगहें, यात्रा कार्यक्रम और बजट के लिए एक स्मार्ट प्लेटफॉर्म।",
+        btn_plan: "प्लान करें", badge_budget: "बजट में",
+        title_map: "लाइव इंटरएक्टिव मैप", title_budget: "बजट विवरण",
+        label_total: "कुल बजट", label_spent: "अनुमानित खर्च",
+        budget_desc: "आपकी चयनित क्षेत्रीय मुद्रा के अनुसार स्वतः समायोजित।",
+        title_weather: "मौसम का पूर्वानुमान", title_places: "वास्तविक स्थानीय स्थान (लाइव डेटा)",
+        places_desc: "स्थान पर क्लिक करके गूगल पर अधिक जानें।"
     }
 };
 
@@ -42,6 +53,21 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check Auth
     if (!localStorage.getItem('token')) {
         window.location.href = 'login.html';
+    }
+
+    // Restore Saved Language
+    const savedLang = localStorage.getItem('triponext_lang') || 'en';
+    const langSelect = document.getElementById('lang-selector');
+    if (langSelect) {
+        langSelect.value = savedLang;
+    }
+    if (savedLang && savedLang !== 'en' && typeof changeLanguage === 'function') {
+        changeLanguage();
+    }
+
+    // Initialize Packing List
+    if (document.getElementById('packing-list') && typeof window.renderPackingList === 'function') {
+        window.renderPackingList();
     }
 
     if (document.getElementById('dates-input')) {
@@ -158,7 +184,9 @@ function logout() {
 }
 
 function changeLanguage() {
-    const lang = document.getElementById('lang-selector').value;
+    const langSelect = document.getElementById('lang-selector');
+    const lang = langSelect ? langSelect.value : 'en';
+    try { localStorage.setItem('triponext_lang', lang); } catch(e) {}
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
         if (translations[lang] && translations[lang][key]) {
@@ -166,6 +194,7 @@ function changeLanguage() {
         }
     });
 }
+window.changeLanguage = changeLanguage;
 
 function updateCurrency() {
     if (currentBudget > 0) {
@@ -690,25 +719,110 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Removed 3D Hover Tilt
 
-    // Packing List Logic
+    // ==========================================
+    // ESSENTIAL PACKING LIST (Persisted in localStorage)
+    // ==========================================
+    const DEFAULT_PACKING_ITEMS = [
+        { id: 'pack-1', text: 'Passport & Government Photo ID', checked: false },
+        { id: 'pack-2', text: 'Phone Charger & High-Capacity Power Bank', checked: false },
+        { id: 'pack-3', text: 'Emergency First-Aid Kit & Prescriptions', checked: false },
+        { id: 'pack-4', text: 'Comfortable Walking Shoes & Extra Socks', checked: false },
+        { id: 'pack-5', text: 'Weather-Appropriate Outfits & Rain Layer', checked: false },
+        { id: 'pack-6', text: 'Travel Insurance Copy & Hotel Bookings', checked: false }
+    ];
+
+    function getPackingItems() {
+        try {
+            const raw = localStorage.getItem('triponext_packing');
+            if (raw) return JSON.parse(raw);
+        } catch (e) {}
+        return DEFAULT_PACKING_ITEMS;
+    }
+
+    function savePackingItems(items) {
+        try {
+            localStorage.setItem('triponext_packing', JSON.stringify(items));
+        } catch (e) {}
+    }
+
+    window.renderPackingList = function() {
+        const list = document.getElementById('packing-list');
+        if (!list) return;
+        const items = getPackingItems();
+        list.innerHTML = '';
+        if (items.length === 0) {
+            list.innerHTML = `<li style="color:#94a3b8; font-size:0.85rem; text-align:center; padding:1rem 0;">No items in packing list. Add one below!</li>`;
+            return;
+        }
+        items.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'packing-item';
+            li.style.cssText = 'margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; background: rgba(255,255,255,0.03); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s;';
+            li.innerHTML = `
+                <div style="display:flex; align-items:center; gap:0.6rem; flex:1; overflow:hidden;">
+                    <input type="checkbox" id="${item.id}" ${item.checked ? 'checked' : ''} onchange="togglePackingCheck('${item.id}')" style="accent-color: var(--primary); transform: scale(1.15); cursor:pointer;">
+                    <label for="${item.id}" style="cursor: pointer; font-size: 0.85rem; color: ${item.checked ? '#94a3b8' : '#f8fafc'}; text-decoration: ${item.checked ? 'line-through' : 'none'}; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${item.text}</label>
+                </div>
+                <button onclick="deletePackingItem('${item.id}')" title="Delete item" style="background:none; border:none; color:#94a3b8; cursor:pointer; padding:2px 6px; font-size:0.8rem; border-radius:4px;" onmouseenter="this.style.color='#f87171'" onmouseleave="this.style.color='#94a3b8'">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            `;
+            list.appendChild(li);
+        });
+    };
+
     window.addPackingItem = function() {
         const input = document.getElementById('new-pack-item');
+        if (!input) return;
         const val = input.value.trim();
-        if(!val) return;
-        
-        const list = document.getElementById('packing-list');
-        const id = 'pack' + (list.children.length + 1);
-        const li = document.createElement('li');
-        li.className = 'packing-item';
-        li.style.marginBottom = '0.5rem';
-        li.style.display = 'flex';
-        li.style.alignItems = 'center';
-        li.style.gap = '0.5rem';
-        
-        li.innerHTML = `<input type="checkbox" id="${id}" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="${id}" style="cursor: pointer;">${val}</label>`;
-        list.appendChild(li);
+        if (!val) return;
+        const items = getPackingItems();
+        items.push({
+            id: 'pack-' + Date.now(),
+            text: val,
+            checked: false
+        });
+        savePackingItems(items);
         input.value = '';
+        window.renderPackingList();
     };
+
+    window.togglePackingCheck = function(id) {
+        const items = getPackingItems();
+        const target = items.find(i => String(i.id) === String(id));
+        if (target) {
+            target.checked = !target.checked;
+            savePackingItems(items);
+            window.renderPackingList();
+        }
+    };
+
+    window.deletePackingItem = function(id) {
+        let items = getPackingItems();
+        items = items.filter(i => String(i.id) !== String(id));
+        savePackingItems(items);
+        window.renderPackingList();
+    };
+
+    window.toggleAllPackingItems = function() {
+        const items = getPackingItems();
+        const allChecked = items.every(i => i.checked);
+        items.forEach(i => i.checked = !allChecked);
+        savePackingItems(items);
+        window.renderPackingList();
+    };
+
+    window.resetPackingList = function() {
+        if (confirm("Reset packing checklist to standard essentials?")) {
+            savePackingItems(DEFAULT_PACKING_ITEMS);
+            window.renderPackingList();
+        }
+    };
+
+    // Auto-render if list element exists
+    if (document.getElementById('packing-list')) {
+        window.renderPackingList();
+    }
 
     // Live Currency Converter Logic
     window.exchangeRates = null;
@@ -2020,6 +2134,95 @@ window.submitSupportTicket = async function() {
     document.getElementById('sub-feature-modal').style.display = 'none';
 };
 
+// ==========================================
+// LEGAL / POLICY MODALS (Privacy Policy & Terms)
+// ==========================================
+window.openPrivacyModal = function() {
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:560px; max-height:85vh; overflow-y:auto; border-radius:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
+                <i class="fa-solid fa-shield-halved" style="color:#38bdf8"></i> TripoNext Privacy Policy
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; display:flex; flex-direction:column; gap:0.9rem;">
+            <p style="margin:0;"><strong>Last Updated:</strong> October 2026</p>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#38bdf8;"><i class="fa-solid fa-lock" style="margin-right:6px;"></i> 1. Your Personal Data Stays Yours</h4>
+                <p style="margin:0;">TripoNext never sells your personal travel information or location data to third parties. All your saved trips, budget sheets, and packing preferences are stored locally in your browser and synchronized securely with encrypted SQLite servers.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#34d399;"><i class="fa-solid fa-wifi" style="margin-right:6px;"></i> 2. Offline Mode & Local Storage</h4>
+                <p style="margin:0;">To provide offline travel access during airplane rides and remote mountain areas, the app stores itineraries in your browser's IndexedDB and localStorage cache. You can wipe this data anytime from Profile &gt; Offline Cache Manager.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#fb923c;"><i class="fa-solid fa-handshake" style="margin-right:6px;"></i> 3. Community & Buddy Chat Privacy</h4>
+                <p style="margin:0;">Public posts on the Community feed are visible to fellow travelers. Private buddy chat messages are direct and protected with authenticated session tokens.</p>
+            </div>
+        </div>
+        <div style="margin-top:1.2rem; text-align:right;">
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
+                <i class="fa-solid fa-check"></i> Got It
+            </button>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+window.openTermsModal = function() {
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:560px; max-height:85vh; overflow-y:auto; border-radius:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
+                <i class="fa-solid fa-file-contract" style="color:#f59e0b"></i> TripoNext Terms of Service
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="font-size:0.88rem; color:#cbd5e1; line-height:1.6; display:flex; flex-direction:column; gap:0.9rem;">
+            <p style="margin:0;"><strong>Effective Date:</strong> October 2026</p>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#f59e0b;"><i class="fa-solid fa-ticket" style="margin-right:6px;"></i> 1. Smart Bookings & Vouchers</h4>
+                <p style="margin:0;">Bookings made via the in-app Bookings Hub generate digital confirmation vouchers and e-tickets. Cancellations and refunds adhere to partner operator rules and can be managed directly in the My Trips portal.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#38bdf8;"><i class="fa-solid fa-robot" style="margin-right:6px;"></i> 2. AI Travel Plan Disclaimers</h4>
+                <p style="margin:0;">The AI Magic Trip Planner suggests real routes, local attractions, and estimated costs. Travelers are encouraged to verify seasonal opening hours and weather warnings before departing.</p>
+            </div>
+            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.8rem;">
+                <h4 style="margin:0 0 0.4rem 0; color:#10b981;"><i class="fa-solid fa-users" style="margin-right:6px;"></i> 3. Community Safety & Verification</h4>
+                <p style="margin:0;">When connecting with travel buddies, verify member badges and coordinate group meetups in public hubs. Disrespectful behavior or spam will result in immediate suspension.</p>
+            </div>
+        </div>
+        <div style="margin-top:1.2rem; text-align:right;">
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
+                <i class="fa-solid fa-check"></i> Accept & Continue
+            </button>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
 // ========================================================
 // OFFLINE MANAGER & CACHE CLEARING
 // (Solves: "Offine wala mein data dikha rha hai Isha change krna hai")
@@ -2637,95 +2840,149 @@ function parseVoiceCommand(transcript) {
     return { fromCity, toCity, numDays };
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    const voiceBtn = document.getElementById('voice-search-btn');
+window.applyVoiceQuery = function(queryText) {
+    if (!queryText || !queryText.trim()) return;
+    const { fromCity, toCity, numDays } = parseVoiceCommand(queryText);
     const destInput = document.getElementById('destination-input');
 
-    if (voiceBtn && (window.SpeechRecognition || window.webkitSpeechRecognition)) {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = false;
+    if (toCity && destInput) {
+        destInput.value = toCity;
+    }
 
+    if (fromCity) {
+        const calcOrigin = document.getElementById('calc-origin');
+        if (calcOrigin) calcOrigin.value = fromCity;
+        const calcDest = document.getElementById('calc-dest');
+        if (calcDest && toCity) calcDest.value = toCity;
+    }
+
+    if (numDays && numDays > 0) {
+        const calcDays = document.getElementById('calc-days');
+        if (calcDays) calcDays.value = numDays;
+        window._selectedNumDays = numDays;
+
+        let badge = document.getElementById('days-badge');
+        const datesEl = document.getElementById('dates-input');
+        if (datesEl) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.id = 'days-badge';
+                badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--primary);color:white;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:bold;pointer-events:none;';
+                datesEl.parentElement.style.position = 'relative';
+                datesEl.parentElement.appendChild(badge);
+            }
+            badge.textContent = numDays + ' days';
+        }
+    }
+
+    const subModal = document.getElementById('sub-feature-modal');
+    if (subModal) subModal.style.display = 'none';
+
+    const toastMsg = [
+        toCity ? `✈️ To: ${toCity}` : '',
+        fromCity ? `🛫 From: ${fromCity}` : '',
+        numDays ? `📅 ${numDays} days` : ''
+    ].filter(Boolean).join(' | ');
+
+    if (toastMsg) {
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.95);color:white;padding:0.8rem 1.5rem;border-radius:20px;font-size:0.9rem;z-index:99999;border:1px solid var(--primary);backdrop-filter:blur(10px);box-shadow:0 8px 25px rgba(0,0,0,0.4);';
+        t.innerHTML = `<i class="fa-solid fa-microphone" style="color:var(--primary);margin-right:8px;"></i>${toastMsg}`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+};
+
+window.openVoiceAssistantModal = function() {
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+    subModal.innerHTML = `
+    <div class="modal-content glassmorphism" style="max-width:520px; border-radius:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
+                <i class="fa-solid fa-microphone-lines" style="color:var(--primary)"></i> Smart Trip Voice & Command Assistant
+            </h3>
+            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <p style="color:#94a3b8; font-size:0.88rem; margin-bottom:1rem; line-height:1.45;">
+            Choose a quick travel command below or type your custom itinerary prompt:
+        </p>
+        <div style="display:flex; flex-direction:column; gap:0.6rem; margin-bottom:1.2rem;">
+            <button onclick="applyVoiceQuery('Trip to Goa for 3 days')" style="text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.65rem 0.9rem; border-radius:10px; color:#f8fafc; font-size:0.85rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>🏖️ <strong>Goa Getaway:</strong> "Trip to Goa for 3 days"</span>
+                <i class="fa-solid fa-arrow-right" style="color:var(--primary); font-size:0.75rem;"></i>
+            </button>
+            <button onclick="applyVoiceQuery('From Delhi to Manali for 5 days')" style="text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.65rem 0.9rem; border-radius:10px; color:#f8fafc; font-size:0.85rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>🏔️ <strong>Mountain Roadtrip:</strong> "From Delhi to Manali for 5 days"</span>
+                <i class="fa-solid fa-arrow-right" style="color:var(--primary); font-size:0.75rem;"></i>
+            </button>
+            <button onclick="applyVoiceQuery('Trip to Paris for 4 days')" style="text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.65rem 0.9rem; border-radius:10px; color:#f8fafc; font-size:0.85rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>🗼 <strong>European City:</strong> "Trip to Paris for 4 days"</span>
+                <i class="fa-solid fa-arrow-right" style="color:var(--primary); font-size:0.75rem;"></i>
+            </button>
+            <button onclick="applyVoiceQuery('Trip to Dubai for 3 days')" style="text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); padding:0.65rem 0.9rem; border-radius:10px; color:#f8fafc; font-size:0.85rem; cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <span>✨ <strong>Desert & Skyline:</strong> "Trip to Dubai for 3 days"</span>
+                <i class="fa-solid fa-arrow-right" style="color:var(--primary); font-size:0.75rem;"></i>
+            </button>
+        </div>
+        <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="voice-custom-query" placeholder="Type prompt (e.g. Plan trip to Ladakh for 6 days)..." class="glass-select" style="flex:1;" onkeypress="if(event.key==='Enter') applyVoiceQuery(this.value)">
+            <button onclick="applyVoiceQuery(document.getElementById('voice-custom-query').value)" class="btn" style="background:var(--primary); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer; font-weight:600;">
+                Apply
+            </button>
+        </div>
+    </div>
+    `;
+    subModal.style.display = 'flex';
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const voiceBtn = document.getElementById('voice-search-btn');
+
+    if (voiceBtn) {
         voiceBtn.addEventListener('click', () => {
-            voiceBtn.style.color = 'var(--primary)';
-            voiceBtn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i>';
-            recognition.start();
-        });
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                try {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'en-US';
+                    recognition.interimResults = false;
 
-        recognition.addEventListener('result', (e) => {
-            const transcript = e.results[0][0].transcript;
-            const { fromCity, toCity, numDays } = parseVoiceCommand(transcript);
+                    voiceBtn.style.color = 'var(--primary)';
+                    voiceBtn.innerHTML = '<i class="fa-solid fa-microphone-lines fa-beat"></i>';
 
-            // ✅ Fill destination field (TO city)
-            if (toCity && destInput) {
-                destInput.value = toCity;
-            }
+                    recognition.addEventListener('result', (e) => {
+                        const transcript = e.results[0][0].transcript;
+                        window.applyVoiceQuery(transcript);
+                        voiceBtn.style.color = 'var(--success)';
+                        voiceBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
+                        setTimeout(() => {
+                            voiceBtn.style.color = 'var(--text-muted)';
+                            voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                        }, 2000);
+                    });
 
-            // ✅ Fill origin field in Budget Calculator (FROM city)
-            if (fromCity) {
-                const calcOrigin = document.getElementById('calc-origin');
-                if (calcOrigin) calcOrigin.value = fromCity;
-                // Also fill destination in budget calculator
-                const calcDest = document.getElementById('calc-dest');
-                if (calcDest && toCity) calcDest.value = toCity;
-            }
+                    recognition.addEventListener('error', () => {
+                        voiceBtn.style.color = 'var(--text-muted)';
+                        voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+                        window.openVoiceAssistantModal();
+                    });
 
-            // ✅ Fill number of days
-            if (numDays && numDays > 0) {
-                const calcDays = document.getElementById('calc-days');
-                if (calcDays) calcDays.value = numDays;
-                window._selectedNumDays = numDays;
-
-                // Show a friendly days badge on dates input
-                let badge = document.getElementById('days-badge');
-                const datesEl = document.getElementById('dates-input');
-                if (datesEl) {
-                    if (!badge) {
-                        badge = document.createElement('span');
-                        badge.id = 'days-badge';
-                        badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--primary);color:white;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:bold;pointer-events:none;';
-                        datesEl.parentElement.style.position = 'relative';
-                        datesEl.parentElement.appendChild(badge);
-                    }
-                    badge.textContent = numDays + ' days';
+                    recognition.start();
+                } catch (e) {
+                    window.openVoiceAssistantModal();
                 }
+            } else {
+                window.openVoiceAssistantModal();
             }
-
-            // ✅ Visual feedback
-            voiceBtn.style.color = 'var(--success)';
-            voiceBtn.innerHTML = '<i class="fa-solid fa-check"></i>';
-
-            // Show a brief toast showing what was parsed
-            const toastMsg = [
-                toCity ? `✈️ To: ${toCity}` : '',
-                fromCity ? `🛫 From: ${fromCity}` : '',
-                numDays ? `📅 ${numDays} days` : ''
-            ].filter(Boolean).join(' | ');
-
-            if (toastMsg) {
-                const t = document.createElement('div');
-                t.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.95);color:white;padding:0.8rem 1.5rem;border-radius:20px;font-size:0.9rem;z-index:99999;border:1px solid var(--primary);backdrop-filter:blur(10px);box-shadow:0 8px 25px rgba(0,0,0,0.4);';
-                t.innerHTML = `<i class="fa-solid fa-microphone" style="color:var(--primary);margin-right:8px;"></i>${toastMsg}`;
-                document.body.appendChild(t);
-                setTimeout(() => t.remove(), 3500);
-            }
-
-            setTimeout(() => {
-                voiceBtn.style.color = 'var(--text-muted)';
-                voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            }, 2000);
         });
-
-        recognition.addEventListener('error', () => {
-            voiceBtn.style.color = '#ef4444';
-            setTimeout(() => {
-                voiceBtn.style.color = 'var(--text-muted)';
-                voiceBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-            }, 2000);
-        });
-    } else if (voiceBtn) {
-        voiceBtn.style.display = 'none';
     }
 });
 

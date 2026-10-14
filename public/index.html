@@ -45,6 +45,7 @@
         <div class="settings-group" style="display: flex; gap: 1rem; align-items: center;">
             <select id="lang-selector" class="glass-select" onchange="changeLanguage()">
                 <option value="en">🇺🇸 EN</option>
+                <option value="hi">🇮🇳 हिन्दी (HI)</option>
                 <option value="es">🇪🇸 ES</option>
                 <option value="fr">🇫🇷 FR</option>
             </select>
@@ -193,22 +194,32 @@
 
             <!-- Bookings Section -->
             <div class="card bookings-card glassmorphism" style="grid-column: span 8;">
-                <h3><i class="fa-solid fa-ticket"></i> Bookings & Reservations</h3>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem;">
-                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.skyscanner.com', '_blank')">
-                        <i class="fa-solid fa-plane" style="font-size: 2rem; color: var(--primary); margin-bottom: 0.5rem;"></i>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+                    <h3 style="margin:0;"><i class="fa-solid fa-ticket" style="color:var(--primary)"></i> Bookings & Instant Reservations</h3>
+                    <button class="btn-small" onclick="openBookingsHub('hotels')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; padding:0.4rem 0.8rem; cursor:pointer; font-size:0.8rem;">
+                        <i class="fa-solid fa-expand"></i> Open Full Booking Hub
+                    </button>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem;">
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer; transition: transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''" onclick="openBookingsHub('flights')">
+                        <i class="fa-solid fa-plane" style="font-size: 1.8rem; color: #38bdf8; margin-bottom: 0.5rem;"></i>
                         <h4>Flights</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Find best prices</p>
+                        <p style="font-size: 0.78rem; color: var(--text-muted);">Compare & Book</p>
                     </div>
-                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.booking.com', '_blank')">
-                        <i class="fa-solid fa-hotel" style="font-size: 2rem; color: #10b981; margin-bottom: 0.5rem;"></i>
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer; transition: transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''" onclick="openBookingsHub('hotels')">
+                        <i class="fa-solid fa-hotel" style="font-size: 1.8rem; color: #10b981; margin-bottom: 0.5rem;"></i>
                         <h4>Hotels</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Secure your stay</p>
+                        <p style="font-size: 0.78rem; color: var(--text-muted);">Secure Stays</p>
                     </div>
-                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer;" onclick="window.open('https://www.uber.com', '_blank')">
-                        <i class="fa-solid fa-taxi" style="font-size: 2rem; color: #f59e0b; margin-bottom: 0.5rem;"></i>
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer; transition: transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''" onclick="openBookingsHub('cabs')">
+                        <i class="fa-solid fa-taxi" style="font-size: 1.8rem; color: #f59e0b; margin-bottom: 0.5rem;"></i>
                         <h4>Cabs</h4>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">Ride locally</p>
+                        <p style="font-size: 0.78rem; color: var(--text-muted);">City & Airport</p>
+                    </div>
+                    <div class="booking-item" style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 12px; text-align: center; border: 1px solid var(--glass-border); cursor: pointer; transition: transform 0.2s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform=''" onclick="openBookingsHub('buses')">
+                        <i class="fa-solid fa-bus" style="font-size: 1.8rem; color: #a855f7; margin-bottom: 0.5rem;"></i>
+                        <h4>Buses</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted);">Volvo & Sleeper</p>
                     </div>
                 </div>
             </div>
@@ -236,16 +247,20 @@
 
             <!-- Essential Packing List -->
             <div class="card packing-card glassmorphism" style="grid-column: span 3;">
-                <h3><i class="fa-solid fa-suitcase-rolling"></i> Essential Packing List</h3>
-                <ul class="packing-list" id="packing-list" style="list-style: none; padding: 0; margin-top: 1rem;">
-                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack1" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack1" style="cursor: pointer;">Passport & ID</label></li>
-                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack2" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack2" style="cursor: pointer;">Phone Charger & Power Bank</label></li>
-                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack3" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack3" style="cursor: pointer;">Travel Insurance</label></li>
-                    <li class="packing-item" style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><input type="checkbox" id="pack4" style="accent-color: var(--primary); transform: scale(1.2);"> <label for="pack4" style="cursor: pointer;">Comfortable Walking Shoes</label></li>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.8rem;">
+                    <h3><i class="fa-solid fa-suitcase-rolling" style="color:var(--primary)"></i> Essential Packing List</h3>
+                    <div style="display:flex; gap:6px;">
+                        <button onclick="toggleAllPackingItems()" title="Toggle check all" style="background:none; border:none; color:#38bdf8; font-size:0.75rem; cursor:pointer;">Select All</button>
+                        <span style="color:rgba(255,255,255,0.2);">|</span>
+                        <button onclick="resetPackingList()" title="Reset checklist" style="background:none; border:none; color:#f87171; font-size:0.75rem; cursor:pointer;">Reset</button>
+                    </div>
+                </div>
+                <ul class="packing-list" id="packing-list" style="list-style: none; padding: 0; margin-top: 0.5rem; max-height: 180px; overflow-y: auto;">
+                    <!-- Dynamically rendered & persisted -->
                 </ul>
-                <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
-                    <input type="text" id="new-pack-item" placeholder="Add custom item..." class="glass-select" style="flex:1;">
-                    <button class="btn-small" onclick="addPackingItem()" style="background: var(--primary); border:none; color:white; border-radius: 8px; cursor: pointer;"><i class="fa-solid fa-plus"></i></button>
+                <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+                    <input type="text" id="new-pack-item" placeholder="Add custom item..." class="glass-select" style="flex:1;" onkeypress="if(event.key==='Enter') addPackingItem()">
+                    <button class="btn-small" onclick="addPackingItem()" style="background: var(--primary); border:none; color:white; border-radius: 8px; cursor: pointer; padding:0.5rem 0.8rem;" title="Add item"><i class="fa-solid fa-plus"></i></button>
                 </div>
             </div>
 
@@ -258,7 +273,7 @@
             >
                 <!-- Hero Image -->
                 <div style="position:relative; width:100%; height:100%; min-height: 240px; overflow:hidden; background:#1e293b;">
-                    <img id="real-dest-img" src="https://source.unsplash.com/600x400/?landscape,nature"
+                    <img id="real-dest-img" src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=800&q=80"
                          style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block;"
                          alt="Destination Photo">
 
@@ -316,12 +331,12 @@
 
     <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
         <div style="margin-bottom: 1rem;">
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-twitter"></i></a>
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-instagram"></i></a>
-            <a href="#" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
+            <a href="https://twitter.com" target="_blank" rel="noopener" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-twitter"></i></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-instagram"></i></a>
+            <a href="https://github.com" target="_blank" rel="noopener" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
         </div>
         <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="#" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="#" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
 
     <!-- Budget Calculator Modal -->

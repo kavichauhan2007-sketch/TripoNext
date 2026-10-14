@@ -218,13 +218,22 @@
             </div>
             
             <!-- Filters -->
-            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
-                <input type="text" placeholder="Search destinations..." style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(15,23,42,0.6); color: white; flex: 1;">
-                <select style="padding: 0.7rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15); background: rgba(15,23,42,0.6); color: white;">
-                    <option>Any Month</option>
-                    <option>October 2026</option>
-                    <option>November 2026</option>
+            <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem; flex-wrap: wrap; align-items: center;">
+                <div style="position: relative; flex: 1; min-width: 220px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                    <input type="text" id="buddy-search-input" placeholder="Search destinations (e.g. Manali, Gokarna, Spiti)..." style="width: 100%; padding: 0.75rem 1rem 0.75rem 2.6rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.6); color: white; outline: none;" oninput="filterBuddies()">
+                </div>
+                <select id="buddy-month-select" style="padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15,23,42,0.85); color: white; outline: none; cursor: pointer; min-width: 140px;" onchange="filterBuddies()">
+                    <option value="all">📅 Any Month</option>
+                    <option value="Oct">October</option>
+                    <option value="Nov">November</option>
+                    <option value="Dec">December</option>
+                    <option value="Jan">January</option>
+                    <option value="Feb">February</option>
                 </select>
+                <button onclick="clearBuddyFilters()" class="btn-small" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: #cbd5e1; border-radius: 12px; padding: 0.75rem 1.2rem; cursor: pointer; font-weight: 500;" title="Clear filters">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
             </div>
         </div>
 
@@ -357,13 +366,45 @@
         let currentChatBuddy = "Rahul S.";
         let currentChatTrip = "Manali, Himachal";
 
-        function renderTrips() {
+        function renderTrips(filterQuery = '', filterMonth = 'all') {
             const container = document.getElementById('buddies-container');
             container.innerHTML = '';
             
             // Merge with any custom posted trips stored in localStorage
             const localCustomTrips = JSON.parse(localStorage.getItem('postedTrips') || '[]');
-            const allTrips = [...localCustomTrips, ...trips];
+            let allTrips = [...localCustomTrips, ...trips];
+
+            // Filter logic
+            const q = filterQuery.toLowerCase().trim();
+            if (q) {
+                allTrips = allTrips.filter(t => 
+                    (t.destination && t.destination.toLowerCase().includes(q)) ||
+                    (t.desc && t.desc.toLowerCase().includes(q)) ||
+                    (t.user && t.user.toLowerCase().includes(q))
+                );
+            }
+
+            if (filterMonth !== 'all') {
+                allTrips = allTrips.filter(t => 
+                    t.dates && t.dates.toLowerCase().includes(filterMonth.toLowerCase())
+                );
+            }
+
+            if (allTrips.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1.5rem; background: rgba(15,23,42,0.5); border: 2px dashed rgba(255,255,255,0.15); border-radius: 20px;">
+                        <i class="fa-solid fa-compass" style="font-size: 2.8rem; color: #64748b; margin-bottom: 1rem;"></i>
+                        <h3 style="color: white; margin: 0 0 0.5rem 0;">No matching travel trips found</h3>
+                        <p style="color: #94a3b8; font-size: 0.9rem; max-width: 440px; margin: 0 auto 1.5rem auto;">
+                            We couldn't find any trips for "${filterQuery || filterMonth}". You can be the first to post this adventure!
+                        </p>
+                        <button class="create-trip-btn" onclick="openCreateTripModal()" style="display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-plus"></i> Post This Trip Now
+                        </button>
+                    </div>
+                `;
+                return;
+            }
 
             allTrips.forEach(trip => {
                 const verifiedIcon = trip.verified ? `<i class="fa-solid fa-circle-check" style="color: #3b82f6; font-size: 0.9rem;" title="Verified Traveler"></i>` : '';
@@ -415,6 +456,18 @@
                 `;
                 container.innerHTML += cardHTML;
             });
+        }
+
+        function filterBuddies() {
+            const q = (document.getElementById('buddy-search-input')?.value || '').trim();
+            const m = document.getElementById('buddy-month-select')?.value || 'all';
+            renderTrips(q, m);
+        }
+
+        function clearBuddyFilters() {
+            if (document.getElementById('buddy-search-input')) document.getElementById('buddy-search-input').value = '';
+            if (document.getElementById('buddy-month-select')) document.getElementById('buddy-month-select').value = 'all';
+            renderTrips('', 'all');
         }
 
         function openJoinModal(tripId) {
@@ -572,7 +625,12 @@
             renderTrips();
         });
     </script>
-
+ 
+    <!-- Footer -->
+    <footer style="margin-top: 4rem; padding: 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.9rem;">
+        <p>&copy; 2026 TripoNext. Connecting Adventurous Travelers Worldwide.</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
+    </footer>
 
     <script src="script.js"></script>
 
