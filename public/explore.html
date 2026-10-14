@@ -9,7 +9,7 @@
     <title>Explore Hidden Gems - TripoNext</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=23">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
@@ -26,7 +26,7 @@
             <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
         </div>
         <div class="user-profile">
-            <!-- User name injected via script.js?v=21 -->
+            <!-- User name injected via script.js?v=23 -->
         </div>
     </nav>
 
@@ -626,7 +626,7 @@
 
                 // Toast Feedback
                 const toast = document.createElement('div');
-                toast.style.css?v=21Text = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#10b981,#059669);color: white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:600;z-index:999999;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
+                toast.style.css?v=23Text = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#10b981,#059669);color: white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:600;z-index:999999;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
                 toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${data.message || 'Hidden Gem added successfully!'}`;
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 4000);
@@ -642,7 +642,7 @@
             }
         }
     </script>
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=23"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

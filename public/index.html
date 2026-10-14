@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <link rel="stylesheet" href="style.css?v=21">
+    <link rel="stylesheet" href="style.css?v=23">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
@@ -58,7 +58,7 @@
                 <div class="input-group search-group-dest">
                     <i class="fa-solid fa-location-dot"></i>
                     <input type="text" placeholder="Where to go? (e.g. Manali, Goa, Paris)" id="destination-input" autocomplete="off">
-                    <button id="voice-search-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; margin-left: 5px; transition: color 0.3s;" title="Voice / Prompt Assistant">
+                    <button id="voice-search-btn" class="search-icon-btn" title="Voice / Prompt Assistant">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
                 </div>
@@ -66,16 +66,16 @@
                     <i class="fa-regular fa-calendar-days"></i>
                     <input type="text" placeholder="Travel Dates" id="dates-input" readonly>
                 </div>
-                <div class="input-group search-group-budget" style="position: relative;">
+                <div class="input-group search-group-budget">
                     <i class="fa-solid fa-wallet"></i>
                     <input type="number" placeholder="Budget" id="budget-input">
-                    <select id="budget-currency" style="background:transparent; border:none; color:var(--text-main); margin-left: 5px; outline: none;" onchange="updateCurrency()">
+                    <select id="budget-currency" class="budget-currency-select" onchange="updateCurrency()">
                         <option value="INR">₹ INR</option>
                         <option value="USD">$ USD</option>
                         <option value="EUR">€ EUR</option>
                         <option value="GBP">£ GBP</option>
                     </select>
-                    <button class="btn-small" style="position: absolute; right: 5px; top: 50%; transform: translateY(-50%); background: var(--accent); border: none; padding: 0.3rem 0.6rem; border-radius: 4px; color: white; cursor: pointer;" onclick="openBudgetCalculator()" title="Auto Calculate Budget">
+                    <button type="button" class="budget-calc-btn" onclick="openBudgetCalculator()" title="Auto Calculate Budget">
                         <i class="fa-solid fa-calculator"></i>
                     </button>
                 </div>
@@ -414,7 +414,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=21"></script>
+    <script src="script.js?v=23"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

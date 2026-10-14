@@ -1321,11 +1321,7 @@ window.renderMobileBottomNav = function() {
     }
 
     if (existingNav) {
-        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
-            existingNav.style.display = 'flex';
-        } else {
-            existingNav.style.display = 'none';
-        }
+        existingNav.style.display = 'flex';
         return;
     }
 
@@ -1365,11 +1361,7 @@ window.renderMobileBottomNav = function() {
 
     const nav = document.getElementById('mobile-bottom-nav');
     if (nav) {
-        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
-            nav.style.display = 'flex';
-        } else {
-            nav.style.display = 'none';
-        }
+        nav.style.display = 'flex';
     }
 };
 
@@ -4401,11 +4393,7 @@ if (typeof window !== 'undefined') {
             nav.style.display = 'none';
             return;
         }
-        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
-            nav.style.display = 'flex';
-        } else {
-            nav.style.display = 'none';
-        }
+        nav.style.display = 'flex';
     });
 }
 
