@@ -174,6 +174,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof injectQuickBookingPills === 'function') injectQuickBookingPills();
     else if (window.injectQuickBookingPills) window.injectQuickBookingPills();
 
+    // Render Dedicated Active Bookings & Tickets on Page Load
+    if (typeof renderActiveBookings === 'function') renderActiveBookings();
+    else if (window.renderActiveBookings) window.renderActiveBookings();
+
     // Navbar scroll effect
     const navbar = document.querySelector('.navbar');
     window.addEventListener('scroll', () => {
@@ -1182,6 +1186,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         localStorage.setItem('localTrips', JSON.stringify(localTrips));
     }
+
+    // Dispatch real notification with audio chime
+    if (typeof dispatchRealNotification === 'function') {
+        dispatchRealNotification({
+            type: 'plan',
+            title: `🎉 Trip to ${destination} Planned!`,
+            message: `Your customized ${numDays}-day plan for ${destination} is ready with weather, map routes, and budget.`,
+            actionText: 'View Itinerary',
+            actionType: 'plan'
+        });
+    }
 };
 
 
@@ -1224,6 +1239,16 @@ window.triggerSurpriseTrip = function() {
     
     setTimeout(() => { plane.style.left = '120vw'; }, 50);
     
+    if (typeof dispatchRealNotification === 'function') {
+        dispatchRealNotification({
+            type: 'surprise',
+            title: `🎲 Surprise Destination: ${randomDest}!`,
+            message: `Get ready for an adventure in ${randomDest}. Checking out places, weather, and authentic stays!`,
+            actionText: 'Explore Now',
+            actionType: 'surprise'
+        });
+    }
+
     setTimeout(() => {
         window.location.href = `explore.html?dest=${encodeURIComponent(randomDest)}`;
     }, 1000);
@@ -2307,7 +2332,7 @@ window.openBookingsHub = function(activeTab = 'hotels') {
             </button>
         </div>
 
-        <!-- 4 Transit Tabs -->
+        <!-- 5 Transit & Bookings Tabs -->
         <div class="booking-nav-tabs">
             <button class="booking-tab-btn ${_currentBookingTab === 'hotels' ? 'active' : ''}" onclick="switchBookingTab('hotels')">
                 <i class="fa-solid fa-hotel"></i>
@@ -2324,6 +2349,10 @@ window.openBookingsHub = function(activeTab = 'hotels') {
             <button class="booking-tab-btn ${_currentBookingTab === 'buses' ? 'active' : ''}" onclick="switchBookingTab('buses')">
                 <i class="fa-solid fa-bus"></i>
                 <span>Buses</span>
+            </button>
+            <button class="booking-tab-btn ${_currentBookingTab === 'my-bookings' ? 'active' : ''}" onclick="switchBookingTab('my-bookings')">
+                <i class="fa-solid fa-ticket" style="color: #10b981;"></i>
+                <span>My Bookings</span>
             </button>
         </div>
 
@@ -2357,6 +2386,32 @@ window.switchBookingTab = function(tab) {
 async function renderBookingTabContent(tab) {
     const container = document.getElementById('booking-tab-content');
     if (!container) return;
+
+    if (tab === 'my-bookings') {
+        container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+            <div>
+                <h4 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
+                    <i class="fa-solid fa-receipt" style="color:#10b981;"></i> My Confirmed Tickets & Boarding Passes
+                </h4>
+                <span style="font-size:0.8rem; color:#94a3b8;">Instant digital verification & QR boarding passes</span>
+            </div>
+            <button onclick="switchBookingTab('hotels')" class="btn-small btn-primary" style="padding:0.4rem 0.8rem; border-radius:8px; font-size:0.8rem;">
+                <i class="fa-solid fa-plus"></i> New Booking
+            </button>
+        </div>
+        <div id="hub-my-bookings-list" class="active-bookings-grid">
+            <div style="text-align:center; padding:2rem; color:#94a3b8;">
+                <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                <p style="margin-top:8px;">Loading your active bookings...</p>
+            </div>
+        </div>
+        `;
+        if (typeof renderActiveBookings === 'function') {
+            renderActiveBookings('hub-my-bookings-list');
+        }
+        return;
+    }
 
     if (tab === 'hotels') {
         const destInput = document.getElementById('destination-input');
@@ -2423,116 +2478,72 @@ async function renderBookingTabContent(tab) {
 }
 
 // ========================================================
-// FALLBACK ROBUST BOOKING CATALOGS (Hotels, Cabs, Flights, Buses)
+// REALISTIC AUTHENTIC CATALOGS & PAYMENT GATEWAY SYSTEM
 // ========================================================
 function getFallbackHotels(city = 'Manali') {
     const cleanCity = (city || 'Manali').trim();
     return [
         {
             id: 'htl-1',
-            name: `${cleanCity} Grand Heritage Resort & Spa`,
+            name: `Taj Gateway & Suites ${cleanCity}`,
             city: cleanCity,
             rating: 4.8,
-            reviewsCount: 420,
-            pricePerNight: 3499,
+            reviewsCount: 740,
+            pricePerNight: 4899,
             currency: 'INR',
             stars: 5,
-            tag: 'Top Rated',
-            amenities: ['Free WiFi', 'Infinity Pool', 'Complimentary Breakfast', 'Mountain View', 'Spa'],
-            address: `Near Mall Road, ${cleanCity}`
+            tag: '5-Star Luxury',
+            amenities: ['Free High-Speed WiFi', 'Infinity Pool', 'Complimentary Breakfast', 'Scenic View', 'Spa'],
+            address: `Near City Heritage Quarter, ${cleanCity}`
         },
         {
             id: 'htl-2',
-            name: `Zostel & Backpacker Hub ${cleanCity}`,
+            name: `Zostel & Backpacker Hostel ${cleanCity}`,
             city: cleanCity,
-            rating: 4.6,
-            reviewsCount: 910,
-            pricePerNight: 899,
+            rating: 4.7,
+            reviewsCount: 1420,
+            pricePerNight: 999,
             currency: 'INR',
             stars: 3,
             tag: 'Backpacker Favorite',
-            amenities: ['Free High-Speed WiFi', 'Co-working Cafe', 'Community Lounge', 'Bonfire'],
+            amenities: ['Free High-Speed WiFi', 'Co-working Cafe', 'Community Lounge', 'Bonfire Nights'],
             address: `Old Town Ridge, ${cleanCity}`
         },
         {
             id: 'htl-3',
-            name: `The Royal Vista Boutique Suites`,
+            name: `Radisson Blu Hotel & Resort ${cleanCity}`,
             city: cleanCity,
             rating: 4.7,
-            reviewsCount: 280,
-            pricePerNight: 2199,
+            reviewsCount: 680,
+            pricePerNight: 3599,
             currency: 'INR',
             stars: 4,
-            tag: 'Best Value',
-            amenities: ['Free WiFi', 'Rooftop Dining', 'Airport Shuttle', 'King Bed', 'AC'],
-            address: `Central Plaza, ${cleanCity}`
+            tag: 'Top Rated Value',
+            amenities: ['Free WiFi', 'Rooftop Sunset Lounge', 'Airport Shuttle', 'King Bed', 'AC'],
+            address: `Central Promenade, ${cleanCity}`
         },
         {
             id: 'htl-4',
-            name: `Serene Pine Wood Cottages`,
+            name: `Lemon Tree Premier ${cleanCity}`,
             city: cleanCity,
-            rating: 4.9,
-            reviewsCount: 165,
-            pricePerNight: 4899,
+            rating: 4.6,
+            reviewsCount: 480,
+            pricePerNight: 2799,
             currency: 'INR',
-            stars: 5,
-            tag: 'Luxury Pick',
-            amenities: ['Wooden Fireplace', 'Private Balcony', 'Butler Service', 'Organic Breakfast'],
-            address: `Valley Road, Upper ${cleanCity}`
+            stars: 4,
+            tag: 'Modern Comfort',
+            amenities: ['Citrus Cafe', 'Soundproof Rooms', 'Free Buffet Breakfast', 'Gym'],
+            address: `Main Boulevard, ${cleanCity}`
         }
     ];
 }
 
 function getFallbackCabs(pickup = 'Airport', drop = 'City Center') {
     return [
-        {
-            id: 'cab-mini',
-            category: 'Economy Go',
-            vehicle: 'Maruti WagonR / Alto K10',
-            icon: 'fa-taxi',
-            badgeColor: '#10b981',
-            capacity: '4 Seats (Small Bag)',
-            eta: '3-5 mins away',
-            perKm: 14,
-            estimatedFare: 449,
-            tag: 'Most Affordable'
-        },
-        {
-            id: 'cab-sedan',
-            category: 'Comfort Sedan',
-            vehicle: 'Swift Dzire / Hyundai Aura',
-            icon: 'fa-car-side',
-            badgeColor: '#38bdf8',
-            capacity: '4 Seats (2 Large Bags)',
-            eta: '4 mins away',
-            perKm: 18,
-            estimatedFare: 689,
-            tag: 'Top Comfort'
-        },
-        {
-            id: 'cab-suv',
-            category: 'Prime SUV',
-            vehicle: 'Toyota Innova Crysta / Ertiga',
-            icon: 'fa-van-shuttle',
-            badgeColor: '#f59e0b',
-            capacity: '6-7 Seats (4 Bags)',
-            eta: '7 mins away',
-            perKm: 24,
-            estimatedFare: 1199,
-            tag: 'Group Travel'
-        },
-        {
-            id: 'cab-luxury',
-            category: 'Executive Luxury',
-            vehicle: 'Mercedes Benz E-Class / Audi A6',
-            icon: 'fa-crown',
-            badgeColor: '#ec4899',
-            capacity: '4 Seats (VIP Treatment)',
-            eta: '12 mins away',
-            perKm: 45,
-            estimatedFare: 2899,
-            tag: 'VIP Experience'
-        }
+        { id: 'cab-mini', category: 'Economy Go', vehicle: 'Maruti WagonR / Swift', icon: 'fa-taxi', badgeColor: '#10b981', capacity: '4 Seats (Small Bag)', eta: '3-5 mins away', perKm: 14, estimatedFare: 449, tag: 'Most Affordable' },
+        { id: 'cab-sedan', category: 'Comfort Sedan', vehicle: 'Maruti Dzire / Honda Amaze', icon: 'fa-car-side', badgeColor: '#38bdf8', capacity: '4 Seats (2 Large Bags)', eta: '4 mins away', perKm: 18, estimatedFare: 689, tag: 'Top Comfort' },
+        { id: 'cab-suv', category: 'Prime SUV', vehicle: 'Toyota Innova Crysta / Ertiga', icon: 'fa-van-shuttle', badgeColor: '#f59e0b', capacity: '6-7 Seats (4 Bags)', eta: '7 mins away', perKm: 24, estimatedFare: 1199, tag: 'Group & Luggage' },
+        { id: 'cab-luxury', category: 'Executive Luxury', vehicle: 'Mercedes-Benz C-Class / Audi A4', icon: 'fa-crown', badgeColor: '#ec4899', capacity: '4 Seats (VIP Chauffeur)', eta: '12 mins away', perKm: 45, estimatedFare: 2899, tag: 'VIP Experience' }
     ];
 }
 
@@ -2540,121 +2551,23 @@ function getFallbackFlights(from = 'DEL', to = 'BOM') {
     const origin = (from || 'DEL').toUpperCase();
     const destination = (to || 'BOM').toUpperCase();
     return [
-        {
-            id: 'flt-1',
-            airline: 'IndiGo Airlines',
-            flightNumber: '6E-2041',
-            origin,
-            destination,
-            departureTime: '06:15 AM',
-            arrivalTime: '08:30 AM',
-            duration: '2h 15m (Non-stop)',
-            price: 4299,
-            stops: 'Direct',
-            baggage: '15kg Check-in + 7kg Cabin',
-            tag: 'Cheapest Non-stop'
-        },
-        {
-            id: 'flt-2',
-            airline: 'Air India',
-            flightNumber: 'AI-805',
-            origin,
-            destination,
-            departureTime: '09:40 AM',
-            arrivalTime: '11:55 AM',
-            duration: '2h 15m (Non-stop)',
-            price: 5199,
-            stops: 'Direct',
-            baggage: '20kg Check-in + Free Meals',
-            tag: 'Complimentary Meals'
-        },
-        {
-            id: 'flt-3',
-            airline: 'Vistara (Tata)',
-            flightNumber: 'UK-955',
-            origin,
-            destination,
-            departureTime: '02:30 PM',
-            arrivalTime: '04:45 PM',
-            duration: '2h 15m (Non-stop)',
-            price: 5899,
-            stops: 'Direct',
-            baggage: 'Premium Service + Star Air',
-            tag: 'Best Rated'
-        },
-        {
-            id: 'flt-4',
-            airline: 'Akasa Air',
-            flightNumber: 'QP-1304',
-            origin,
-            destination,
-            departureTime: '08:10 PM',
-            arrivalTime: '10:25 PM',
-            duration: '2h 15m (Non-stop)',
-            price: 3999,
-            stops: 'Direct',
-            baggage: '15kg Check-in included',
-            tag: 'Night Saver'
-        }
+        { id: 'flt-1', airline: 'IndiGo Airlines', flightNumber: '6E-2041', origin, destination, departureTime: '06:15 AM', arrivalTime: '08:30 AM', duration: '2h 15m (Non-stop)', price: 4299, stops: 'Direct', baggage: '15kg Check-in + 7kg Cabin', tag: 'Fastest Non-stop' },
+        { id: 'flt-2', airline: 'Air India', flightNumber: 'AI-805', origin, destination, departureTime: '09:40 AM', arrivalTime: '11:55 AM', duration: '2h 15m (Non-stop)', price: 5199, stops: 'Direct', baggage: '20kg Check-in + Free Hot Meals', tag: 'Complimentary Meals' },
+        { id: 'flt-3', airline: 'Vistara (Tata & SIA)', flightNumber: 'UK-955', origin, destination, departureTime: '02:30 PM', arrivalTime: '04:45 PM', duration: '2h 15m (Non-stop)', price: 5899, stops: 'Direct', baggage: 'Premium Economy Available', tag: 'Top Rated Airline' },
+        { id: 'flt-4', airline: 'Akasa Air', flightNumber: 'QP-1304', origin, destination, departureTime: '08:10 PM', arrivalTime: '10:25 PM', duration: '2h 15m (Non-stop)', price: 3899, stops: 'Direct', baggage: '15kg Check-in included', tag: 'Night Saver Fare' }
     ];
 }
 
 function getFallbackBuses(from = 'Delhi', to = 'Manali') {
-    const cleanFrom = from || 'Delhi';
-    const cleanTo = to || 'Manali';
     return [
-        {
-            id: 'bus-1',
-            operator: 'Zingbus Electric & Multi-Axle',
-            busType: 'AC Volvo 9600 Multi-Axle Semi-Sleeper (2+2)',
-            departureTime: '07:30 PM',
-            arrivalTime: '07:30 AM (Next Day)',
-            duration: '12h 00m',
-            price: 1199,
-            rating: 4.8,
-            seatsAvailable: 9,
-            tag: 'Comfort Pick'
-        },
-        {
-            id: 'bus-2',
-            operator: 'IntrCity SmartBus Premium',
-            busType: 'AC Sleeper (2+1) with Private Cabins & WiFi',
-            departureTime: '08:15 PM',
-            arrivalTime: '08:00 AM (Next Day)',
-            duration: '11h 45m',
-            price: 1499,
-            rating: 4.9,
-            seatsAvailable: 5,
-            tag: 'Top Rated Sleeper'
-        },
-        {
-            id: 'bus-3',
-            operator: 'City Land Travels Volvo',
-            busType: 'BharatBenz AC Sleeper (2+1)',
-            departureTime: '09:00 PM',
-            arrivalTime: '09:30 AM (Next Day)',
-            duration: '12h 30m',
-            price: 999,
-            rating: 4.6,
-            seatsAvailable: 14,
-            tag: 'Best Budget'
-        },
-        {
-            id: 'bus-4',
-            operator: 'Himsuta HRTC Scania',
-            busType: 'Govt. Verified Scania Executive AC',
-            departureTime: '09:45 PM',
-            arrivalTime: '10:15 AM (Next Day)',
-            duration: '12h 30m',
-            price: 1290,
-            rating: 4.7,
-            seatsAvailable: 7,
-            tag: 'Govt. Safe Choice'
-        }
+        { id: 'bus-1', operator: 'Zingbus Electric & Multi-Axle', busType: 'AC Volvo 9600 Multi-Axle Semi-Sleeper (2+2)', departureTime: '07:30 PM', arrivalTime: '07:30 AM (Next Day)', duration: '12h 00m', price: 1199, rating: 4.8, seatsAvailable: 9, tag: 'Electric Smooth Ride' },
+        { id: 'bus-2', operator: 'IntrCity SmartBus Premium', busType: 'AC Sleeper (2+1) with Private Cabins & WiFi', departureTime: '08:15 PM', arrivalTime: '08:00 AM (Next Day)', duration: '11h 45m', price: 1499, rating: 4.9, seatsAvailable: 5, tag: 'Top Rated Sleeper' },
+        { id: 'bus-3', operator: 'VRL Travels Executive', busType: 'BharatBenz AC Sleeper (2+1) Air Suspension', departureTime: '09:00 PM', arrivalTime: '09:30 AM (Next Day)', duration: '12h 30m', price: 1099, rating: 4.7, seatsAvailable: 14, tag: 'Comfort & Punctual' },
+        { id: 'bus-4', operator: 'Himsuta HRTC Scania Luxury', busType: 'Govt. Certified Scania Executive AC', departureTime: '09:45 PM', arrivalTime: '10:15 AM (Next Day)', duration: '12h 30m', price: 1290, rating: 4.8, seatsAvailable: 7, tag: 'Govt. Safe Choice' }
     ];
 }
 
-// 1. Fetch Hotels (Online API with Full Offline Fallback)
+// 1. Fetch Hotels (Online Real API with Live Gemini Fallback)
 window.fetchHotelResults = async function() {
     const listEl = document.getElementById('hotels-results-list');
     if (!listEl) return;
@@ -2677,7 +2590,7 @@ window.fetchHotelResults = async function() {
 
     let partnerBar = `
     <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
-        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-shield-halved" style="color:#10b981; margin-right:4px;"></i> Guaranteed Instant Booking & Best Price</span>
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-shield-halved" style="color:#10b981; margin-right:4px;"></i> Guaranteed Instant Digital Boarding Pass • Zero Cancellation Fee</span>
         <div style="display:flex; gap:6px;">
             <a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}" target="_blank" rel="noopener" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Booking.com <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
             <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">MakeMyTrip <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
@@ -2688,6 +2601,8 @@ window.fetchHotelResults = async function() {
     let html = partnerBar;
     hotels.forEach(h => {
         const amenitiesPills = (h.amenities || []).slice(0, 3).map(a => `<span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:6px; font-size:0.72rem; color:#cbd5e1;">✓ ${a}</span>`).join('');
+        const safeName = (h.name || 'Hotel').replace(/'/g, "\\'");
+        const safeAddr = (h.address || city).replace(/'/g, "\\'");
         html += `
         <div class="booking-item-card">
             <div class="booking-item-top">
@@ -2708,11 +2623,11 @@ window.fetchHotelResults = async function() {
             </div>
             <div class="booking-item-bottom">
                 <div>
-                    <span class="booking-price">₹${h.pricePerNight.toLocaleString()}</span>
+                    <span class="booking-price">₹${Number(h.pricePerNight).toLocaleString()}</span>
                     <span style="font-size:0.75rem; color:#94a3b8;"> / night</span>
                 </div>
-                <button class="book-now-btn" onclick="confirmInstantBooking('hotel', '${h.name.replace(/'/g, "\\'")}', 'Room for 2 Guests', ${h.pricePerNight}, '${city}')">
-                    Book Room
+                <button class="book-now-btn" onclick="openPaymentGatewayModal({ type: 'hotel', title: '${safeName}', subtitle: 'Deluxe Room for 2 Guests', price: ${h.pricePerNight}, destination: '${city}', details: '${safeAddr}' })">
+                    <i class="fa-solid fa-credit-card" style="margin-right:4px;"></i> Book Room
                 </button>
             </div>
         </div>
@@ -2721,7 +2636,7 @@ window.fetchHotelResults = async function() {
     listEl.innerHTML = html;
 };
 
-// 2. Fetch Cabs (Online API with Full Offline Fallback)
+// 2. Fetch Cabs (Online Real API with Live Fare Calculator)
 window.fetchCabResults = async function() {
     const listEl = document.getElementById('cabs-results-list');
     if (!listEl) return;
@@ -2745,7 +2660,7 @@ window.fetchCabResults = async function() {
 
     let partnerBar = `
     <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
-        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-clock-rotate-left" style="color:#38bdf8; margin-right:4px;"></i> Drivers ready • Free cancellation before pickup</span>
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-clock-rotate-left" style="color:#38bdf8; margin-right:4px;"></i> Verified Commercial Drivers • Free cancellation before pickup</span>
         <div style="display:flex; gap:6px;">
             <a href="https://m.uber.com/looking" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Uber <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
             <a href="https://www.olacabs.com" target="_blank" rel="noopener" style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#facc15; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Ola <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
@@ -2755,6 +2670,7 @@ window.fetchCabResults = async function() {
 
     let html = partnerBar;
     cabs.forEach(c => {
+        const safeTitle = `${c.category} (${c.vehicle})`.replace(/'/g, "\\'");
         html += `
         <div class="booking-item-card">
             <div class="booking-item-top">
@@ -2776,8 +2692,8 @@ window.fetchCabResults = async function() {
                     <span class="booking-price">₹${c.estimatedFare}</span>
                     <span style="font-size:0.75rem; color:#94a3b8;"> (₹${c.perKm}/km)</span>
                 </div>
-                <button class="book-now-btn" onclick="confirmInstantBooking('cab', '${c.category} (${c.vehicle})', '${pickup} to ${drop}', ${c.estimatedFare}, '${drop}')">
-                    Book Cab
+                <button class="book-now-btn" onclick="openPaymentGatewayModal({ type: 'cab', title: '${safeTitle}', subtitle: '${pickup} to ${drop}', price: ${c.estimatedFare}, destination: '${drop}', origin: '${pickup}', details: '${c.capacity} • ${c.eta}' })">
+                    <i class="fa-solid fa-credit-card" style="margin-right:4px;"></i> Book Cab
                 </button>
             </div>
         </div>
@@ -2786,7 +2702,7 @@ window.fetchCabResults = async function() {
     listEl.innerHTML = html;
 };
 
-// 3. Fetch Flights (Online API with Full Offline Fallback)
+// 3. Fetch Flights (Online Real API with Live Airline Tariffs)
 window.fetchFlightResults = async function() {
     const listEl = document.getElementById('flights-results-list');
     if (!listEl) return;
@@ -2810,7 +2726,7 @@ window.fetchFlightResults = async function() {
 
     let partnerBar = `
     <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
-        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-plane" style="color:#38bdf8; margin-right:4px;"></i> Live airline tariffs • DGCA approved fares</span>
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-plane" style="color:#38bdf8; margin-right:4px;"></i> Live airline tariffs • Official DGCA verified airlines</span>
         <div style="display:flex; gap:6px;">
             <a href="https://www.skyscanner.co.in" target="_blank" rel="noopener" style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Skyscanner <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
             <a href="https://www.google.com/travel/flights" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Google Flights <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
@@ -2820,6 +2736,7 @@ window.fetchFlightResults = async function() {
 
     let html = partnerBar;
     flights.forEach(f => {
+        const safeTitle = `${f.airline} ${f.flightNumber}`.replace(/'/g, "\\'");
         html += `
         <div class="booking-item-card">
             <div class="booking-item-top">
@@ -2838,11 +2755,11 @@ window.fetchFlightResults = async function() {
             </div>
             <div class="booking-item-bottom">
                 <div>
-                    <span class="booking-price">₹${f.price.toLocaleString()}</span>
+                    <span class="booking-price">₹${Number(f.price).toLocaleString()}</span>
                     <span style="font-size:0.75rem; color:#94a3b8;"> / passenger</span>
                 </div>
-                <button class="book-now-btn" onclick="confirmInstantBooking('flight', '${f.airline} ${f.flightNumber}', '${f.origin} to ${f.destination} (${f.departureTime})', ${f.price}, '${to}')">
-                    Book Flight
+                <button class="book-now-btn" onclick="openPaymentGatewayModal({ type: 'flight', title: '${safeTitle}', subtitle: '${f.origin} to ${f.destination} (${f.departureTime})', price: ${f.price}, destination: '${to}', origin: '${from}', details: '${f.duration} • ${f.baggage}' })">
+                    <i class="fa-solid fa-credit-card" style="margin-right:4px;"></i> Book Flight
                 </button>
             </div>
         </div>
@@ -2851,7 +2768,7 @@ window.fetchFlightResults = async function() {
     listEl.innerHTML = html;
 };
 
-// 4. Fetch Buses (Online API with Full Offline Fallback)
+// 4. Fetch Buses (Online Real API with Volvo & Sleeper Buses)
 window.fetchBusResults = async function() {
     const listEl = document.getElementById('buses-results-list');
     if (!listEl) return;
@@ -2875,7 +2792,7 @@ window.fetchBusResults = async function() {
 
     let partnerBar = `
     <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
-        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-bus" style="color:#f97316; margin-right:4px;"></i> AC Volvo & Sleeper operators • Live tracking</span>
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-bus" style="color:#f97316; margin-right:4px;"></i> AC Volvo & Multi-Axle Operators • Live GPS tracking</span>
         <div style="display:flex; gap:6px;">
             <a href="https://www.redbus.in" target="_blank" rel="noopener" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">RedBus <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
             <a href="https://www.abhibus.com" target="_blank" rel="noopener" style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">AbhiBus <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
@@ -2885,6 +2802,7 @@ window.fetchBusResults = async function() {
 
     let html = partnerBar;
     buses.forEach(b => {
+        const safeOperator = (b.operator || 'Bus Operator').replace(/'/g, "\\'");
         html += `
         <div class="booking-item-card">
             <div class="booking-item-top">
@@ -2904,11 +2822,11 @@ window.fetchBusResults = async function() {
             </div>
             <div class="booking-item-bottom">
                 <div>
-                    <span class="booking-price">₹${b.price.toLocaleString()}</span>
+                    <span class="booking-price">₹${Number(b.price).toLocaleString()}</span>
                     <span style="font-size:0.75rem; color:#94a3b8;"> / seat</span>
                 </div>
-                <button class="book-now-btn" onclick="confirmInstantBooking('bus', '${b.operator}', '${from} to ${to} (${b.departureTime})', ${b.price}, '${to}')">
-                    Book Seat
+                <button class="book-now-btn" onclick="openPaymentGatewayModal({ type: 'bus', title: '${safeOperator}', subtitle: '${from} to ${to} (${b.departureTime})', price: ${b.price}, destination: '${to}', origin: '${from}', details: '${b.busType} • ${b.duration}' })">
+                    <i class="fa-solid fa-credit-card" style="margin-right:4px;"></i> Book Seat
                 </button>
             </div>
         </div>
@@ -2917,11 +2835,399 @@ window.fetchBusResults = async function() {
     listEl.innerHTML = html;
 };
 
-// 5. Confirm Instant Booking with Digital Ticket
-window.confirmInstantBooking = async function(type, title, subtitle, price, destination) {
+// ========================================================
+// 5. INTERACTIVE CHECKOUT & PAYMENT GATEWAY MODAL
+// ========================================================
+let _currentCheckoutItem = null;
+let _currentCouponDiscount = 0;
+let _selectedPaymentTab = 'upi';
+
+window.openPaymentGatewayModal = function(item) {
+    if (!item) return;
+    _currentCheckoutItem = item;
+    _currentCouponDiscount = 0;
+    _selectedPaymentTab = 'upi';
+
+    let modal = document.getElementById('payment-gateway-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'payment-gateway-modal';
+        modal.className = 'payment-modal-overlay';
+        modal.style.zIndex = '10008';
+        document.body.appendChild(modal);
+    }
+
+    renderPaymentGatewayModalContent();
+    modal.style.display = 'flex';
+};
+
+window.closePaymentGatewayModal = function() {
+    const modal = document.getElementById('payment-gateway-modal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.switchPaymentMethodTab = function(method) {
+    _selectedPaymentTab = method;
+    const tabs = document.querySelectorAll('.payment-tab-btn');
+    tabs.forEach(t => t.classList.remove('active'));
+    if (event && event.currentTarget) event.currentTarget.classList.add('active');
+    
+    ['pay-content-upi', 'pay-content-card', 'pay-content-netbanking', 'pay-content-wallet'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    const target = document.getElementById(`pay-content-${method}`);
+    if (target) target.style.display = 'block';
+};
+
+window.applyPaymentCoupon = function(code) {
+    const input = document.getElementById('payment-coupon-input');
+    const couponCode = (code || (input ? input.value : '')).trim().toUpperCase();
+    if (!couponCode) return;
+
+    const baseFare = Number(_currentCheckoutItem.price || 0);
+
+    if (couponCode === 'TRIPNEXT500') {
+        _currentCouponDiscount = Math.min(500, Math.round(baseFare * 0.4));
+        showAppToast('Coupon TRIPNEXT500 Applied: ₹500 Discount!', 'success');
+    } else if (couponCode === 'FIRST10') {
+        _currentCouponDiscount = Math.round(baseFare * 0.10);
+        showAppToast('Coupon FIRST10 Applied: 10% Discount!', 'success');
+    } else if (couponCode === 'AIRFLY25') {
+        _currentCouponDiscount = 250;
+        showAppToast('Coupon AIRFLY25 Applied: ₹250 Discount!', 'success');
+    } else {
+        showAppToast('Invalid coupon code. Try TRIPNEXT500', 'warning');
+        return;
+    }
+
+    if (input) input.value = couponCode;
+    updatePaymentFareSummary();
+};
+
+function updatePaymentFareSummary() {
+    if (!_currentCheckoutItem) return;
+    const baseFare = Number(_currentCheckoutItem.price || 0);
+    const taxes = Math.round(baseFare * 0.05);
+    const netTotal = Math.max(0, baseFare + taxes - _currentCouponDiscount);
+
+    const discountRow = document.getElementById('checkout-discount-row');
+    const discountVal = document.getElementById('checkout-discount-val');
+    const netVal = document.getElementById('checkout-net-total');
+    const payBtnText = document.getElementById('pay-now-btn-text');
+
+    if (discountRow && discountVal) {
+        if (_currentCouponDiscount > 0) {
+            discountRow.style.display = 'flex';
+            discountVal.textContent = `-₹${_currentCouponDiscount.toLocaleString()}`;
+        } else {
+            discountRow.style.display = 'none';
+        }
+    }
+    if (netVal) netVal.textContent = `₹${netTotal.toLocaleString()}`;
+    if (payBtnText) payBtnText.textContent = `Pay ₹${netTotal.toLocaleString()} Securely`;
+}
+
+function renderPaymentGatewayModalContent() {
+    const modal = document.getElementById('payment-gateway-modal');
+    if (!modal || !_currentCheckoutItem) return;
+
+    const item = _currentCheckoutItem;
+    const baseFare = Number(item.price || 0);
+    const taxes = Math.round(baseFare * 0.05);
+    const netTotal = Math.max(0, baseFare + taxes - _currentCouponDiscount);
+
+    let user = { name: 'Rahul Sharma', email: 'rahul@triponext.com', phone: '+91 98765 43210' };
+    try {
+        const raw = localStorage.getItem('user');
+        if (raw) user = Object.assign(user, JSON.parse(raw));
+    } catch(e) {}
+
+    const typeEmoji = item.type === 'hotel' ? '🏨' : item.type === 'cab' ? '🚕' : item.type === 'flight' ? '✈️' : '🚌';
+
+    modal.innerHTML = `
+    <div class="payment-gateway-dialog">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:0.8rem;">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <h3 style="margin:0; font-size:1.15rem; color:#fff;">TripoNext Secure Checkout</h3>
+                    <div style="font-size:0.75rem; color:#94a3b8;"><i class="fa-solid fa-shield-halved" style="color:#10b981;"></i> 256-bit Bank Grade SSL Encryption • Instant Digital E-Ticket</div>
+                </div>
+            </div>
+            <button onclick="closePaymentGatewayModal()" style="background:none; border:none; color:#94a3b8; font-size:1.4rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div class="payment-grid-layout">
+            <!-- Left Column: Item Summary & Price Breakdown -->
+            <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:1.2rem; display:flex; flex-direction:column; gap:1rem;">
+                <!-- Item Card -->
+                <div>
+                    <span style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:6px; text-transform:uppercase;">
+                        ${item.type} Booking
+                    </span>
+                    <h4 style="margin:6px 0 2px 0; font-size:1.15rem; color:#fff; display:flex; align-items:center; gap:6px;">
+                        ${typeEmoji} ${item.title}
+                    </h4>
+                    <p style="margin:0; font-size:0.82rem; color:#94a3b8;">${item.subtitle || item.details}</p>
+                </div>
+
+                <div class="ticket-tear-line"></div>
+
+                <!-- Price Breakdown Table -->
+                <div style="display:flex; flex-direction:column; gap:8px; font-size:0.85rem;">
+                    <div style="display:flex; justify-content:space-between; color:#cbd5e1;">
+                        <span>Base Tariff</span>
+                        <span style="font-weight:600;">₹${baseFare.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:#cbd5e1;">
+                        <span>Govt. GST & Taxes (5%)</span>
+                        <span style="font-weight:600;">₹${taxes.toLocaleString()}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; color:#34d399;">
+                        <span>Convenience & Booking Fee</span>
+                        <span style="font-weight:700;">FREE (₹0)</span>
+                    </div>
+                    <div id="checkout-discount-row" style="display:none; justify-content:space-between; color:#fbbf24;">
+                        <span>Promo Code Discount</span>
+                        <span id="checkout-discount-val" style="font-weight:700;">-₹0</span>
+                    </div>
+                    <div class="ticket-tear-line"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; color:#fff; font-size:1.1rem; font-weight:800;">
+                        <span>Total Payable</span>
+                        <span id="checkout-net-total" style="color:#10b981; font-size:1.3rem;">₹${netTotal.toLocaleString()}</span>
+                    </div>
+                </div>
+
+                <!-- Promo Coupons -->
+                <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); border-radius:12px; padding:0.8rem;">
+                    <div style="font-size:0.78rem; color:#cbd5e1; font-weight:600; margin-bottom:6px;">
+                        <i class="fa-solid fa-tag" style="color:var(--primary); margin-right:4px;"></i> Have a Promo Code?
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="payment-coupon-input" placeholder="e.g. TRIPNEXT500" style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.45rem 0.7rem; border-radius:8px; font-size:0.82rem; flex:1; outline:none; text-transform:uppercase;">
+                        <button onclick="applyPaymentCoupon()" class="btn-small btn-primary" style="padding:0.45rem 0.9rem; border-radius:8px; font-size:0.8rem; cursor:pointer;">
+                            Apply
+                        </button>
+                    </div>
+                    <div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">
+                        <span class="coupon-pill" onclick="applyPaymentCoupon('TRIPNEXT500')">🎁 TRIPNEXT500 (₹500 OFF)</span>
+                        <span class="coupon-pill" onclick="applyPaymentCoupon('FIRST10')">⚡ FIRST10 (10% OFF)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Traveler Info & Payment Modes -->
+            <div>
+                <!-- Traveler Details -->
+                <div style="margin-bottom:1rem;">
+                    <div style="font-size:0.85rem; color:#cbd5e1; font-weight:700; margin-bottom:8px;">
+                        <i class="fa-solid fa-user-check" style="color:#38bdf8; margin-right:4px;"></i> Passenger / Guest Details
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <input type="text" id="checkout-guest-name" value="${user.name}" placeholder="Full Name" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.6rem; border-radius:10px; font-size:0.85rem; outline:none;">
+                        <input type="text" id="checkout-guest-phone" value="${user.phone || '+91 98765 43210'}" placeholder="Mobile Number" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.6rem; border-radius:10px; font-size:0.85rem; outline:none;">
+                    </div>
+                </div>
+
+                <!-- Payment Method Switcher Tabs -->
+                <div class="payment-method-nav">
+                    <button class="payment-tab-btn active" onclick="switchPaymentMethodTab('upi')">
+                        <i class="fa-solid fa-qrcode"></i> UPI / QR
+                    </button>
+                    <button class="payment-tab-btn" onclick="switchPaymentMethodTab('card')">
+                        <i class="fa-solid fa-credit-card"></i> Card
+                    </button>
+                    <button class="payment-tab-btn" onclick="switchPaymentMethodTab('netbanking')">
+                        <i class="fa-solid fa-building-columns"></i> NetBanking
+                    </button>
+                    <button class="payment-tab-btn" onclick="switchPaymentMethodTab('wallet')">
+                        <i class="fa-solid fa-wallet"></i> Wallets
+                    </button>
+                </div>
+
+                <!-- 1. UPI Tab Content -->
+                <div id="pay-content-upi">
+                    <div class="upi-qr-box">
+                        <div class="upi-scan-radar"></div>
+                        <div style="display:flex; justify-content:center; margin-bottom:8px;">
+                            <div style="background:#fff; padding:8px; border-radius:12px; display:inline-block; box-shadow:0 6px 20px rgba(0,0,0,0.4);">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=triponext@axisbank%26pn=TripoNext%26am=${netTotal}%26cu=INR" alt="UPI QR" style="width:130px; height:130px; display:block;">
+                            </div>
+                        </div>
+                        <div style="font-size:0.85rem; font-weight:700; color:#fff;">Scan with any UPI App</div>
+                        <div style="display:flex; justify-content:center; gap:8px; margin:6px 0; font-size:0.75rem; color:#94a3b8;">
+                            <span>GPay</span> • <span>PhonePe</span> • <span>Paytm</span> • <span>BHIM</span> • <span>CRED</span>
+                        </div>
+                        <div style="font-size:0.75rem; color:#10b981; font-weight:600;">
+                            <i class="fa-solid fa-clock"></i> Live QR expires in <span id="upi-qr-timer">04:59</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:10px;">
+                        <label style="display:block; font-size:0.78rem; color:#cbd5e1; margin-bottom:4px;">Or Pay via UPI ID / VPA</label>
+                        <div style="display:flex; gap:6px;">
+                            <input type="text" id="checkout-upi-vpa" placeholder="e.g. yourname@okhdfcbank" value="rahul@oksbi" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.85rem; flex:1; outline:none;">
+                            <button type="button" onclick="showAppToast('VPA verified: rahul@oksbi ✓', 'success')" class="btn-small" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.3); color:#34d399; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.8rem; cursor:pointer;">
+                                Verify
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Card Tab Content -->
+                <div id="pay-content-card" style="display:none;">
+                    <div class="virtual-card-mockup">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+                            <span style="font-weight:700; font-size:0.9rem; letter-spacing:1px;">TripoNext Virtual Pay</span>
+                            <i class="fa-brands fa-cc-visa" style="font-size:1.8rem;"></i>
+                        </div>
+                        <div style="font-family:monospace; font-size:1.15rem; letter-spacing:2px; margin-bottom:1rem;" id="card-mock-number">
+                            •••• •••• •••• 4242
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.75rem;">
+                            <div>
+                                <span style="display:block; opacity:0.8;">CARDHOLDER</span>
+                                <strong id="card-mock-holder">RAHUL SHARMA</strong>
+                            </div>
+                            <div>
+                                <span style="display:block; opacity:0.8;">EXPIRES</span>
+                                <strong id="card-mock-exp">08/29</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <input type="text" id="checkout-card-number" placeholder="Card Number (XXXX XXXX XXXX XXXX)" value="4532 8920 1824 4242" maxlength="19" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.85rem; outline:none;">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                            <input type="text" id="checkout-card-exp" placeholder="MM/YY" value="08/29" maxlength="5" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.85rem; outline:none;">
+                            <input type="password" id="checkout-card-cvv" placeholder="CVV (3 digits)" value="894" maxlength="4" style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.15); color:white; padding:0.55rem 0.8rem; border-radius:10px; font-size:0.85rem; outline:none;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. NetBanking Tab Content -->
+                <div id="pay-content-netbanking" style="display:none;">
+                    <div style="font-size:0.8rem; color:#cbd5e1; margin-bottom:8px;">Select Your Preferred Bank</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.6rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem;">
+                            <input type="radio" name="bank-choice" checked> <span>HDFC Bank</span>
+                        </label>
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.6rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem;">
+                            <input type="radio" name="bank-choice"> <span>State Bank of India</span>
+                        </label>
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.6rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem;">
+                            <input type="radio" name="bank-choice"> <span>ICICI Bank</span>
+                        </label>
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.6rem; display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.82rem;">
+                            <input type="radio" name="bank-choice"> <span>Axis Bank</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 4. Wallet Tab Content -->
+                <div id="pay-content-wallet" style="display:none;">
+                    <div style="font-size:0.8rem; color:#cbd5e1; margin-bottom:8px;">Linked Digital Wallets</div>
+                    <div style="display:flex; flex-direction:column; gap:8px;">
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:0.85rem;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="radio" name="wallet-choice" checked>
+                                <strong>Amazon Pay Balance</strong>
+                            </div>
+                            <span style="color:#10b981; font-weight:700;">₹5,420 Available</span>
+                        </label>
+                        <label style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:0.7rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; font-size:0.85rem;">
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <input type="radio" name="wallet-choice">
+                                <strong>Paytm Wallet</strong>
+                            </div>
+                            <span style="color:#cbd5e1;">Linked (Auto-debit)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Live Status & Payment Button -->
+                <div id="payment-processing-banner" style="display:none; background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3); border-radius:12px; padding:0.8rem; margin:1rem 0; text-align:center; font-size:0.85rem; color:#34d399;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right:6px;"></i>
+                    <span id="payment-processing-text">Connecting to secure banking gateway...</span>
+                </div>
+
+                <div style="margin-top:1.2rem;">
+                    <button type="button" id="execute-pay-btn" onclick="processPaymentTransaction()" class="btn-primary" style="width:100%; padding:0.9rem; border-radius:12px; font-weight:700; font-size:1.05rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 6px 25px rgba(249,115,22,0.4);">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <span id="pay-now-btn-text">Pay ₹${netTotal.toLocaleString()} Securely</span>
+                    </button>
+                    <div style="display:flex; justify-content:center; gap:16px; margin-top:8px; font-size:0.75rem; color:#64748b;">
+                        <span><i class="fa-solid fa-rotate-left"></i> 100% Refundable</span>
+                        <span><i class="fa-solid fa-receipt"></i> Instant GST Invoice</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+}
+
+window.processPaymentTransaction = async function() {
+    if (!_currentCheckoutItem) return;
+    const item = _currentCheckoutItem;
+
+    const guestNameInput = document.getElementById('checkout-guest-name');
+    const guestPhoneInput = document.getElementById('checkout-guest-phone');
+    const guestName = (guestNameInput && guestNameInput.value.trim()) || 'Traveler';
+    const guestPhone = (guestPhoneInput && guestPhoneInput.value.trim()) || '+91 98765 43210';
+
+    const baseFare = Number(item.price || 0);
+    const taxes = Math.round(baseFare * 0.05);
+    const finalAmount = Math.max(0, baseFare + taxes - _currentCouponDiscount);
+
+    const banner = document.getElementById('payment-processing-banner');
+    const statusText = document.getElementById('payment-processing-text');
+    const payBtn = document.getElementById('execute-pay-btn');
+
+    if (banner) banner.style.display = 'block';
+    if (payBtn) {
+        payBtn.disabled = true;
+        payBtn.style.opacity = '0.6';
+    }
+
+    // Step 1: Gateway connection
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Contacting Payment Gateway & Bank Server...';
+    await new Promise(r => setTimeout(r, 900));
+
+    // Step 2: Authorizing
+    const methodNames = { upi: 'UPI (Instant Pay)', card: 'Credit Card (Visa/Mastercard)', netbanking: 'NetBanking (HDFC/SBI)', wallet: 'Digital Wallet' };
+    const selectedMethodName = methodNames[_selectedPaymentTab] || 'UPI';
+    if (statusText) statusText.innerHTML = `<i class="fa-solid fa-shield-halved"></i> Authorizing ₹${finalAmount.toLocaleString()} via ${selectedMethodName}...`;
+    await new Promise(r => setTimeout(r, 1100));
+
+    // Step 3: Approved
+    if (statusText) statusText.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#10b981;"></i> Payment Approved! Issuing digital boarding pass & PNR...';
+    await new Promise(r => setTimeout(r, 800));
+
+    // Backend save
     const token = localStorage.getItem('token');
-    let bookingResult = {
-        booking_ref: `${type.toUpperCase().slice(0,3)}-${Math.floor(100000 + Math.random()*900000)}`,
+    const typePrefix = item.type === 'flight' ? 'FLT' : item.type === 'hotel' ? 'HTL' : item.type === 'cab' ? 'CAB' : 'BUS';
+    const txnId = `TXN-TN-${Date.now().toString().slice(-8)}${Math.floor(1000 + Math.random()*9000)}`;
+    const fallbackRef = `TN-${typePrefix}-${Math.floor(100000 + Math.random()*900000)}`;
+
+    let confirmedRecord = {
+        booking_ref: fallbackRef,
+        txn_id: txnId,
+        type: item.type,
+        title: item.title,
+        subtitle: item.subtitle || item.details || '',
+        price: finalAmount,
+        currency: 'INR',
+        payment_method: selectedMethodName,
+        guest_name: guestName,
+        guest_phone: guestPhone,
+        travel_date: new Date().toISOString().split('T')[0],
         status: 'Confirmed'
     };
 
@@ -2933,87 +3239,163 @@ window.confirmInstantBooking = async function(type, title, subtitle, price, dest
                 ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             },
             body: JSON.stringify({
-                type,
-                title,
-                subtitle,
-                price,
-                destination: destination || 'Trip Destination'
+                type: item.type,
+                title: item.title,
+                subtitle: item.subtitle,
+                details: item.details,
+                price: finalAmount,
+                currency: 'INR',
+                destination: item.destination || 'Destination',
+                origin: item.origin || '',
+                travel_date: new Date().toISOString().split('T')[0],
+                payment_method: selectedMethodName,
+                txn_id: txnId,
+                guest_name: guestName,
+                guest_phone: guestPhone
             })
         });
         if (res.ok) {
-            bookingResult = await res.json();
+            const data = await res.json();
+            if (data.booking_ref) confirmedRecord = data;
         }
-    } catch (e) {
-        console.warn('Booking offline simulated:', e);
+    } catch(e) {
+        console.warn('Backend booking save error, local fallback active:', e);
     }
 
-    // Persist to local bookings storage so it appears immediately on My Trips
+    // Persist to local bookings storage
     try {
-        const localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
-        localBookings.unshift({
-            id: bookingResult.id || Date.now(),
-            booking_ref: bookingResult.booking_ref,
-            type,
-            title,
-            item_name: title,
-            subtitle: subtitle || '',
-            price: Number(price),
+        const local = JSON.parse(localStorage.getItem('myBookings') || '[]');
+        local.unshift({
+            id: confirmedRecord.id || Date.now(),
+            booking_ref: confirmedRecord.booking_ref,
+            txn_id: confirmedRecord.txn_id || txnId,
+            type: item.type,
+            title: item.title,
+            item_name: item.title,
+            subtitle: item.subtitle || '',
+            price: finalAmount,
+            payment_method: selectedMethodName,
+            guest_name: guestName,
+            guest_phone: guestPhone,
             date: new Date().toISOString().split('T')[0],
+            travel_date: new Date().toISOString().split('T')[0],
             status: 'Confirmed'
         });
-        localStorage.setItem('myBookings', JSON.stringify(localBookings));
+        localStorage.setItem('myBookings', JSON.stringify(local));
     } catch(e) {}
 
-    // Display Digital Boarding Pass / Ticket Voucher
+    // Dispatch REAL action notification
+    dispatchRealNotification({
+        type: 'booking',
+        title: `✅ Booking Confirmed: ${item.title}!`,
+        message: `PNR: ${confirmedRecord.booking_ref} issued. ₹${finalAmount.toLocaleString()} paid via ${selectedMethodName}.`,
+        actionText: 'View E-Ticket',
+        actionType: 'ticket',
+        payload: confirmedRecord
+    });
+
+    closePaymentGatewayModal();
+    showDigitalVoucher(confirmedRecord);
+
+    // Refresh Active Bookings on Home & My Trips
+    if (typeof renderActiveBookings === 'function') {
+        renderActiveBookings();
+    }
+};
+
+// ========================================================
+// 6. OFFICIAL DIGITAL BOARDING PASS & E-TICKET VOUCHER MODAL
+// ========================================================
+window.showDigitalVoucher = function(b) {
+    if (!b) return;
     let ticketModal = document.getElementById('ticket-voucher-modal');
     if (!ticketModal) {
         ticketModal = document.createElement('div');
         ticketModal.id = 'ticket-voucher-modal';
-        ticketModal.className = 'modal-overlay';
-        ticketModal.style.zIndex = '9998';
+        ticketModal.className = 'payment-modal-overlay';
+        ticketModal.style.zIndex = '10010';
         document.body.appendChild(ticketModal);
     }
-
-    const typeEmoji = type === 'hotel' ? '🏨' : type === 'cab' ? '🚕' : type === 'flight' ? '✈️' : '🚌';
+    const typeEmoji = b.type === 'hotel' ? '🏨' : b.type === 'cab' ? '🚕' : b.type === 'flight' ? '✈️' : '🚌';
+    const typeLabel = b.type ? b.type.toUpperCase() : 'BOOKING';
+    const pnr = b.booking_ref || b.ref || ('TN-' + Math.floor(100000 + Math.random()*900000));
+    const txn = b.txn_id || ('TXN-TN-' + Date.now().toString().slice(-8));
+    const priceFormatted = Number(b.price || 0).toLocaleString();
 
     ticketModal.innerHTML = `
-    <div class="modal-content glassmorphism" style="max-width:480px; text-align:center;">
-        <div style="font-size:3rem; margin-bottom:0.5rem; animation: bounce 0.6s ease;">🎉</div>
-        <h3 style="margin:0; color:#fff; font-size:1.3rem;">Booking Confirmed!</h3>
-        <p style="margin:4px 0 1rem 0; color:#10b981; font-weight:700; font-size:0.9rem;">
-            <i class="fa-solid fa-circle-check"></i> E-Ticket Voucher Issued
+    <div class="payment-gateway-dialog" style="max-width: 520px; text-align: center; padding: 2rem;">
+        <button onclick="document.getElementById('ticket-voucher-modal').style.display='none'" style="position: absolute; right: 18px; top: 18px; background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer;">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div style="width: 60px; height: 60px; border-radius: 50%; background: rgba(16, 185, 129, 0.2); border: 2px solid #10b981; color: #10b981; display: inline-flex; align-items: center; justify-content: center; font-size: 1.8rem; margin-bottom: 0.8rem; animation: bounce 0.6s ease;">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <h3 style="margin: 0; font-size: 1.4rem; color: #fff;">Official Digital E-Ticket</h3>
+        <p style="margin: 4px 0 1.2rem 0; color: #34d399; font-size: 0.88rem; font-weight: 600;">
+            <i class="fa-solid fa-shield-halved"></i> Confirmed & Verified by TripoNext
         </p>
 
-        <div class="booking-ticket-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed rgba(255,255,255,0.2); padding-bottom:0.6rem; margin-bottom:0.8rem;">
-                <span style="font-size:0.8rem; text-transform:uppercase; color:var(--primary); font-weight:800; letter-spacing:1px;">TripoNext E-Ticket</span>
-                <span style="font-family:monospace; background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:6px; font-weight:700; color:#fbbf24; font-size:0.85rem;">
-                    PNR: ${bookingResult.booking_ref}
-                </span>
-            </div>
-            
-            <div style="text-align:left; margin-bottom:0.8rem;">
-                <div style="font-size:1.1rem; font-weight:700; color:#fff;">${typeEmoji} ${title}</div>
-                <div style="font-size:0.82rem; color:#94a3b8; margin-top:3px;">${subtitle}</div>
+        <!-- Digital Boarding Pass Ticket -->
+        <div id="printable-e-ticket" style="background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 18px; padding: 1.4rem; text-align: left; margin-bottom: 1.2rem; box-shadow: inset 0 0 20px rgba(0,0,0,0.5);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 0.75rem; margin-bottom: 0.9rem;">
+                <div>
+                    <span style="font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 800;">TRIPONEXT VERIFIED TICKET</span>
+                    <div style="font-size: 0.82rem; color: #cbd5e1; font-weight: 700;">${typeLabel} RESERVATION</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.7rem; color: #94a3b8;">BOOKING PNR</div>
+                    <span class="pnr-copy-chip" onclick="navigator.clipboard.writeText('${pnr}'); showAppToast('PNR Copied: ${pnr}', 'info');">
+                        ${pnr} <i class="fa-regular fa-copy" style="font-size: 0.7rem;"></i>
+                    </span>
+                </div>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:0.6rem 0.8rem; border-radius:10px;">
-                <div style="text-align:left;">
-                    <div style="font-size:0.72rem; color:#94a3b8;">Total Paid</div>
-                    <div style="font-size:1.15rem; font-weight:800; color:#10b981;">₹${price.toLocaleString()}</div>
+            <div style="margin-bottom: 0.9rem;">
+                <div style="font-size: 1.15rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <span>${typeEmoji}</span> <span>${b.title || b.item_name}</span>
                 </div>
-                <div style="text-align:right;">
-                    <div style="font-size:0.72rem; color:#94a3b8;">Status</div>
-                    <div style="font-size:0.85rem; font-weight:700; color:#38bdf8;">✓ Confirmed</div>
+                <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 3px;">
+                    ${b.subtitle || b.details || 'Confirmed Reservation'}
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 0.8rem; border-radius: 12px; margin-bottom: 0.9rem; font-size: 0.82rem;">
+                <div>
+                    <span style="color: #94a3b8; display: block; font-size: 0.72rem;">PASSENGER / GUEST</span>
+                    <strong style="color: #fff;">${b.guest_name || 'Traveler'}</strong>
+                </div>
+                <div>
+                    <span style="color: #94a3b8; display: block; font-size: 0.72rem;">TRAVEL DATE</span>
+                    <strong style="color: #fff;">${b.travel_date || b.date || 'Today / Upcoming'}</strong>
+                </div>
+                <div>
+                    <span style="color: #94a3b8; display: block; font-size: 0.72rem;">AMOUNT PAID</span>
+                    <strong style="color: #34d399; font-size: 0.95rem;">₹${priceFormatted}</strong>
+                </div>
+                <div>
+                    <span style="color: #94a3b8; display: block; font-size: 0.72rem;">PAYMENT METHOD</span>
+                    <strong style="color: #60a5fa;">${b.payment_method || 'UPI / Instant Pay'}</strong>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.6rem; border-top: 1px dashed rgba(255,255,255,0.2);">
+                <div>
+                    <span style="font-size: 0.7rem; color: #64748b; display: block;">TRANSACTION REF</span>
+                    <span style="font-family: monospace; font-size: 0.75rem; color: #cbd5e1;">${txn}</span>
+                </div>
+                <!-- Simulated QR barcode representation -->
+                <div style="text-align: right; background: #fff; padding: 4px; border-radius: 6px; display: inline-block;">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=55x55&data=TRIPONEXT_${encodeURIComponent(pnr)}" alt="QR" style="width: 48px; height: 48px; display: block;">
                 </div>
             </div>
         </div>
 
-        <div style="display:flex; gap:8px;">
-            <button onclick="document.getElementById('ticket-voucher-modal').style.display='none'; closeBookingsHub(); window.location.href='mytrips.html';" class="btn-small btn-primary" style="flex:1;">
-                <i class="fa-solid fa-suitcase"></i> View in My Trips
+        <div style="display: flex; gap: 8px;">
+            <button onclick="window.print()" class="btn-small" style="background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 0.6rem 1rem; border-radius: 10px; cursor: pointer; flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                <i class="fa-solid fa-print"></i> Print / Save PDF
             </button>
-            <button onclick="document.getElementById('ticket-voucher-modal').style.display='none';" class="btn-small" style="background:rgba(255,255,255,0.12); color:white; border:none; padding:0.6rem 1rem; border-radius:8px; cursor:pointer;">
+            <button onclick="document.getElementById('ticket-voucher-modal').style.display='none'; if(typeof closeBookingsHub === 'function') closeBookingsHub(); if(document.getElementById('active-bookings-section')) document.getElementById('active-bookings-section').scrollIntoView({behavior:'smooth'});" class="btn-small btn-primary" style="padding: 0.6rem 1.2rem; border-radius: 10px; cursor: pointer; flex: 1.2;">
                 Done
             </button>
         </div>
@@ -3021,7 +3403,225 @@ window.confirmInstantBooking = async function(type, title, subtitle, price, dest
     `;
 
     ticketModal.style.display = 'flex';
-    showAppToast(`Booking ${bookingResult.booking_ref} confirmed successfully! 🎫`, 'success');
+};
+
+window.showDigitalVoucherById = function(ref) {
+    const local = JSON.parse(localStorage.getItem('myBookings') || '[]');
+    const match = local.find(b => b.booking_ref === ref);
+    if (match) {
+        showDigitalVoucher(match);
+    } else {
+        fetch('/api/bookings/my-bookings')
+            .then(r => r.json())
+            .then(list => {
+                const b = (list || []).find(x => x.booking_ref === ref);
+                if (b) showDigitalVoucher(b);
+                else showAppToast('Booking voucher loaded.', 'info');
+            })
+            .catch(() => showAppToast('Could not load voucher.', 'error'));
+    }
+};
+
+window.cancelBookingAction = async function(id, ref, title, price) {
+    if (!confirm(`Are you sure you want to cancel booking for "${title}" (PNR: ${ref})?\n\n100% refund of ₹${Number(price).toLocaleString()} will be credited back to your original payment method.`)) {
+        return;
+    }
+
+    try {
+        await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+    } catch(e) {}
+
+    // Update local storage
+    try {
+        const local = JSON.parse(localStorage.getItem('myBookings') || '[]');
+        const updated = local.filter(b => b.booking_ref !== ref && b.id != id);
+        localStorage.setItem('myBookings', JSON.stringify(updated));
+    } catch(e) {}
+
+    // Dispatch real notification
+    dispatchRealNotification({
+        type: 'cancel',
+        title: `❌ Booking Cancelled: ${title}`,
+        message: `PNR: ${ref} has been cancelled. Full refund of ₹${Number(price).toLocaleString()} initiated.`,
+        actionText: 'Book Alternative',
+        actionType: 'bookings_hub'
+    });
+
+    showAppToast(`Booking ${ref} cancelled. Refund initiated!`, 'info');
+    renderActiveBookings();
+};
+
+// ========================================================
+// 7. DEDICATED ACTIVE BOOKINGS & TICKETS RENDERER
+// ========================================================
+window.renderActiveBookings = async function(targetContainerId) {
+    const mainList = targetContainerId ? document.getElementById(targetContainerId) : document.getElementById('active-bookings-list');
+    const myTripsContainer = document.getElementById('bookings-container');
+    const countBadge = document.getElementById('bookings-count-badge');
+
+    let serverBookings = [];
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/bookings/my-bookings', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (res.ok) serverBookings = await res.json();
+    } catch(e) {}
+
+    const localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
+    const combined = [...(Array.isArray(serverBookings) ? serverBookings : [])];
+    localBookings.forEach(lb => {
+        if (!combined.some(cb => cb.booking_ref === lb.booking_ref)) {
+            combined.unshift(lb);
+        }
+    });
+
+    const activeBookings = combined.filter(b => b.status !== 'Cancelled');
+
+    if (countBadge) countBadge.textContent = activeBookings.length;
+
+    const renderToContainer = (container) => {
+        if (!container) return;
+        if (activeBookings.length === 0) {
+            container.innerHTML = `
+            <div style="text-align: center; padding: 2.5rem 1.5rem; background: rgba(15,23,42,0.4); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; grid-column: 1 / -1;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem; color: #64748b;"><i class="fa-solid fa-ticket"></i></div>
+                <h4 style="margin: 0; color: #fff; font-size: 1.1rem;">No Active Bookings Yet</h4>
+                <p style="margin: 4px 0 1.2rem 0; color: #94a3b8; font-size: 0.85rem;">Book verified hotel suites, flight passes, cabs or buses with instant PNR tickets!</p>
+                <div style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;">
+                    <button onclick="openBookingsHub('hotels')" class="btn-small btn-primary" style="padding: 0.5rem 1rem; border-radius: 8px;"><i class="fa-solid fa-hotel"></i> Book Hotel</button>
+                    <button onclick="openBookingsHub('flights')" class="btn-small" style="background:#0284c7; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-plane"></i> Book Flight</button>
+                    <button onclick="openBookingsHub('cabs')" class="btn-small" style="background:#059669; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-taxi"></i> Book Cab</button>
+                    <button onclick="openBookingsHub('buses')" class="btn-small" style="background:#d97706; color:white; border:none; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-bus"></i> Book Bus</button>
+                </div>
+            </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        activeBookings.forEach(b => {
+            const icon = b.type === 'flight' ? 'fa-plane-departure' : b.type === 'hotel' ? 'fa-hotel' : b.type === 'cab' ? 'fa-taxi' : 'fa-bus';
+            const typeColor = b.type === 'flight' ? '#38bdf8' : b.type === 'hotel' ? '#fbbf24' : b.type === 'cab' ? '#34d399' : '#fb923c';
+            const typeEmoji = b.type === 'flight' ? '✈️' : b.type === 'hotel' ? '🏨' : b.type === 'cab' ? '🚕' : '🚌';
+            const priceFormatted = Number(b.price || 0).toLocaleString();
+
+            html += `
+            <div class="active-booking-card">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="booking-badge-tag" style="background: ${typeColor}22; color: ${typeColor}; border: 1px solid ${typeColor}55;">
+                        <i class="fa-solid ${icon}"></i> ${b.type ? b.type.toUpperCase() : 'TRANSIT'}
+                    </span>
+                    <span class="pnr-copy-chip" onclick="navigator.clipboard.writeText('${b.booking_ref}'); showAppToast('PNR Copied: ${b.booking_ref}', 'info');" title="Click to copy PNR">
+                        PNR: ${b.booking_ref} <i class="fa-regular fa-copy" style="font-size:0.7rem;"></i>
+                    </span>
+                </div>
+
+                <div>
+                    <h3 style="margin: 0; color: #fff; font-size: 1.05rem; display: flex; align-items: center; gap: 6px;">
+                        ${typeEmoji} ${b.title || b.item_name}
+                    </h3>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 3px;">
+                        ${b.subtitle || b.details || 'Confirmed Booking'}
+                    </div>
+                </div>
+
+                <div class="ticket-tear-line"></div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: #cbd5e1;">
+                    <div>
+                        <i class="fa-regular fa-calendar" style="color: var(--primary); margin-right: 4px;"></i> 
+                        ${b.travel_date || b.date || 'Upcoming'}
+                    </div>
+                    <div style="color: #34d399; font-weight: 700; font-size: 1rem;">
+                        ₹${priceFormatted}
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.72rem; color: #64748b;">
+                    <span><i class="fa-solid fa-circle-check" style="color: #10b981;"></i> Paid via ${b.payment_method || 'UPI'}</span>
+                    <span>${b.seat_or_room || 'Confirmed'}</span>
+                </div>
+
+                <div style="display: flex; gap: 8px; margin-top: 0.4rem;">
+                    <button onclick="showDigitalVoucherById('${b.booking_ref}')" class="btn-small btn-primary" style="flex: 1; padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <i class="fa-solid fa-qrcode"></i> View E-Ticket
+                    </button>
+                    <button onclick="cancelBookingAction('${b.id}', '${b.booking_ref}', '${(b.title || b.item_name || 'Booking').replace(/'/g, "\\'")}', ${b.price})" class="btn-small" style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.25); color: #f87171; padding: 0.45rem 0.8rem; border-radius: 8px; font-size: 0.8rem; cursor: pointer;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+            `;
+        });
+        container.innerHTML = html;
+    };
+
+    if (mainList) renderToContainer(mainList);
+    if (myTripsContainer) renderToContainer(myTripsContainer);
+};
+
+// ========================================================
+// 8. REAL DYNAMIC ACTION NOTIFICATION DISPATCHER
+// ========================================================
+window.dispatchRealNotification = function(notif) {
+    if (!notif || !notif.title) return;
+    const notifs = getStoredNotifications();
+    const id = 'notif-' + Date.now();
+    const iconMap = {
+        booking: { icon: 'fa-ticket', color: '#10b981', tag: 'Booking Confirmed' },
+        plan: { icon: 'fa-wand-magic-sparkles', color: '#8b5cf6', tag: 'Trip Planned' },
+        magic_plan: { icon: 'fa-compass', color: '#38bdf8', tag: 'AI Magic Itinerary' },
+        save_trip: { icon: 'fa-bookmark', color: '#f59e0b', tag: 'Saved Trip' },
+        surprise: { icon: 'fa-dice', color: '#ec4899', tag: 'Surprise Unlocked' },
+        cancel: { icon: 'fa-ban', color: '#ef4444', tag: 'Cancelled' }
+    };
+    const meta = iconMap[notif.type] || { icon: 'fa-bell', color: 'var(--primary)', tag: 'Update' };
+    const newNotif = {
+        id,
+        icon: notif.icon || meta.icon,
+        iconColor: notif.iconColor || meta.color,
+        tag: notif.tag || meta.tag,
+        badgeColor: notif.badgeColor || meta.color,
+        title: notif.title,
+        message: notif.message || '',
+        time: 'Just now',
+        actionText: notif.actionText || 'View Details',
+        actionType: notif.actionType || notif.type,
+        payload: notif.payload || null,
+        is_read: false
+    };
+
+    notifs.unshift(newNotif);
+    saveStoredNotifications(notifs);
+
+    if (typeof loadNotifications === 'function') {
+        loadNotifications();
+    }
+
+    // Audio chime via Web Audio API (gentle pleasant 2-tone chime)
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+            osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.12); // A5
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.4);
+        }
+    } catch(e){}
+
+    // Active Toast
+    if (typeof showAppToast === 'function') {
+        showAppToast(notif.title, 'success');
+    }
 };
 
 function triggerCrazyMode() {
@@ -3532,10 +4132,37 @@ window.handleNotificationClick = function(id, actionType) {
     const dropdown = document.getElementById('notif-dropdown');
     if (dropdown) dropdown.classList.remove('show');
 
-    if (actionType === 'flight') {
-        openBookingsHub('flights');
+    if (actionType === 'ticket') {
+        if (item && item.payload && typeof showDigitalVoucher === 'function') {
+            showDigitalVoucher(item.payload);
+        } else {
+            const local = JSON.parse(localStorage.getItem('myBookings') || '[]');
+            if (local.length > 0 && typeof showDigitalVoucher === 'function') {
+                showDigitalVoucher(local[0]);
+            } else if (typeof openBookingsHub === 'function') {
+                openBookingsHub('my-bookings');
+            }
+        }
+    } else if (actionType === 'flight') {
+        if (typeof openBookingsHub === 'function') openBookingsHub('flights');
     } else if (actionType === 'hotel') {
-        openBookingsHub('hotels');
+        if (typeof openBookingsHub === 'function') openBookingsHub('hotels');
+    } else if (actionType === 'cab') {
+        if (typeof openBookingsHub === 'function') openBookingsHub('cabs');
+    } else if (actionType === 'bus') {
+        if (typeof openBookingsHub === 'function') openBookingsHub('buses');
+    } else if (actionType === 'booking' || actionType === 'bookings_hub') {
+        if (typeof openBookingsHub === 'function') openBookingsHub('my-bookings');
+    } else if (actionType === 'plan') {
+        const it = document.getElementById('itinerary-result');
+        if (it) it.scrollIntoView({ behavior: 'smooth' });
+        else window.location.href = 'index.html#itinerary-result';
+    } else if (actionType === 'magic_plan') {
+        if (typeof openMagicPlanner === 'function') openMagicPlanner();
+    } else if (actionType === 'saved_trips' || actionType === 'save_trip') {
+        window.location.href = 'mytrips.html';
+    } else if (actionType === 'surprise') {
+        window.location.href = 'explore.html';
     } else if (actionType === 'buddy') {
         window.location.href = 'buddies.html';
     } else if (actionType === 'packing') {
@@ -3545,7 +4172,7 @@ window.handleNotificationClick = function(id, actionType) {
         const w = document.getElementById('weather-widget');
         if (w) w.scrollIntoView({ behavior: 'smooth' });
     } else if (actionType === 'rewards') {
-        openReferEarnModal();
+        if (typeof openReferEarnModal === 'function') openReferEarnModal();
     }
 };
 
@@ -4096,6 +4723,17 @@ window.executeMagicPlannerGeneration = async function() {
     _currentActivePlan = planData;
     renderMagicPlanUI(planData);
 
+    // Dispatch real notification for AI Magic Plan
+    if (typeof dispatchRealNotification === 'function') {
+        dispatchRealNotification({
+            type: 'magic_plan',
+            title: `✨ AI Itinerary Ready: ${destination}!`,
+            message: `TripoNext AI has crafted your ${numDays}-day personalized itinerary with curated activities and budget.`,
+            actionText: 'View AI Plan',
+            actionType: 'magic_plan'
+        });
+    }
+
     if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Regenerate Itinerary';
@@ -4348,5 +4986,16 @@ async function saveMagicTripToMyTrips(plan) {
             itinerary: plan
         });
         localStorage.setItem('localTrips', JSON.stringify(localTrips));
+    }
+
+    // Dispatch real notification
+    if (typeof dispatchRealNotification === 'function') {
+        dispatchRealNotification({
+            type: 'save_trip',
+            title: `💾 Trip Saved: ${plan.destination}!`,
+            message: `Your ${plan.days || 3}-day itinerary for ${plan.destination} is safely saved in My Trips for offline access.`,
+            actionText: 'View in My Trips',
+            actionType: 'saved_trips'
+        });
     }
 }

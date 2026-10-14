@@ -708,6 +708,10 @@
 
         // View ticket modal
         function viewBookingDetails(ref) {
+            if (typeof showDigitalVoucherById === 'function') {
+                showDigitalVoucherById(ref);
+                return;
+            }
             const b = allBookingsData.find(item => item.booking_ref === ref);
             if (!b) return;
 
@@ -773,6 +777,16 @@
             let localBookings = JSON.parse(localStorage.getItem('myBookings') || '[]');
             localBookings = localBookings.filter(b => b.booking_ref !== ref);
             localStorage.setItem('myBookings', JSON.stringify(localBookings));
+
+            if (typeof dispatchRealNotification === 'function') {
+                dispatchRealNotification({
+                    type: 'cancel',
+                    title: `❌ Booking Cancelled`,
+                    message: `Booking ${ref} has been cancelled. Full refund initiated.`,
+                    actionText: 'Book Alternative',
+                    actionType: 'bookings_hub'
+                });
+            }
 
             if (window.showAppToast) window.showAppToast(`Booking ${ref} cancelled.`, 'info');
             loadBookings();

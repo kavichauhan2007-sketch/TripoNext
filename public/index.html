@@ -109,6 +109,37 @@
         </div>
     </header>
 
+    <!-- Dedicated Bookings & Active Tickets Section -->
+    <section class="active-bookings-section" id="active-bookings-section" style="max-width: 1200px; margin: 1.8rem auto 1rem auto; padding: 0 1.5rem;">
+        <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 1.4rem; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.8rem;">
+                <div>
+                    <h2 style="margin: 0; font-size: 1.3rem; color: #fff; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-ticket" style="color: #10b981;"></i> My Confirmed Bookings & Active Tickets
+                    </h2>
+                    <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 0.85rem;">
+                        Instant access to your verified flight boarding passes, hotel reservations, cab rides & bus tickets
+                    </p>
+                </div>
+                <div style="display: flex; gap: 0.6rem;">
+                    <button onclick="openBookingsHub('hotels')" class="btn-small btn-primary" style="padding: 0.5rem 1rem; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-plus"></i> Book Stay / Ride
+                    </button>
+                    <a href="mytrips.html" class="btn-small" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #cbd5e1; padding: 0.5rem 0.9rem; border-radius: 10px; text-decoration: none; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Full History
+                    </a>
+                </div>
+            </div>
+
+            <div id="active-bookings-list" class="active-bookings-grid">
+                <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
+                    <p style="margin-top: 8px;">Loading your confirmed tickets...</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <main class="dashboard" id="dashboard" style="display: none;">
         <div class="dashboard-header">
             <h2 id="trip-title">Trip to ...</h2>
