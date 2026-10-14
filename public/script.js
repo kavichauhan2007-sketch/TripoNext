@@ -3,7 +3,7 @@ if (typeof window !== 'undefined') {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k !== 'triponext-cache-v15') caches.delete(k);
+                if (k !== 'triponext-cache-v22') caches.delete(k);
             });
         });
     }
@@ -4382,62 +4382,31 @@ window.switchToolboxTab = function(tabName, btn) {
 // and ensures bottom dock is never displayed on other pages
 // ========================================================
 window.updateModalActiveState = function() {
-    const activeModal = document.querySelector(
-        '.booking-hub-modal[style*="display: flex"], .booking-hub-modal[style*="display: block"], ' +
-        '.payment-modal-overlay[style*="display: flex"], .payment-modal-overlay[style*="display: block"], ' +
-        '#ticket-voucher-modal[style*="display: flex"], #ticket-voucher-modal[style*="display: block"], ' +
-        '#magic-itinerary-modal[style*="display: flex"], #magic-itinerary-modal[style*="display: block"], ' +
-        '.settings-hub-modal[style*="display: flex"], .settings-hub-modal[style*="display: block"], ' +
-        '#sub-feature-modal[style*="display: flex"], #sub-feature-modal[style*="display: block"], ' +
-        '#editTripModal[style*="display: flex"], #editTripModal[style*="display: block"], ' +
-        '#expenseModal[style*="display: flex"], #expenseModal[style*="display: block"], ' +
-        '#booking-detail-modal[style*="display: flex"], #booking-detail-modal[style*="display: block"], ' +
-        '.modal[style*="display: flex"], .modal-overlay[style*="display: flex"], ' +
-        '#toolbox-modal.show'
-    );
-
+    // Native CSS :has() selectors handle modal hiding automatically and efficiently without JS overhead
     const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
     const nav = document.getElementById('mobile-bottom-nav');
     const toolbox = document.getElementById('floating-toolbox-btn');
-
     if (!isHome) {
         if (nav) nav.style.setProperty('display', 'none', 'important');
         if (toolbox) toolbox.style.setProperty('display', 'none', 'important');
-        return;
-    }
-
-    if (activeModal) {
-        document.body.classList.add('has-active-modal');
-        if (nav) nav.style.setProperty('display', 'none', 'important');
-        if (toolbox) toolbox.style.setProperty('display', 'none', 'important');
-    } else {
-        document.body.classList.remove('has-active-modal');
-        if (nav) {
-            if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
-                nav.style.display = 'flex';
-            } else {
-                nav.style.display = 'none';
-            }
-        }
-        if (toolbox) {
-            toolbox.style.display = 'flex';
-        }
     }
 };
 
 if (typeof window !== 'undefined') {
     window.addEventListener('resize', () => {
-        if (window.updateModalActiveState) window.updateModalActiveState();
+        const nav = document.getElementById('mobile-bottom-nav');
+        if (!nav) return;
+        const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
+        if (!isHome) {
+            nav.style.display = 'none';
+            return;
+        }
+        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
+            nav.style.display = 'flex';
+        } else {
+            nav.style.display = 'none';
+        }
     });
-    if (typeof MutationObserver !== 'undefined') {
-        const observer = new MutationObserver(() => {
-            if (window.updateModalActiveState) window.updateModalActiveState();
-        });
-        document.addEventListener('DOMContentLoaded', () => {
-            observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
-            window.updateModalActiveState();
-        });
-    }
 }
 
 function renderCurrencyTab() {

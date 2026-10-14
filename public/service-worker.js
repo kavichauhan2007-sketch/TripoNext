@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v15';
+const CACHE_NAME = 'triponext-cache-v22';
 const STATIC_ASSETS = [
   '/',
   '/login.html',
