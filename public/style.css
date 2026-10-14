@@ -216,35 +216,83 @@ h1, h2, h3, h4, h5, h6 {
 /* Search Bar */
 .search-bar {
     display: flex;
-    background: var(--glass-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
+    background: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 50px;
-    padding: 0.5rem;
-    box-shadow: var(--glass-shadow);
+    padding: 0.5rem 0.8rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     align-items: center;
-    gap: 1rem;
+    gap: 0.6rem;
     flex-wrap: wrap;
     justify-content: space-between;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
 .input-group {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1.2rem;
     flex: 1;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    border-right: 1px solid rgba(255,255,255,0.12);
 }
 
 .input-group:last-of-type {
     border-right: none;
 }
 
+.search-group-dest {
+    flex: 2 !important;
+    min-width: 260px !important;
+    position: relative;
+}
+
+.search-group-dest input {
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    padding-right: 25px !important;
+}
+
+.search-group-dest input::placeholder {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.search-group-dates {
+    flex: 1.4 !important;
+    min-width: 190px !important;
+}
+
+.search-group-dates input {
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    padding-right: 38px !important;
+}
+
+.search-group-dates input::placeholder {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.search-group-budget {
+    flex: 1.1 !important;
+    min-width: 170px !important;
+}
+
+.search-group-travelers {
+    flex: 0.8 !important;
+    min-width: 110px !important;
+}
+
 .input-group i {
     color: var(--primary);
     font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 .input-group input {
@@ -1851,8 +1899,8 @@ h1, h2, h3, h4, h5, h6 {
     bottom: 14px;
     left: 50%;
     transform: translateX(-50%);
-    width: 94%;
-    max-width: 500px;
+    width: 95%;
+    max-width: 640px;
     height: 64px;
     background: rgba(15, 23, 42, 0.94);
     backdrop-filter: blur(20px);
@@ -1862,7 +1910,7 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 9990;
     justify-content: space-around;
     align-items: center;
-    padding: 0 0.8rem;
+    padding: 0 0.5rem;
     box-shadow: 0 10px 35px rgba(0, 0, 0, 0.65);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2607,6 +2655,154 @@ body.phone-mode-active .mobile-bottom-nav {
     text-align: center;
     margin: 1rem 0;
 }
+
+/* ========================================================
+   SUB-FEATURE & VOUCHER MODAL ELEVATION OVERRIDES
+   Ensures sub-modals (Refer, Offers, Feedback, Help, Cache, Ticket)
+   always appear prominently above Settings Hub (z-index 9995)
+   ======================================================== */
+#sub-feature-modal,
+#ticket-voucher-modal {
+    z-index: 100000 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.82) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    display: none;
+    justify-content: center !important;
+    align-items: center !important;
+}
+
+#sub-feature-modal .modal-content,
+#ticket-voucher-modal .modal-content {
+    position: relative !important;
+    z-index: 100001 !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85) !important;
+    animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes modalPop {
+    from {
+        opacity: 0;
+        transform: scale(0.92) translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Notification Dropdown Styling & Elevation */
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 360px;
+    max-width: 90vw;
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    padding: 0;
+    z-index: 99999 !important;
+    display: none;
+    overflow: hidden;
+}
+
+.notif-dropdown.show {
+    display: block;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.notif-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notif-list {
+    max-height: 380px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.notif-item {
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    margin-bottom: 0.4rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.notif-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+    transform: translateX(2px);
+}
+
+.notif-item.unread {
+    background: rgba(249, 115, 22, 0.08);
+    border-color: rgba(249, 115, 22, 0.25);
+}
+
+.notif-item-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.notif-item-title {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.notif-item-time {
+    font-size: 0.72rem;
+    color: #64748b;
+}
+
+.notif-item-desc {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin-bottom: 4px;
+}
+
+.notif-item-badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 6px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
 
 
 

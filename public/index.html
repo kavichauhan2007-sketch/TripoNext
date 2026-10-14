@@ -62,18 +62,18 @@
             <p data-i18n="hero_subtitle">One smart platform for maps, weather, places, itineraries, and budget.</p>
             
             <div class="search-bar">
-                <div class="input-group" style="position: relative; display: flex; align-items: center; width: 100%;">
-                    <i class="fa-solid fa-location-dot" style="margin-right: 10px;"></i>
-                    <input type="text" placeholder="Where to? (e.g. Paris)" id="destination-input" style="flex: 1; background: transparent; border: none; color: white; outline: none;">
-                    <button id="voice-search-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; margin-left: 5px; transition: color 0.3s;" title="Voice Search">
+                <div class="input-group search-group-dest">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <input type="text" placeholder="Where to go? (e.g. Manali, Goa, Paris)" id="destination-input" autocomplete="off">
+                    <button id="voice-search-btn" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 5px; margin-left: 5px; transition: color 0.3s;" title="Voice / Prompt Assistant">
                         <i class="fa-solid fa-microphone"></i>
                     </button>
                 </div>
-                <div class="input-group">
-                    <i class="fa-regular fa-calendar"></i>
-                    <input type="text" placeholder="Select Dates" id="dates-input">
+                <div class="input-group search-group-dates">
+                    <i class="fa-regular fa-calendar-days"></i>
+                    <input type="text" placeholder="Travel Dates" id="dates-input" readonly>
                 </div>
-                <div class="input-group" style="position: relative;">
+                <div class="input-group search-group-budget" style="position: relative;">
                     <i class="fa-solid fa-wallet"></i>
                     <input type="number" placeholder="Budget" id="budget-input">
                     <select id="budget-currency" style="background:transparent; border:none; color:var(--text-main); margin-left: 5px; outline: none;" onchange="updateCurrency()">
@@ -86,19 +86,25 @@
                         <i class="fa-solid fa-calculator"></i>
                     </button>
                 </div>
-                <div class="input-group">
+                <div class="input-group search-group-travelers">
                     <i class="fa-solid fa-user-group"></i>
                     <input type="number" placeholder="Travelers" id="people-input" min="1" value="1">
                 </div>
-                <button class="search-btn" onclick="planTrip()">
+                <button class="search-btn" id="main-plan-btn" onclick="planTrip()">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="btn_plan">Plan It</span>
                 </button>
             </div>
 
-            <!-- Quick Feature Launchers / AI Magic Planner -->
+            <!-- Quick Feature Launchers / AI Magic Planner & Surprise Me -->
             <div style="display: flex; gap: 0.8rem; margin-top: 1.5rem; justify-content: center; flex-wrap: wrap;">
                 <button onclick="openMagicPlanner()" class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 20px rgba(139,92,246,0.4); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Magic Planner
+                </button>
+                <button onclick="triggerSurpriseTrip()" class="btn-primary" style="background: linear-gradient(135deg, #f97316, #ec4899); border: none; padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 700; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 20px rgba(249,115,22,0.4); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-dice"></i> 🎲 Surprise Me!
+                </button>
+                <button onclick="openBookingsHub('hotels')" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                    <i class="fa-solid fa-ticket" style="color: #10b981;"></i> Book Stays & Rides
                 </button>
                 <a href="buddies.html" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
                     <i class="fa-solid fa-user-group" style="color: #38bdf8;"></i> Find Travel Buddies

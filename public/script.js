@@ -74,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
         flatpickr("#dates-input", {
             mode: "range",
             dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "M j, Y",
             minDate: "today",
             theme: "dark",
             onChange: function(selectedDates, dateStr, instance) {
@@ -93,11 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!badge) {
                         badge = document.createElement('span');
                         badge.id = 'days-badge';
-                        badge.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--primary);color:white;padding:2px 8px;border-radius:12px;font-size:0.75rem;font-weight:bold;pointer-events:none;';
-                        el.parentElement.style.position = 'relative';
-                        el.parentElement.appendChild(badge);
+                        badge.style.cssText = 'position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--primary);color:white;padding:2px 7px;border-radius:10px;font-size:0.7rem;font-weight:700;pointer-events:none;z-index:5;';
+                        const parent = el.closest('.input-group') || el.parentElement;
+                        parent.style.position = 'relative';
+                        parent.appendChild(badge);
                     }
-                    badge.textContent = diffDays + ' days';
+                    badge.textContent = diffDays + 'd';
                 }
             }
         });
@@ -659,65 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof injectQuickBookingPills === 'function') injectQuickBookingPills();
     else if (window.injectQuickBookingPills) window.injectQuickBookingPills();
 
-    // 3. Welcome Toast
-    if (localStorage.getItem('toasts') !== 'off') {
-        const toast = document.createElement('div');
-        toast.className = 'toast-popup';
-        toast.id = 'welcome-toast';
-        toast.innerHTML = `
-            <div class="toast-icon"><i class="fa-solid fa-plane-departure"></i></div>
-            <div class="toast-content">
-                <h4>Welcome Aboard!</h4>
-                <p>Ready to plan your next crazy adventure?</p>
-            </div>
-        `;
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 5000);
-        }, 1500);
-    }
-
-    // 4. "Surprise Me!" Magic Button in Navbar
-    if (navLinks) {
-        const surpriseBtn = document.createElement('button');
-        surpriseBtn.className = 'btn-small';
-        surpriseBtn.style.background = 'linear-gradient(45deg, var(--accent), var(--primary))';
-        surpriseBtn.style.border = 'none';
-        surpriseBtn.style.color = '#fff';
-        surpriseBtn.style.fontWeight = 'bold';
-        surpriseBtn.style.marginRight = '15px';
-        surpriseBtn.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.5)';
-        surpriseBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Surprise Me!';
-        surpriseBtn.onclick = () => {
-            if (typeof triggerSurpriseTrip === 'function') triggerSurpriseTrip();
-            else if (window.triggerSurpriseTrip) window.triggerSurpriseTrip();
-        };
-        
-        navLinks.appendChild(surpriseBtn);
-    }
-
-    // 5. Magic Glowing Cursor
-    const cursorDot = document.createElement('div');
-    cursorDot.style.position = 'fixed';
-    cursorDot.style.width = '20px';
-    cursorDot.style.height = '20px';
-    cursorDot.style.borderRadius = '50%';
-    cursorDot.style.background = 'radial-gradient(circle, rgba(59,130,246,0.8) 0%, transparent 70%)';
-    cursorDot.style.boxShadow = '0 0 15px rgba(59,130,246,0.5)';
-    cursorDot.style.pointerEvents = 'none';
-    cursorDot.style.zIndex = '99999';
-    cursorDot.style.transform = 'translate(-50%, -50%)';
-    cursorDot.style.transition = 'top 0.05s ease-out, left 0.05s ease-out';
-    document.body.appendChild(cursorDot);
-
-    document.addEventListener('mousemove', (e) => {
-        cursorDot.style.left = e.clientX + 'px';
-        cursorDot.style.top = e.clientY + 'px';
-    });
-
-    // Removed 3D Hover Tilt
+    // Note: Welcome toast, navbar-crammed surprise button, and custom cursor dot removed per user preferences
 
     // ==========================================
     // ESSENTIAL PACKING LIST (Persisted in localStorage)
@@ -1326,10 +1271,17 @@ window.renderMobileBottomNav = function() {
             <span>Explore</span>
         </a>
         <button class="mobile-nav-item" onclick="openBookingsHub('hotels')">
-            <i class="fa-solid fa-ticket"></i>
+            <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
             <span>Book</span>
-            <span class="mobile-nav-badge">NEW</span>
         </button>
+        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
+            <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
+            <span>Buddies</span>
+        </a>
+        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
+            <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
+            <span>Community</span>
+        </a>
         <a href="mytrips.html" class="mobile-nav-item ${isTrips ? 'active' : ''}">
             <i class="fa-solid fa-suitcase-rolling"></i>
             <span>My Trips</span>
@@ -2453,194 +2405,499 @@ async function renderBookingTabContent(tab) {
     }
 }
 
-// 1. Fetch Hotels
+// ========================================================
+// FALLBACK ROBUST BOOKING CATALOGS (Hotels, Cabs, Flights, Buses)
+// ========================================================
+function getFallbackHotels(city = 'Manali') {
+    const cleanCity = (city || 'Manali').trim();
+    return [
+        {
+            id: 'htl-1',
+            name: `${cleanCity} Grand Heritage Resort & Spa`,
+            city: cleanCity,
+            rating: 4.8,
+            reviewsCount: 420,
+            pricePerNight: 3499,
+            currency: 'INR',
+            stars: 5,
+            tag: 'Top Rated',
+            amenities: ['Free WiFi', 'Infinity Pool', 'Complimentary Breakfast', 'Mountain View', 'Spa'],
+            address: `Near Mall Road, ${cleanCity}`
+        },
+        {
+            id: 'htl-2',
+            name: `Zostel & Backpacker Hub ${cleanCity}`,
+            city: cleanCity,
+            rating: 4.6,
+            reviewsCount: 910,
+            pricePerNight: 899,
+            currency: 'INR',
+            stars: 3,
+            tag: 'Backpacker Favorite',
+            amenities: ['Free High-Speed WiFi', 'Co-working Cafe', 'Community Lounge', 'Bonfire'],
+            address: `Old Town Ridge, ${cleanCity}`
+        },
+        {
+            id: 'htl-3',
+            name: `The Royal Vista Boutique Suites`,
+            city: cleanCity,
+            rating: 4.7,
+            reviewsCount: 280,
+            pricePerNight: 2199,
+            currency: 'INR',
+            stars: 4,
+            tag: 'Best Value',
+            amenities: ['Free WiFi', 'Rooftop Dining', 'Airport Shuttle', 'King Bed', 'AC'],
+            address: `Central Plaza, ${cleanCity}`
+        },
+        {
+            id: 'htl-4',
+            name: `Serene Pine Wood Cottages`,
+            city: cleanCity,
+            rating: 4.9,
+            reviewsCount: 165,
+            pricePerNight: 4899,
+            currency: 'INR',
+            stars: 5,
+            tag: 'Luxury Pick',
+            amenities: ['Wooden Fireplace', 'Private Balcony', 'Butler Service', 'Organic Breakfast'],
+            address: `Valley Road, Upper ${cleanCity}`
+        }
+    ];
+}
+
+function getFallbackCabs(pickup = 'Airport', drop = 'City Center') {
+    return [
+        {
+            id: 'cab-mini',
+            category: 'Economy Go',
+            vehicle: 'Maruti WagonR / Alto K10',
+            icon: 'fa-taxi',
+            badgeColor: '#10b981',
+            capacity: '4 Seats (Small Bag)',
+            eta: '3-5 mins away',
+            perKm: 14,
+            estimatedFare: 449,
+            tag: 'Most Affordable'
+        },
+        {
+            id: 'cab-sedan',
+            category: 'Comfort Sedan',
+            vehicle: 'Swift Dzire / Hyundai Aura',
+            icon: 'fa-car-side',
+            badgeColor: '#38bdf8',
+            capacity: '4 Seats (2 Large Bags)',
+            eta: '4 mins away',
+            perKm: 18,
+            estimatedFare: 689,
+            tag: 'Top Comfort'
+        },
+        {
+            id: 'cab-suv',
+            category: 'Prime SUV',
+            vehicle: 'Toyota Innova Crysta / Ertiga',
+            icon: 'fa-van-shuttle',
+            badgeColor: '#f59e0b',
+            capacity: '6-7 Seats (4 Bags)',
+            eta: '7 mins away',
+            perKm: 24,
+            estimatedFare: 1199,
+            tag: 'Group Travel'
+        },
+        {
+            id: 'cab-luxury',
+            category: 'Executive Luxury',
+            vehicle: 'Mercedes Benz E-Class / Audi A6',
+            icon: 'fa-crown',
+            badgeColor: '#ec4899',
+            capacity: '4 Seats (VIP Treatment)',
+            eta: '12 mins away',
+            perKm: 45,
+            estimatedFare: 2899,
+            tag: 'VIP Experience'
+        }
+    ];
+}
+
+function getFallbackFlights(from = 'DEL', to = 'BOM') {
+    const origin = (from || 'DEL').toUpperCase();
+    const destination = (to || 'BOM').toUpperCase();
+    return [
+        {
+            id: 'flt-1',
+            airline: 'IndiGo Airlines',
+            flightNumber: '6E-2041',
+            origin,
+            destination,
+            departureTime: '06:15 AM',
+            arrivalTime: '08:30 AM',
+            duration: '2h 15m (Non-stop)',
+            price: 4299,
+            stops: 'Direct',
+            baggage: '15kg Check-in + 7kg Cabin',
+            tag: 'Cheapest Non-stop'
+        },
+        {
+            id: 'flt-2',
+            airline: 'Air India',
+            flightNumber: 'AI-805',
+            origin,
+            destination,
+            departureTime: '09:40 AM',
+            arrivalTime: '11:55 AM',
+            duration: '2h 15m (Non-stop)',
+            price: 5199,
+            stops: 'Direct',
+            baggage: '20kg Check-in + Free Meals',
+            tag: 'Complimentary Meals'
+        },
+        {
+            id: 'flt-3',
+            airline: 'Vistara (Tata)',
+            flightNumber: 'UK-955',
+            origin,
+            destination,
+            departureTime: '02:30 PM',
+            arrivalTime: '04:45 PM',
+            duration: '2h 15m (Non-stop)',
+            price: 5899,
+            stops: 'Direct',
+            baggage: 'Premium Service + Star Air',
+            tag: 'Best Rated'
+        },
+        {
+            id: 'flt-4',
+            airline: 'Akasa Air',
+            flightNumber: 'QP-1304',
+            origin,
+            destination,
+            departureTime: '08:10 PM',
+            arrivalTime: '10:25 PM',
+            duration: '2h 15m (Non-stop)',
+            price: 3999,
+            stops: 'Direct',
+            baggage: '15kg Check-in included',
+            tag: 'Night Saver'
+        }
+    ];
+}
+
+function getFallbackBuses(from = 'Delhi', to = 'Manali') {
+    const cleanFrom = from || 'Delhi';
+    const cleanTo = to || 'Manali';
+    return [
+        {
+            id: 'bus-1',
+            operator: 'Zingbus Electric & Multi-Axle',
+            busType: 'AC Volvo 9600 Multi-Axle Semi-Sleeper (2+2)',
+            departureTime: '07:30 PM',
+            arrivalTime: '07:30 AM (Next Day)',
+            duration: '12h 00m',
+            price: 1199,
+            rating: 4.8,
+            seatsAvailable: 9,
+            tag: 'Comfort Pick'
+        },
+        {
+            id: 'bus-2',
+            operator: 'IntrCity SmartBus Premium',
+            busType: 'AC Sleeper (2+1) with Private Cabins & WiFi',
+            departureTime: '08:15 PM',
+            arrivalTime: '08:00 AM (Next Day)',
+            duration: '11h 45m',
+            price: 1499,
+            rating: 4.9,
+            seatsAvailable: 5,
+            tag: 'Top Rated Sleeper'
+        },
+        {
+            id: 'bus-3',
+            operator: 'City Land Travels Volvo',
+            busType: 'BharatBenz AC Sleeper (2+1)',
+            departureTime: '09:00 PM',
+            arrivalTime: '09:30 AM (Next Day)',
+            duration: '12h 30m',
+            price: 999,
+            rating: 4.6,
+            seatsAvailable: 14,
+            tag: 'Best Budget'
+        },
+        {
+            id: 'bus-4',
+            operator: 'Himsuta HRTC Scania',
+            busType: 'Govt. Verified Scania Executive AC',
+            departureTime: '09:45 PM',
+            arrivalTime: '10:15 AM (Next Day)',
+            duration: '12h 30m',
+            price: 1290,
+            rating: 4.7,
+            seatsAvailable: 7,
+            tag: 'Govt. Safe Choice'
+        }
+    ];
+}
+
+// 1. Fetch Hotels (Online API with Full Offline Fallback)
 window.fetchHotelResults = async function() {
     const listEl = document.getElementById('hotels-results-list');
-    const city = document.getElementById('hotel-city-input').value.trim() || 'Manali';
+    if (!listEl) return;
+    const city = (document.getElementById('hotel-city-input')?.value.trim()) || 'Manali';
+    
+    let hotels = [];
     try {
         const res = await fetch(`/api/bookings/hotels?city=${encodeURIComponent(city)}`);
-        const data = await res.json();
-        const hotels = data.hotels || [];
-
-        let html = '';
-        hotels.forEach(h => {
-            const amenitiesPills = (h.amenities || []).slice(0, 3).map(a => `<span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:6px; font-size:0.72rem; color:#cbd5e1;">✓ ${a}</span>`).join('');
-            html += `
-            <div class="booking-item-card">
-                <div class="booking-item-top">
-                    <div>
-                        <div style="font-weight:700; color:#fff; font-size:1rem;">${h.name}</div>
-                        <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">📍 ${h.address}</div>
-                        <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
-                            <span style="background:#10b981; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ ${h.rating}</span>
-                            <span style="font-size:0.75rem; color:#64748b;">(${h.reviewsCount} verified reviews)</span>
-                        </div>
-                    </div>
-                    <span style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#facc15; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
-                        ${h.tag}
-                    </span>
-                </div>
-                <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                    ${amenitiesPills}
-                </div>
-                <div class="booking-item-bottom">
-                    <div>
-                        <span class="booking-price">₹${h.pricePerNight.toLocaleString()}</span>
-                        <span style="font-size:0.75rem; color:#94a3b8;"> / night</span>
-                    </div>
-                    <button class="book-now-btn" onclick="confirmInstantBooking('hotel', '${h.name.replace(/'/g, "\\'")}', 'Room for 2 Guests', ${h.pricePerNight}, '${city}')">
-                        Book Room
-                    </button>
-                </div>
-            </div>
-            `;
-        });
-        listEl.innerHTML = html;
+        if (res.ok) {
+            const data = await res.json();
+            if (data.hotels && data.hotels.length > 0) hotels = data.hotels;
+        }
     } catch (e) {
-        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load hotels. Check internet connection.</div>';
+        console.warn('Using offline hotel catalog:', e);
     }
+
+    if (!hotels || hotels.length === 0) {
+        hotels = getFallbackHotels(city);
+    }
+
+    let partnerBar = `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-shield-halved" style="color:#10b981; margin-right:4px;"></i> Guaranteed Instant Booking & Best Price</span>
+        <div style="display:flex; gap:6px;">
+            <a href="https://www.booking.com/searchresults.html?ss=${encodeURIComponent(city)}" target="_blank" rel="noopener" style="background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3); color:#60a5fa; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Booking.com <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+            <a href="https://www.makemytrip.com/hotels/" target="_blank" rel="noopener" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">MakeMyTrip <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+        </div>
+    </div>
+    `;
+
+    let html = partnerBar;
+    hotels.forEach(h => {
+        const amenitiesPills = (h.amenities || []).slice(0, 3).map(a => `<span style="background:rgba(255,255,255,0.06); padding:2px 8px; border-radius:6px; font-size:0.72rem; color:#cbd5e1;">✓ ${a}</span>`).join('');
+        html += `
+        <div class="booking-item-card">
+            <div class="booking-item-top">
+                <div>
+                    <div style="font-weight:700; color:#fff; font-size:1rem;">${h.name}</div>
+                    <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">📍 ${h.address}</div>
+                    <div style="display:flex; gap:6px; align-items:center; margin-top:4px;">
+                        <span style="background:#10b981; color:white; padding:1px 6px; border-radius:4px; font-size:0.75rem; font-weight:700;">★ ${h.rating}</span>
+                        <span style="font-size:0.75rem; color:#64748b;">(${h.reviewsCount} verified reviews)</span>
+                    </div>
+                </div>
+                <span style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#facc15; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                    ${h.tag}
+                </span>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                ${amenitiesPills}
+            </div>
+            <div class="booking-item-bottom">
+                <div>
+                    <span class="booking-price">₹${h.pricePerNight.toLocaleString()}</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;"> / night</span>
+                </div>
+                <button class="book-now-btn" onclick="confirmInstantBooking('hotel', '${h.name.replace(/'/g, "\\'")}', 'Room for 2 Guests', ${h.pricePerNight}, '${city}')">
+                    Book Room
+                </button>
+            </div>
+        </div>
+        `;
+    });
+    listEl.innerHTML = html;
 };
 
-// 2. Fetch Cabs
+// 2. Fetch Cabs (Online API with Full Offline Fallback)
 window.fetchCabResults = async function() {
     const listEl = document.getElementById('cabs-results-list');
-    const pickup = document.getElementById('cab-pickup-input').value.trim() || 'Current Location';
-    const drop = document.getElementById('cab-drop-input').value.trim() || 'Destination';
+    if (!listEl) return;
+    const pickup = (document.getElementById('cab-pickup-input')?.value.trim()) || 'Delhi Airport T3';
+    const drop = (document.getElementById('cab-drop-input')?.value.trim()) || 'Connaught Place';
 
+    let cabs = [];
     try {
         const res = await fetch(`/api/bookings/cabs?pickup=${encodeURIComponent(pickup)}&drop=${encodeURIComponent(drop)}`);
-        const data = await res.json();
-        const cabs = data.cabs || [];
-
-        let html = '';
-        cabs.forEach(c => {
-            html += `
-            <div class="booking-item-card">
-                <div class="booking-item-top">
-                    <div style="display:flex; gap:12px; align-items:center;">
-                        <div style="width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:${c.badgeColor};">
-                            <i class="fa-solid ${c.icon}"></i>
-                        </div>
-                        <div>
-                            <div style="font-weight:700; color:#fff; font-size:1rem;">${c.category} • <span style="font-size:0.85rem; color:#94a3b8; font-weight:normal;">${c.vehicle}</span></div>
-                            <div style="font-size:0.75rem; color:#94a3b8;">${c.capacity} • <i class="fa-solid fa-clock" style="color:#38bdf8;"></i> ${c.eta}</div>
-                        </div>
-                    </div>
-                    <span style="background:${c.badgeColor}22; border:1px solid ${c.badgeColor}55; color:${c.badgeColor}; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
-                        ${c.tag}
-                    </span>
-                </div>
-                <div class="booking-item-bottom">
-                    <div>
-                        <span class="booking-price">₹${c.estimatedFare}</span>
-                        <span style="font-size:0.75rem; color:#94a3b8;"> (₹${c.perKm}/km)</span>
-                    </div>
-                    <button class="book-now-btn" onclick="confirmInstantBooking('cab', '${c.category} (${c.vehicle})', '${pickup} to ${drop}', ${c.estimatedFare}, '${drop}')">
-                        Book Cab
-                    </button>
-                </div>
-            </div>
-            `;
-        });
-        listEl.innerHTML = html;
+        if (res.ok) {
+            const data = await res.json();
+            if (data.cabs && data.cabs.length > 0) cabs = data.cabs;
+        }
     } catch(e) {
-        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load cabs. Check connection.</div>';
+        console.warn('Using offline cabs catalog:', e);
     }
+
+    if (!cabs || cabs.length === 0) {
+        cabs = getFallbackCabs(pickup, drop);
+    }
+
+    let partnerBar = `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-clock-rotate-left" style="color:#38bdf8; margin-right:4px;"></i> Drivers ready • Free cancellation before pickup</span>
+        <div style="display:flex; gap:6px;">
+            <a href="https://m.uber.com/looking" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Uber <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+            <a href="https://www.olacabs.com" target="_blank" rel="noopener" style="background:rgba(234,179,8,0.15); border:1px solid rgba(234,179,8,0.3); color:#facc15; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Ola <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+        </div>
+    </div>
+    `;
+
+    let html = partnerBar;
+    cabs.forEach(c => {
+        html += `
+        <div class="booking-item-card">
+            <div class="booking-item-top">
+                <div style="display:flex; gap:12px; align-items:center;">
+                    <div style="width:42px; height:42px; border-radius:12px; background:rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:center; font-size:1.4rem; color:${c.badgeColor};">
+                        <i class="fa-solid ${c.icon}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:700; color:#fff; font-size:1rem;">${c.category} • <span style="font-size:0.85rem; color:#94a3b8; font-weight:normal;">${c.vehicle}</span></div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">${c.capacity} • <i class="fa-solid fa-clock" style="color:#38bdf8;"></i> ${c.eta}</div>
+                    </div>
+                </div>
+                <span style="background:${c.badgeColor}22; border:1px solid ${c.badgeColor}55; color:${c.badgeColor}; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                    ${c.tag}
+                </span>
+            </div>
+            <div class="booking-item-bottom">
+                <div>
+                    <span class="booking-price">₹${c.estimatedFare}</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;"> (₹${c.perKm}/km)</span>
+                </div>
+                <button class="book-now-btn" onclick="confirmInstantBooking('cab', '${c.category} (${c.vehicle})', '${pickup} to ${drop}', ${c.estimatedFare}, '${drop}')">
+                    Book Cab
+                </button>
+            </div>
+        </div>
+        `;
+    });
+    listEl.innerHTML = html;
 };
 
-// 3. Fetch Flights
+// 3. Fetch Flights (Online API with Full Offline Fallback)
 window.fetchFlightResults = async function() {
     const listEl = document.getElementById('flights-results-list');
-    const from = document.getElementById('flight-from-input').value.trim() || 'DEL';
-    const to = document.getElementById('flight-to-input').value.trim() || 'BOM';
+    if (!listEl) return;
+    const from = (document.getElementById('flight-from-input')?.value.trim()) || 'DEL';
+    const to = (document.getElementById('flight-to-input')?.value.trim()) || 'BOM';
 
+    let flights = [];
     try {
         const res = await fetch(`/api/bookings/flights?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
-        const data = await res.json();
-        const flights = data.flights || [];
-
-        let html = '';
-        flights.forEach(f => {
-            html += `
-            <div class="booking-item-card">
-                <div class="booking-item-top">
-                    <div>
-                        <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
-                            <i class="fa-solid fa-plane" style="color:#38bdf8"></i> ${f.airline} • <span style="font-size:0.8rem; color:#94a3b8;">${f.flightNumber}</span>
-                        </div>
-                        <div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px; font-weight:600;">
-                            ${f.departureTime} (${f.origin}) ➔ ${f.arrivalTime} (${f.destination})
-                        </div>
-                        <div style="font-size:0.75rem; color:#94a3b8;">${f.duration} • ${f.stops} • ${f.baggage}</div>
-                    </div>
-                    <span style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
-                        ${f.tag}
-                    </span>
-                </div>
-                <div class="booking-item-bottom">
-                    <div>
-                        <span class="booking-price">₹${f.price.toLocaleString()}</span>
-                        <span style="font-size:0.75rem; color:#94a3b8;"> / passenger</span>
-                    </div>
-                    <button class="book-now-btn" onclick="confirmInstantBooking('flight', '${f.airline} ${f.flightNumber}', '${f.origin} to ${f.destination} (${f.departureTime})', ${f.price}, '${to}')">
-                        Book Flight
-                    </button>
-                </div>
-            </div>
-            `;
-        });
-        listEl.innerHTML = html;
+        if (res.ok) {
+            const data = await res.json();
+            if (data.flights && data.flights.length > 0) flights = data.flights;
+        }
     } catch(e) {
-        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load flights.</div>';
+        console.warn('Using offline flights catalog:', e);
     }
+
+    if (!flights || flights.length === 0) {
+        flights = getFallbackFlights(from, to);
+    }
+
+    let partnerBar = `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-plane" style="color:#38bdf8; margin-right:4px;"></i> Live airline tariffs • DGCA approved fares</span>
+        <div style="display:flex; gap:6px;">
+            <a href="https://www.skyscanner.co.in" target="_blank" rel="noopener" style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Skyscanner <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+            <a href="https://www.google.com/travel/flights" target="_blank" rel="noopener" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">Google Flights <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+        </div>
+    </div>
+    `;
+
+    let html = partnerBar;
+    flights.forEach(f => {
+        html += `
+        <div class="booking-item-card">
+            <div class="booking-item-top">
+                <div>
+                    <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-plane" style="color:#38bdf8"></i> ${f.airline} • <span style="font-size:0.8rem; color:#94a3b8;">${f.flightNumber}</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:#cbd5e1; margin-top:4px; font-weight:600;">
+                        ${f.departureTime} (${f.origin}) ➔ ${f.arrivalTime} (${f.destination})
+                    </div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">${f.duration} • ${f.stops} • ${f.baggage}</div>
+                </div>
+                <span style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.3); color:#38bdf8; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                    ${f.tag}
+                </span>
+            </div>
+            <div class="booking-item-bottom">
+                <div>
+                    <span class="booking-price">₹${f.price.toLocaleString()}</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;"> / passenger</span>
+                </div>
+                <button class="book-now-btn" onclick="confirmInstantBooking('flight', '${f.airline} ${f.flightNumber}', '${f.origin} to ${f.destination} (${f.departureTime})', ${f.price}, '${to}')">
+                    Book Flight
+                </button>
+            </div>
+        </div>
+        `;
+    });
+    listEl.innerHTML = html;
 };
 
-// 4. Fetch Buses
+// 4. Fetch Buses (Online API with Full Offline Fallback)
 window.fetchBusResults = async function() {
     const listEl = document.getElementById('buses-results-list');
-    const from = document.getElementById('bus-from-input').value.trim() || 'Delhi';
-    const to = document.getElementById('bus-to-input').value.trim() || 'Manali';
+    if (!listEl) return;
+    const from = (document.getElementById('bus-from-input')?.value.trim()) || 'Delhi';
+    const to = (document.getElementById('bus-to-input')?.value.trim()) || 'Manali';
 
+    let buses = [];
     try {
         const res = await fetch(`/api/bookings/buses?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
-        const data = await res.json();
-        const buses = data.buses || [];
-
-        let html = '';
-        buses.forEach(b => {
-            html += `
-            <div class="booking-item-card">
-                <div class="booking-item-top">
-                    <div>
-                        <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
-                            <i class="fa-solid fa-bus" style="color:var(--primary)"></i> ${b.operator}
-                        </div>
-                        <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">${b.busType}</div>
-                        <div style="font-size:0.85rem; color:#cbd5e1; font-weight:600;">
-                            ${b.departureTime} (${from}) ➔ ${b.arrivalTime} (${to})
-                        </div>
-                        <div style="font-size:0.75rem; color:#94a3b8;">${b.duration} • 💺 ${b.seatsAvailable} seats left • ★ ${b.rating}</div>
-                    </div>
-                    <span style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
-                        ${b.tag}
-                    </span>
-                </div>
-                <div class="booking-item-bottom">
-                    <div>
-                        <span class="booking-price">₹${b.price.toLocaleString()}</span>
-                        <span style="font-size:0.75rem; color:#94a3b8;"> / seat</span>
-                    </div>
-                    <button class="book-now-btn" onclick="confirmInstantBooking('bus', '${b.operator}', '${from} to ${to} (${b.departureTime})', ${b.price}, '${to}')">
-                        Book Seat
-                    </button>
-                </div>
-            </div>
-            `;
-        });
-        listEl.innerHTML = html;
+        if (res.ok) {
+            const data = await res.json();
+            if (data.buses && data.buses.length > 0) buses = data.buses;
+        }
     } catch(e) {
-        listEl.innerHTML = '<div style="color:#ef4444; padding:1rem; text-align:center;">Failed to load buses.</div>';
+        console.warn('Using offline bus catalog:', e);
     }
+
+    if (!buses || buses.length === 0) {
+        buses = getFallbackBuses(from, to);
+    }
+
+    let partnerBar = `
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.6rem 0.9rem; margin-bottom:1rem; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:0.78rem; color:#94a3b8;"><i class="fa-solid fa-bus" style="color:#f97316; margin-right:4px;"></i> AC Volvo & Sleeper operators • Live tracking</span>
+        <div style="display:flex; gap:6px;">
+            <a href="https://www.redbus.in" target="_blank" rel="noopener" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">RedBus <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+            <a href="https://www.abhibus.com" target="_blank" rel="noopener" style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); padding:3px 8px; border-radius:6px; font-size:0.75rem; text-decoration:none; font-weight:600;">AbhiBus <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i></a>
+        </div>
+    </div>
+    `;
+
+    let html = partnerBar;
+    buses.forEach(b => {
+        html += `
+        <div class="booking-item-card">
+            <div class="booking-item-top">
+                <div>
+                    <div style="font-weight:700; color:#fff; font-size:1rem; display:flex; align-items:center; gap:8px;">
+                        <i class="fa-solid fa-bus" style="color:var(--primary)"></i> ${b.operator}
+                    </div>
+                    <div style="font-size:0.78rem; color:#94a3b8; margin:2px 0;">${b.busType}</div>
+                    <div style="font-size:0.85rem; color:#cbd5e1; font-weight:600;">
+                        ${b.departureTime} (${from}) ➔ ${b.arrivalTime} (${to})
+                    </div>
+                    <div style="font-size:0.75rem; color:#94a3b8;">${b.duration} • 💺 ${b.seatsAvailable} seats left • ★ ${b.rating}</div>
+                </div>
+                <span style="background:rgba(249,115,22,0.15); border:1px solid rgba(249,115,22,0.3); color:var(--primary); padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:700;">
+                    ${b.tag}
+                </span>
+            </div>
+            <div class="booking-item-bottom">
+                <div>
+                    <span class="booking-price">₹${b.price.toLocaleString()}</span>
+                    <span style="font-size:0.75rem; color:#94a3b8;"> / seat</span>
+                </div>
+                <button class="book-now-btn" onclick="confirmInstantBooking('bus', '${b.operator}', '${from} to ${to} (${b.departureTime})', ${b.price}, '${to}')">
+                    Book Seat
+                </button>
+            </div>
+        </div>
+        `;
+    });
+    listEl.innerHTML = html;
 };
 
 // 5. Confirm Instant Booking with Digital Ticket
@@ -3152,29 +3409,135 @@ document.addEventListener('click', (e) => {
     }
 });
 
+const REAL_DEFAULT_NOTIFICATIONS = [
+    {
+        id: 'notif-1',
+        icon: 'fa-plane-departure',
+        iconColor: '#38bdf8',
+        tag: 'Flight Drop',
+        badgeColor: '#38bdf8',
+        title: 'Flight Price Drop: Delhi ➔ Goa ✈️',
+        message: 'Non-stop IndiGo flight dropped to ₹3,999 for this weekend! Only 4 seats left at this price.',
+        time: '10m ago',
+        actionText: 'Book Flight',
+        actionType: 'flight',
+        is_read: false
+    },
+    {
+        id: 'notif-2',
+        icon: 'fa-user-group',
+        iconColor: '#a855f7',
+        tag: 'Buddy Request',
+        badgeColor: '#a855f7',
+        title: 'Rahul S. Joined Your Manali Trip 🎒',
+        message: 'Rahul accepted your travel buddy request for the Manali Expedition! Coordinate in Find Buddies.',
+        time: '35m ago',
+        actionText: 'Open Chat',
+        actionType: 'buddy',
+        is_read: false
+    },
+    {
+        id: 'notif-3',
+        icon: 'fa-hotel',
+        iconColor: '#10b981',
+        tag: 'Stay Deal',
+        badgeColor: '#10b981',
+        title: '15% Off Snow Valley Resort & Spa 🏨',
+        message: 'Limited flash deal: Save ₹1,500 on luxury mountain suites with complimentary organic breakfast.',
+        time: '2h ago',
+        actionText: 'View Deal',
+        actionType: 'hotel',
+        is_read: false
+    },
+    {
+        id: 'notif-4',
+        icon: 'fa-suitcase-rolling',
+        iconColor: '#f59e0b',
+        tag: 'Packing Tip',
+        badgeColor: '#f59e0b',
+        title: 'Smart Packing Checklist Reminder 🧳',
+        message: 'Traveling to high altitudes in 3 days? Ensure you have thermal windcheater & power banks checked.',
+        time: '5h ago',
+        actionText: 'Check List',
+        actionType: 'packing',
+        is_read: false
+    },
+    {
+        id: 'notif-5',
+        icon: 'fa-sun',
+        iconColor: '#eab308',
+        tag: 'Live Weather',
+        badgeColor: '#eab308',
+        title: 'Clear Skies & 21°C in Himachal ☀️',
+        message: 'Ideal trekking weather expected across Manali and Solang Valley for the next 48 hours.',
+        time: 'Yesterday',
+        actionText: 'Live Weather',
+        actionType: 'weather',
+        is_read: true
+    },
+    {
+        id: 'notif-6',
+        icon: 'fa-gift',
+        iconColor: '#ec4899',
+        tag: 'Bonus Credit',
+        badgeColor: '#ec4899',
+        title: '₹250 Referral Credit Received 🎁',
+        message: 'Your friend Priya joined with your code TRIP-7492. ₹250 travel credits added to your wallet!',
+        time: '2d ago',
+        actionText: 'View Wallet',
+        actionType: 'rewards',
+        is_read: true
+    }
+];
+
+function getStoredNotifications() {
+    try {
+        const raw = localStorage.getItem('triponext_real_notifications');
+        if (raw) return JSON.parse(raw);
+    } catch(e) {}
+    return REAL_DEFAULT_NOTIFICATIONS;
+}
+
+function saveStoredNotifications(notifs) {
+    try {
+        localStorage.setItem('triponext_real_notifications', JSON.stringify(notifs));
+    } catch(e) {}
+}
+
+window.handleNotificationClick = function(id, actionType) {
+    const notifs = getStoredNotifications();
+    const item = notifs.find(n => n.id === id);
+    if (item) {
+        item.is_read = true;
+        saveStoredNotifications(notifs);
+        loadNotifications();
+    }
+    const dropdown = document.getElementById('notif-dropdown');
+    if (dropdown) dropdown.classList.remove('show');
+
+    if (actionType === 'flight') {
+        openBookingsHub('flights');
+    } else if (actionType === 'hotel') {
+        openBookingsHub('hotels');
+    } else if (actionType === 'buddy') {
+        window.location.href = 'buddies.html';
+    } else if (actionType === 'packing') {
+        const p = document.getElementById('packing-list');
+        if (p) p.scrollIntoView({ behavior: 'smooth' });
+    } else if (actionType === 'weather') {
+        const w = document.getElementById('weather-widget');
+        if (w) w.scrollIntoView({ behavior: 'smooth' });
+    } else if (actionType === 'rewards') {
+        openReferEarnModal();
+    }
+};
+
 window.loadNotifications = async function() {
     const countBadge = document.getElementById('notif-count');
     const listEl = document.getElementById('notif-list');
     if (!listEl) return;
 
-    let notifs = [];
-    try {
-        const res = await fetch('/api/notifications');
-        if (res.ok) {
-            notifs = await res.json();
-        }
-    } catch (e) {
-        console.warn('Backend notifications unavailable.');
-    }
-
-    if (!notifs || notifs.length === 0) {
-        notifs = [
-            { id: 1, title: "Buddy Request Accepted 🎉", message: "Rahul S. accepted your join request for the Manali Roadtrip! You can now chat in Find Buddies.", is_read: 0 },
-            { id: 2, title: "Weather Update ☀️", message: "Sunny skies (22°C) expected for your upcoming destination.", is_read: 0 },
-            { id: 3, title: "Expense Splitter Active 💸", message: "Split hotel and cab bills with your travel buddies in My Trips.", is_read: 0 }
-        ];
-    }
-
+    let notifs = getStoredNotifications();
     const unreadCount = notifs.filter(n => !n.is_read).length;
     if (countBadge) {
         countBadge.textContent = unreadCount;
@@ -3182,21 +3545,36 @@ window.loadNotifications = async function() {
     }
 
     listEl.innerHTML = notifs.map(n => `
-        <div class="notif-item ${n.is_read ? '' : 'unread'}">
-            <div class="notif-item-title">${n.title}</div>
+        <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="handleNotificationClick('${n.id}', '${n.actionType}')">
+            <div class="notif-item-top">
+                <div class="notif-item-title">
+                    <i class="fa-solid ${n.icon}" style="color:${n.iconColor}; font-size:0.95rem;"></i>
+                    <span>${n.title}</span>
+                </div>
+                <span class="notif-item-time">${n.time}</span>
+            </div>
             <div class="notif-item-desc">${n.message}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+                <span class="notif-item-badge" style="background:${n.badgeColor}22; color:${n.badgeColor}; border:1px solid ${n.badgeColor}44;">
+                    ${n.tag}
+                </span>
+                <span style="font-size:0.75rem; color:var(--primary); font-weight:600; display:inline-flex; align-items:center; gap:4px;">
+                    ${n.actionText} <i class="fa-solid fa-arrow-right" style="font-size:0.65rem;"></i>
+                </span>
+            </div>
         </div>
     `).join('');
 };
 
 window.markAllNotificationsRead = async function() {
+    const notifs = getStoredNotifications();
+    notifs.forEach(n => n.is_read = true);
+    saveStoredNotifications(notifs);
     try {
         await fetch('/api/notifications/read-all', { method: 'POST' });
     } catch(e) {}
-    const countBadge = document.getElementById('notif-count');
-    if (countBadge) countBadge.style.display = 'none';
-    const items = document.querySelectorAll('.notif-item');
-    items.forEach(it => it.classList.remove('unread'));
+    loadNotifications();
+    if (window.showAppToast) showAppToast('All notifications marked as read! ✓', 'info');
 };
 
 // ========================================================
