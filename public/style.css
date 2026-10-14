@@ -1885,15 +1885,36 @@ h1, h2, h3, h4, h5, h6 {
    MOBILE-FIRST APP SHELL & MODERN RESPONSIVE DESIGN SYSTEM
    ======================================================== */
 
-@media (max-width: 868px) {
-    body {
-        padding-bottom: 76px !important;
-    }
+/* Back to Home Pill in Navbar */
+.nav-back-home-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #e2e8f0;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    transition: all 0.25s ease;
+}
+.nav-back-home-pill:hover {
+    background: rgba(249, 115, 22, 0.2);
+    border-color: rgba(249, 115, 22, 0.4);
+    color: var(--primary);
+    transform: translateX(-2px);
 }
 
-/* Mobile Bottom Navigation Bar - Universal App Dock */
+body {
+    padding-bottom: 24px !important;
+}
+
+/* Mobile Bottom Navigation Bar - Universal App Dock (Only on Home Mobile / Phone Mode) */
 .mobile-bottom-nav {
-    display: flex !important;
+    display: none;
     position: fixed;
     bottom: 14px;
     left: 50%;
@@ -1914,12 +1935,12 @@ h1, h2, h3, h4, h5, h6 {
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-body {
-    padding-bottom: 84px !important;
-}
-
 @media (max-width: 868px) {
-    .mobile-bottom-nav {
+    body.home-page {
+        padding-bottom: 78px !important;
+    }
+    body.home-page .mobile-bottom-nav {
+        display: flex;
         bottom: 0;
         left: 0;
         transform: none;
@@ -1933,6 +1954,56 @@ body {
         padding-bottom: env(safe-area-inset-bottom, 0px);
         background: rgba(10, 15, 29, 0.96);
     }
+}
+
+body.phone-mode-active.home-page .mobile-bottom-nav {
+    display: flex !important;
+}
+
+/* HIDE BOTTOM PANELS ON ALL OTHER PAGES (Explore, My Trips, Buddies, Community) */
+.explore-bg .mobile-bottom-nav,
+.mytrips-bg .mobile-bottom-nav,
+.community-bg .mobile-bottom-nav,
+body.page-other .mobile-bottom-nav,
+.explore-bg .floating-toolbox-btn,
+.mytrips-bg .floating-toolbox-btn,
+.community-bg .floating-toolbox-btn,
+body.page-other .floating-toolbox-btn,
+.explore-bg #toolbox-modal,
+.mytrips-bg #toolbox-modal,
+.community-bg #toolbox-modal {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* HIDE BOTTOM PANELS WHEN ANY MODAL IS OPEN */
+body.has-active-modal .mobile-bottom-nav,
+body.has-active-modal .floating-toolbox-btn,
+body.has-active-modal #toolbox-modal,
+body:has(.booking-hub-modal[style*="display: flex"]),
+body:has(.booking-hub-modal[style*="display: block"]),
+body:has(.payment-modal-overlay[style*="display: flex"]),
+body:has(.payment-modal-overlay[style*="display: block"]),
+body:has(#ticket-voucher-modal[style*="display: flex"]),
+body:has(#ticket-voucher-modal[style*="display: block"]),
+body:has(#magic-itinerary-modal[style*="display: flex"]),
+body:has(#magic-itinerary-modal[style*="display: block"]),
+body:has(.settings-hub-modal[style*="display: flex"]),
+body:has(.settings-hub-modal[style*="display: block"]),
+body:has(#sub-feature-modal[style*="display: flex"]),
+body:has(#sub-feature-modal[style*="display: block"]),
+body:has(#editTripModal[style*="display: flex"]),
+body:has(#editTripModal[style*="display: block"]),
+body:has(#expenseModal[style*="display: flex"]),
+body:has(#expenseModal[style*="display: block"]),
+body:has(#booking-detail-modal[style*="display: flex"]),
+body:has(#booking-detail-modal[style*="display: block"]) {
+    display: none !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
 }
 
     .mobile-nav-item {

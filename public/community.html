@@ -26,10 +26,15 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/favicon.png">
 </head>
-<body class="community-bg">
+<body class="community-bg page-other">
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <div class="logo">
-            <i class="fa-solid fa-plane-departure"></i> TripoNext
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="index.html" class="nav-back-home-pill" title="Back to Dashboard">
+                <i class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+            </a>
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
+                <i class="fa-solid fa-plane-departure"></i> TripoNext
+            </div>
         </div>
         <div class="user-profile">
             <!-- User name injected via JS -->

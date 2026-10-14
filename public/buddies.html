@@ -182,10 +182,13 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/favicon.png">
 </head>
-<body class="explore-bg">
+<body class="explore-bg page-other">
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="logo">
+        <a href="index.html" class="nav-back-home-pill" title="Back to Dashboard">
+            <i class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+        </a>
+        <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
             <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
         </div>
         <div class="user-profile">

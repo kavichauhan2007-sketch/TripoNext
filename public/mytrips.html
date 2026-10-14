@@ -208,11 +208,16 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="/favicon.png">
 </head>
-<body class="mytrips-bg">
+<body class="mytrips-bg page-other">
     <!-- Navbar -->
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
-        <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
-            <i class="fa-solid fa-plane-departure"></i> TripoNext
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="index.html" class="nav-back-home-pill" title="Back to Dashboard">
+                <i class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+            </a>
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
+                <i class="fa-solid fa-plane-departure"></i> TripoNext
+            </div>
         </div>
         <div class="settings-group" style="display:flex; align-items:center; gap:8px;">
             <button onclick="openGlobalSettings()" class="btn-small" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; border-radius:10px; padding:0.5rem 0.8rem; cursor:pointer;" title="Account & Settings">

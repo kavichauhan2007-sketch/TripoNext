@@ -1292,22 +1292,32 @@ window.showAppToast = function(msg, type = 'info') {
 // MOBILE-FIRST BOTTOM NAVIGATION & QUICK LAUNCHERS
 // ========================================================
 window.renderMobileBottomNav = function() {
-    if (document.getElementById('mobile-bottom-nav')) return;
-
     const currentPath = window.location.pathname;
-    const isHome = currentPath.endsWith('index.html') || currentPath === '/' || currentPath.endsWith('/');
-    const isExplore = currentPath.endsWith('explore.html');
-    const isTrips = currentPath.endsWith('mytrips.html');
-    const isCommunity = currentPath.endsWith('community.html');
-    const isBuddies = currentPath.endsWith('buddies.html');
+    const isHome = currentPath.endsWith('index.html') || currentPath === '/' || currentPath.endsWith('/') || currentPath.endsWith('/index');
+
+    const existingNav = document.getElementById('mobile-bottom-nav');
+    if (!isHome) {
+        // HIDE on all other pages (Explore, My Trips, Buddies, Community) so all buttons/cards are 100% accessible
+        if (existingNav) existingNav.style.setProperty('display', 'none', 'important');
+        return;
+    }
+
+    if (existingNav) {
+        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
+            existingNav.style.display = 'flex';
+        } else {
+            existingNav.style.display = 'none';
+        }
+        return;
+    }
 
     const navHTML = `
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-        <a href="index.html" class="mobile-nav-item ${isHome ? 'active' : ''}">
+        <a href="index.html" class="mobile-nav-item active">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <a href="explore.html" class="mobile-nav-item ${isExplore ? 'active' : ''}">
+        <a href="explore.html" class="mobile-nav-item">
             <i class="fa-solid fa-compass"></i>
             <span>Explore</span>
         </a>
@@ -1315,15 +1325,15 @@ window.renderMobileBottomNav = function() {
             <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
             <span>Book</span>
         </button>
-        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
+        <a href="buddies.html" class="mobile-nav-item">
             <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
             <span>Buddies</span>
         </a>
-        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
+        <a href="community.html" class="mobile-nav-item">
             <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
             <span>Community</span>
         </a>
-        <a href="mytrips.html" class="mobile-nav-item ${isTrips ? 'active' : ''}">
+        <a href="mytrips.html" class="mobile-nav-item">
             <i class="fa-solid fa-suitcase-rolling"></i>
             <span>My Trips</span>
         </a>
@@ -1334,6 +1344,15 @@ window.renderMobileBottomNav = function() {
     </nav>
     `;
     document.body.insertAdjacentHTML('beforeend', navHTML);
+
+    const nav = document.getElementById('mobile-bottom-nav');
+    if (nav) {
+        if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
+            nav.style.display = 'flex';
+        } else {
+            nav.style.display = 'none';
+        }
+    }
 };
 
 window.togglePhoneMode = function() {
@@ -4278,6 +4297,14 @@ const TRAVEL_PHRASES = [
 ];
 
 window.injectFloatingToolbox = function() {
+    const currentPath = window.location.pathname;
+    const isHome = currentPath.endsWith('index.html') || currentPath === '/' || currentPath.endsWith('/') || currentPath.endsWith('/index');
+    if (!isHome) {
+        const existingBtn = document.getElementById('floating-toolbox-btn');
+        if (existingBtn) existingBtn.style.setProperty('display', 'none', 'important');
+        return;
+    }
+
     if (document.getElementById('floating-toolbox-btn')) return;
 
     // Floating Button
@@ -4330,6 +4357,70 @@ window.switchToolboxTab = function(tabName, btn) {
     else if (tabName === 'phrases') renderPhrasesTab();
     else if (tabName === 'sos') renderSOSTab();
 };
+
+// ========================================================
+// ACTIVE MODAL & PANEL VISIBILITY MONITOR
+// Auto-hides bottom dock and floating buttons when modals open,
+// and ensures bottom dock is never displayed on other pages
+// ========================================================
+window.updateModalActiveState = function() {
+    const activeModal = document.querySelector(
+        '.booking-hub-modal[style*="display: flex"], .booking-hub-modal[style*="display: block"], ' +
+        '.payment-modal-overlay[style*="display: flex"], .payment-modal-overlay[style*="display: block"], ' +
+        '#ticket-voucher-modal[style*="display: flex"], #ticket-voucher-modal[style*="display: block"], ' +
+        '#magic-itinerary-modal[style*="display: flex"], #magic-itinerary-modal[style*="display: block"], ' +
+        '.settings-hub-modal[style*="display: flex"], .settings-hub-modal[style*="display: block"], ' +
+        '#sub-feature-modal[style*="display: flex"], #sub-feature-modal[style*="display: block"], ' +
+        '#editTripModal[style*="display: flex"], #editTripModal[style*="display: block"], ' +
+        '#expenseModal[style*="display: flex"], #expenseModal[style*="display: block"], ' +
+        '#booking-detail-modal[style*="display: flex"], #booking-detail-modal[style*="display: block"], ' +
+        '.modal[style*="display: flex"], .modal-overlay[style*="display: flex"], ' +
+        '#toolbox-modal.show'
+    );
+
+    const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
+    const nav = document.getElementById('mobile-bottom-nav');
+    const toolbox = document.getElementById('floating-toolbox-btn');
+
+    if (!isHome) {
+        if (nav) nav.style.setProperty('display', 'none', 'important');
+        if (toolbox) toolbox.style.setProperty('display', 'none', 'important');
+        return;
+    }
+
+    if (activeModal) {
+        document.body.classList.add('has-active-modal');
+        if (nav) nav.style.setProperty('display', 'none', 'important');
+        if (toolbox) toolbox.style.setProperty('display', 'none', 'important');
+    } else {
+        document.body.classList.remove('has-active-modal');
+        if (nav) {
+            if (window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active')) {
+                nav.style.display = 'flex';
+            } else {
+                nav.style.display = 'none';
+            }
+        }
+        if (toolbox) {
+            toolbox.style.display = 'flex';
+        }
+    }
+};
+
+if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => {
+        if (window.updateModalActiveState) window.updateModalActiveState();
+    });
+    if (typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(() => {
+            if (window.updateModalActiveState) window.updateModalActiveState();
+        });
+        document.addEventListener('DOMContentLoaded', () => {
+            observer.observe(document.body, { attributes: true, subtree: true, attributeFilter: ['style', 'class'] });
+            window.updateModalActiveState();
+        });
+    }
+}
 
 function renderCurrencyTab() {
     const body = document.getElementById('toolbox-body');
