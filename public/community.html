@@ -9,7 +9,7 @@
     <title>Community - TripoNext</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20">
     <style>
         .ai-chat-box { height: 300px; display: flex; flex-direction: column; }
         .ai-messages { flex-grow: 1; overflow-y: auto; margin-bottom: 1rem; padding-right: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; }
@@ -30,13 +30,6 @@
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
         <div class="logo">
             <i class="fa-solid fa-plane-departure"></i> TripoNext
-        </div>
-        <div class="nav-links">
-            <a href="index.html">Dashboard</a>
-            <a href="explore.html">Explore</a>
-            <a href="mytrips.html">My Trips</a>
-            <a href="community.html" class="active">Community</a>
-            <a href="buddies.html">Find Buddies</a>
         </div>
         <div class="user-profile">
             <!-- User name injected via JS -->
@@ -615,13 +608,16 @@
         <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
-    <script src="script.js"></script>
+    <script src="script.js?v=20"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered'))
+                    .then(reg => {
+                        reg.update();
+                        console.log('Service Worker registered & updated');
+                    })
                     .catch(err => console.log('Service Worker registration failed: ', err));
             });
         }

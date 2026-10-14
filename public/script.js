@@ -1,3 +1,19 @@
+// Force purge outdated cache versions and update service worker
+if (typeof window !== 'undefined') {
+    if ('caches' in window) {
+        caches.keys().then(keys => {
+            keys.forEach(k => {
+                if (k !== 'triponext-cache-v15') caches.delete(k);
+            });
+        });
+    }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.update());
+        });
+    }
+}
+
 // Translations Dictionary
 const translations = {
     en: {
@@ -1714,6 +1730,32 @@ window.toggleAppTheme = function(theme) {
 };
 
 // ========================================================
+// SUB-FEATURE MODAL SYSTEM (Drill-down Navigation)
+// Ensures sub-modals (Refer, Offers, Feedback, Help, Cache)
+// smoothly replace Settings Hub and return cleanly on back/close
+// ========================================================
+window.showSubFeatureModal = function(innerHTML) {
+    const settingsModal = document.getElementById('settings-hub-modal');
+    if (settingsModal) settingsModal.style.display = 'none';
+    let subModal = document.getElementById('sub-feature-modal');
+    if (!subModal) {
+        subModal = document.createElement('div');
+        subModal.id = 'sub-feature-modal';
+        subModal.className = 'modal-overlay';
+        document.body.appendChild(subModal);
+    }
+    subModal.innerHTML = innerHTML;
+    subModal.style.display = 'flex';
+};
+
+window.closeSubFeatureModal = function() {
+    const subModal = document.getElementById('sub-feature-modal');
+    if (subModal) subModal.style.display = 'none';
+    const settingsModal = document.getElementById('settings-hub-modal');
+    if (settingsModal) settingsModal.style.display = 'flex';
+};
+
+// ========================================================
 // REFER & EARN MODAL
 // ========================================================
 window.openReferEarnModal = async function() {
@@ -1726,21 +1768,16 @@ window.openReferEarnModal = async function() {
         if (res.ok) data = await res.json();
     } catch (e) {}
 
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:500px; text-align:center;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-gift" style="color:#c084fc"></i> Refer & Earn
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1779,7 +1816,7 @@ window.openReferEarnModal = async function() {
         </div>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.copyReferralCode = function(code) {
@@ -1809,22 +1846,17 @@ window.shareReferralLink = function(code) {
 let _selectedRating = 5;
 
 window.openFeedbackModal = function() {
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-
     _selectedRating = 5;
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:480px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-star" style="color:#eab308"></i> Feedback & Rating
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1869,7 +1901,7 @@ window.openFeedbackModal = function() {
         </button>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.setStarRating = function(rating) {
@@ -1904,7 +1936,7 @@ window.submitUserFeedback = async function() {
     }
 
     showAppToast('Thank you! Your feedback and rating have been recorded. 🎉', 'success');
-    document.getElementById('sub-feature-modal').style.display = 'none';
+    closeSubFeatureModal();
 };
 
 // ========================================================
@@ -1927,14 +1959,6 @@ window.openOffersModal = async function() {
         }
     } catch (e) {}
 
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-
     let cardsHTML = '';
     offers.forEach(o => {
         const icon = o.type === 'flight' ? 'fa-plane' : o.type === 'hotel' ? 'fa-hotel' : o.type === 'cab' ? 'fa-taxi' : o.type === 'bus' ? 'fa-bus' : 'fa-tag';
@@ -1956,13 +1980,16 @@ window.openOffersModal = async function() {
         `;
     });
 
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:520px; max-height:85vh; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-percent" style="color:#ec4899"></i> Exclusive Travel Deals & Coupons
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -1972,7 +1999,7 @@ window.openOffersModal = async function() {
         ${cardsHTML}
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.copyOfferCode = function(code) {
@@ -2023,20 +2050,23 @@ window.openHelpSupportModal = async function() {
         `;
     });
 
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:540px; max-height:85vh; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-headset" style="color:#34d399"></i> Help & Support Center
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
 
         <!-- 24/7 Support Channels -->
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:1.2rem;">
-            <div onclick="document.getElementById('sub-feature-modal').style.display='none'; toggleChatbot();" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.25); border-radius:14px; padding:1rem; text-align:center; cursor:pointer;">
+            <div onclick="closeSubFeatureModal(); toggleChatbot();" style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.25); border-radius:14px; padding:1rem; text-align:center; cursor:pointer;">
                 <i class="fa-solid fa-robot" style="font-size:1.6rem; color:#38bdf8; margin-bottom:6px;"></i>
                 <div style="font-weight:700; color:#fff; font-size:0.9rem;">AI Travel Assistant</div>
                 <div style="font-size:0.75rem; color:#94a3b8;">Instant 24x7 Answers</div>
@@ -2062,7 +2092,7 @@ window.openHelpSupportModal = async function() {
         </div>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.submitSupportTicket = async function() {
@@ -2083,27 +2113,23 @@ window.submitSupportTicket = async function() {
     } catch(e) {}
 
     showAppToast('Support Ticket submitted! Our team will respond shortly. 💬', 'success');
-    document.getElementById('sub-feature-modal').style.display = 'none';
+    closeSubFeatureModal();
 };
 
 // ==========================================
 // LEGAL / POLICY MODALS (Privacy Policy & Terms)
 // ==========================================
 window.openPrivacyModal = function() {
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:560px; max-height:85vh; overflow-y:auto; border-radius:18px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
                 <i class="fa-solid fa-shield-halved" style="color:#38bdf8"></i> TripoNext Privacy Policy
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -2123,30 +2149,26 @@ window.openPrivacyModal = function() {
             </div>
         </div>
         <div style="margin-top:1.2rem; text-align:right;">
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
+            <button onclick="closeSubFeatureModal()" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
                 <i class="fa-solid fa-check"></i> Got It
             </button>
         </div>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.openTermsModal = function() {
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:560px; max-height:85vh; overflow-y:auto; border-radius:18px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:0.8rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px; font-size:1.25rem;">
                 <i class="fa-solid fa-file-contract" style="color:#f59e0b"></i> TripoNext Terms of Service
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -2166,13 +2188,13 @@ window.openTermsModal = function() {
             </div>
         </div>
         <div style="margin-top:1.2rem; text-align:right;">
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
+            <button onclick="closeSubFeatureModal()" class="btn" style="background:linear-gradient(135deg,var(--primary),var(--primary-hover)); color:white; border:none; padding:0.6rem 1.4rem; border-radius:10px; cursor:pointer; font-weight:600;">
                 <i class="fa-solid fa-check"></i> Accept & Continue
             </button>
         </div>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 // ========================================================
@@ -2183,21 +2205,16 @@ window.openOfflineManager = function() {
     const isOnline = navigator.onLine;
     const localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
 
-    let subModal = document.getElementById('sub-feature-modal');
-    if (!subModal) {
-        subModal = document.createElement('div');
-        subModal.id = 'sub-feature-modal';
-        subModal.className = 'modal-overlay';
-        document.body.appendChild(subModal);
-    }
-
-    subModal.innerHTML = `
+    const content = `
     <div class="modal-content glassmorphism" style="max-width:480px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+            <button onclick="closeSubFeatureModal()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:8px; padding:4px 10px; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
             <h3 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-wifi" style="color:var(--primary)"></i> Offline Mode & Cache Manager
             </h3>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
@@ -2228,13 +2245,13 @@ window.openOfflineManager = function() {
             <button onclick="clearOfflineCache()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.35); color:#f87171; padding:0.75rem; border-radius:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
                 <i class="fa-solid fa-trash-can"></i> Clear All Offline Cached Data
             </button>
-            <button onclick="document.getElementById('sub-feature-modal').style.display='none'" class="btn-small" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:0.7rem; border-radius:12px; cursor:pointer;">
+            <button onclick="closeSubFeatureModal()" class="btn-small" style="background:rgba(255,255,255,0.1); color:white; border:none; padding:0.7rem; border-radius:12px; cursor:pointer;">
                 Done
             </button>
         </div>
     </div>
     `;
-    subModal.style.display = 'flex';
+    showSubFeatureModal(content);
 };
 
 window.clearOfflineCache = function() {

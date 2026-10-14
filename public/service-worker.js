@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v8';
+const CACHE_NAME = 'triponext-cache-v15';
 const STATIC_ASSETS = [
   '/',
   '/login.html',
@@ -18,10 +18,10 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(STATIC_ASSETS))
-      .then(() => self.skipWaiting())
   );
 });
 
@@ -54,19 +54,15 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // For HTML, CSS, JS and static assets: Cache First with Network Revalidation
+  // For HTML, CSS, JS and static assets: Network First with Cache Fallback
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      const fetchPromise = fetch(event.request).then(networkResponse => {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        }
-        return networkResponse;
-      }).catch(() => cached);
-
-      return cached || fetchPromise;
-    })
+    fetch(event.request).then(networkResponse => {
+      if (networkResponse && networkResponse.status === 200) {
+        const clone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+      }
+      return networkResponse;
+    }).catch(() => caches.match(event.request))
   );
 });
 

@@ -9,7 +9,7 @@
     <title>My Trips & Bookings - TripoNext</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20">
     <style>
         /* Mobile-First Page Styles */
         .mytrips-main {
@@ -213,13 +213,6 @@
     <nav class="navbar" style="background: rgba(15, 23, 42, 0.95); box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
         <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
             <i class="fa-solid fa-plane-departure"></i> TripoNext
-        </div>
-        <div class="nav-links">
-            <a href="index.html">Dashboard</a>
-            <a href="explore.html">Explore</a>
-            <a href="mytrips.html" class="active">My Trips</a>
-            <a href="community.html">Community</a>
-            <a href="buddies.html">Find Buddies</a>
         </div>
         <div class="settings-group" style="display:flex; align-items:center; gap:8px;">
             <button onclick="openGlobalSettings()" class="btn-small" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; border-radius:10px; padding:0.5rem 0.8rem; cursor:pointer;" title="Account & Settings">
@@ -1032,13 +1025,16 @@
             }
         }
     </script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered'))
+                    .then(reg => {
+                        reg.update();
+                        console.log('Service Worker registered & updated');
+                    })
                     .catch(err => console.log('Service Worker registration failed: ', err));
             });
         }

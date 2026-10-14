@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
@@ -33,13 +33,6 @@
     <nav class="navbar">
         <div class="logo">
             <i class="fa-solid fa-plane-departure"></i> TripoNext
-        </div>
-        <div class="nav-links">
-            <a href="index.html" class="active" data-i18n="nav_dashboard">Dashboard</a>
-            <a href="explore.html" data-i18n="nav_explore">Explore</a>
-            <a href="mytrips.html" data-i18n="nav_mytrips">My Trips</a>
-            <a href="community.html" data-i18n="nav_community">Community</a>
-            <a href="buddies.html">Find Buddies</a>
         </div>
         
         <div class="settings-group" style="display: flex; gap: 1rem; align-items: center;">
@@ -390,13 +383,16 @@
         </div>
     </div>
 
-    <script src="script.js?v=3"></script>
+    <script src="script.js?v=20"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered'))
+                    .then(reg => {
+                        reg.update();
+                        console.log('Service Worker registered & updated');
+                    })
                     .catch(err => console.log('Service Worker registration failed: ', err));
             });
         }
