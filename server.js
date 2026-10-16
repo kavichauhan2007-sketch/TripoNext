@@ -1404,6 +1404,9 @@ app.delete('/api/bookings/:id', (req, res) => {
 
 // Fallback to serve index.html for SPA-like behavior if needed
 app.use((req, res) => {
+    if (req.path.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API endpoint not found' });
+    }
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 

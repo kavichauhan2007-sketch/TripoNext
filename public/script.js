@@ -3,7 +3,7 @@ if (typeof window !== 'undefined') {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k !== 'triponext-cache-v24') caches.delete(k);
+                if (k !== 'triponext-cache-v30') caches.delete(k);
             });
         });
     }

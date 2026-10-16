@@ -1,12 +1,12 @@
-const CACHE_NAME = 'triponext-cache-v25';
+const CACHE_NAME = 'triponext-cache-v30';
 const STATIC_ASSETS = [
   '/',
-  '/login.html',
   '/index.html',
   '/explore.html',
   '/mytrips.html',
   '/community.html',
   '/buddies.html',
+  '/login.html',
   '/style.css',
   '/script.js',
   '/auth.js',
@@ -20,8 +20,11 @@ const STATIC_ASSETS = [
 self.addEventListener('install', event => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then(cache => {
+      return Promise.allSettled(
+        STATIC_ASSETS.map(url => cache.add(url).catch(err => console.warn('Cache add warning for:', url, err)))
+      );
+    })
   );
 });
 
