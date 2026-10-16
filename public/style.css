@@ -2163,19 +2163,19 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
         background: transparent !important;
         border: none !important;
         cursor: pointer !important;
-        padding: 4px 2px !important;
-        font-size: 0.72rem !important;
+        padding: 4px 1px !important;
+        font-size: 0.64rem !important;
         font-weight: 600 !important;
-        letter-spacing: 0.1px !important;
+        letter-spacing: -0.2px !important;
         transition: all 0.2s ease !important;
-        flex: 1 !important;
-        max-width: 20% !important;
+        flex: 1 1 0 !important;
+        max-width: none !important;
         min-width: 0 !important;
-        gap: 3px !important;
+        gap: 2px !important;
         -webkit-tap-highlight-color: transparent !important;
     }
     .mobile-nav-item i {
-        font-size: 1.22rem !important;
+        font-size: 1.14rem !important;
         transition: transform 0.2s ease, color 0.2s ease !important;
     }
     .mobile-nav-item span {
@@ -2183,7 +2183,8 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         max-width: 100% !important;
-        font-size: 0.72rem !important;
+        font-size: 0.63rem !important;
+        line-height: 1 !important;
     }
     .mobile-nav-item:hover,
     .mobile-nav-item:active {

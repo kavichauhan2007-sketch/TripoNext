@@ -3,7 +3,7 @@ if (typeof window !== 'undefined') {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k !== 'triponext-cache-v30') caches.delete(k);
+                if (k !== 'triponext-cache-v31') caches.delete(k);
             });
         });
     }
@@ -1495,9 +1495,10 @@ window.showAppToast = function(msg, type = 'info') {
 window.renderMobileBottomNav = function() {
     const currentPath = (window.location.pathname || '').toLowerCase();
     const isExplore = currentPath.includes('explore');
-    const isBuddies = currentPath.includes('buddies') || currentPath.includes('community');
+    const isBuddies = currentPath.includes('buddies');
+    const isCommunity = currentPath.includes('community');
     const isMyTrips = currentPath.includes('mytrips');
-    const isHome = !isExplore && !isBuddies && !isMyTrips;
+    const isHome = !isExplore && !isBuddies && !isCommunity && !isMyTrips;
 
     const existingNav = document.getElementById('mobile-bottom-nav');
     if (existingNav) {
@@ -1514,16 +1515,24 @@ window.renderMobileBottomNav = function() {
             <i class="fa-solid fa-compass"></i>
             <span>Explore</span>
         </a>
-        <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
-            <i class="fa-solid fa-receipt"></i>
-            <span>Bookings</span>
-        </a>
+        <button class="mobile-nav-item" onclick="openBookingsHub('hotels')" title="Book Hotels, Flights, Cabs">
+            <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
+            <span>Book</span>
+        </button>
         <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
-            <i class="fa-solid fa-users"></i>
-            <span>Community</span>
+            <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
+            <span>Buddies</span>
+        </a>
+        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
+            <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
+            <span>Moments</span>
+        </a>
+        <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
+            <i class="fa-solid fa-suitcase-rolling"></i>
+            <span>My Trips</span>
         </a>
         <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
-            <i class="fa-solid fa-user"></i>
+            <i class="fa-solid fa-user-gear"></i>
             <span>Profile</span>
         </button>
     </nav>
