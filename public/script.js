@@ -1400,20 +1400,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // 7. Terminal Typing Effect for Hero Title
     const heroTitle = document.querySelector('h1[data-i18n="hero_title"]');
     if (heroTitle) {
-        const text = heroTitle.innerText;
-        heroTitle.innerText = '';
-        heroTitle.style.borderRight = '3px solid var(--primary)';
-        let i = 0;
-        function typeWriter() {
-            if (i < text.length) {
-                heroTitle.innerHTML += text.charAt(i);
-                i++;
-                setTimeout(typeWriter, 50);
-            } else {
-                heroTitle.style.borderRight = 'none';
+        if (window.innerWidth <= 868) {
+            heroTitle.style.borderRight = 'none';
+        } else {
+            const text = heroTitle.innerText;
+            heroTitle.innerText = '';
+            heroTitle.style.borderRight = '3px solid var(--primary)';
+            let i = 0;
+            function typeWriter() {
+                if (i < text.length) {
+                    heroTitle.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(typeWriter, 50);
+                } else {
+                    heroTitle.style.borderRight = 'none';
+                }
             }
+            setTimeout(typeWriter, 500);
         }
-        setTimeout(typeWriter, 500);
     }
 });
 
@@ -1491,10 +1495,9 @@ window.showAppToast = function(msg, type = 'info') {
 window.renderMobileBottomNav = function() {
     const currentPath = (window.location.pathname || '').toLowerCase();
     const isExplore = currentPath.includes('explore');
-    const isBuddies = currentPath.includes('buddies');
-    const isCommunity = currentPath.includes('community');
+    const isBuddies = currentPath.includes('buddies') || currentPath.includes('community');
     const isMyTrips = currentPath.includes('mytrips');
-    const isHome = !isExplore && !isBuddies && !isCommunity && !isMyTrips;
+    const isHome = !isExplore && !isBuddies && !isMyTrips;
 
     const existingNav = document.getElementById('mobile-bottom-nav');
     if (existingNav) {
@@ -1511,24 +1514,16 @@ window.renderMobileBottomNav = function() {
             <i class="fa-solid fa-compass"></i>
             <span>Explore</span>
         </a>
-        <button class="mobile-nav-item" onclick="openBookingsHub('hotels')">
-            <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
-            <span>Book</span>
-        </button>
-        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
-            <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
-            <span>Buddies</span>
-        </a>
-        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
-            <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
-            <span>Moments</span>
-        </a>
         <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
-            <i class="fa-solid fa-suitcase-rolling"></i>
-            <span>My Trips</span>
+            <i class="fa-solid fa-receipt"></i>
+            <span>Bookings</span>
         </a>
-        <button class="mobile-nav-item" onclick="openGlobalSettings()">
-            <i class="fa-solid fa-user-gear"></i>
+        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
+            <i class="fa-solid fa-users"></i>
+            <span>Community</span>
+        </a>
+        <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
+            <i class="fa-solid fa-user"></i>
             <span>Profile</span>
         </button>
     </nav>
@@ -1574,6 +1569,7 @@ window.initPhoneMode = function() {
 };
 
 window.injectQuickBookingPills = function() {
+    if (window.innerWidth <= 868) return; // Dedicated mobile services grid used on mobile
     const heroContent = document.querySelector('.hero-content');
     if (!heroContent || document.getElementById('quick-pills-bar')) return;
 

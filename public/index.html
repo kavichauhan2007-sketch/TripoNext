@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     
-    <link rel="stylesheet" href="style.css?v=30">
+    <link rel="stylesheet" href="style.css?v=31">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
@@ -88,23 +88,40 @@
                 </button>
             </div>
 
-            <!-- Quick Feature Launchers / AI Magic Planner & Surprise Me -->
+            <!-- Quick Feature Launchers / AI Magic Planner & Services Hub -->
             <div class="hero-quick-actions" id="hero-quick-actions">
-                <button onclick="openMagicPlanner()" class="btn-primary" style="background: linear-gradient(135deg, #8b5cf6, #3b82f6); border: none; padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 20px rgba(139,92,246,0.4); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
+                <button onclick="openMagicPlanner()" class="hero-magic-btn">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Magic Planner
                 </button>
-                <button onclick="triggerSurpriseTrip()" class="btn-primary" style="background: linear-gradient(135deg, #f97316, #ec4899); border: none; padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 700; cursor: pointer; color: white; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 20px rgba(249,115,22,0.4); transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
-                    <i class="fa-solid fa-dice"></i> 🎲 Surprise Me!
-                </button>
-                <button onclick="openBookingsHub('hotels')" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
-                    <i class="fa-solid fa-ticket" style="color: #10b981;"></i> Book Stays & Rides
-                </button>
-                <a href="buddies.html" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
-                    <i class="fa-solid fa-user-group" style="color: #38bdf8;"></i> Find Travel Buddies
-                </a>
-                <a href="community.html" class="btn-primary" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(10px); padding: 0.75rem 1.4rem; border-radius: 9999px; font-weight: 600; text-decoration: none; color: white; display: inline-flex; align-items: center; gap: 0.5rem; transition: transform 0.2s;" onmouseenter="this.style.transform='scale(1.05)'" onmouseleave="this.style.transform='scale(1)'">
-                    <i class="fa-solid fa-camera-retro" style="color: #f59e0b;"></i> Trip Moments Wall
-                </a>
+                <div class="hero-services-row">
+                    <button onclick="openQuickBookingService('hotels')" class="hero-service-tile">
+                        <i class="fa-solid fa-hotel" style="color:#f59e0b;"></i>
+                        <span>Hotels</span>
+                    </button>
+                    <button onclick="openQuickBookingService('cabs')" class="hero-service-tile">
+                        <i class="fa-solid fa-taxi" style="color:#10b981;"></i>
+                        <span>Cabs</span>
+                    </button>
+                    <button onclick="openQuickBookingService('flights')" class="hero-service-tile">
+                        <i class="fa-solid fa-plane-departure" style="color:#38bdf8;"></i>
+                        <span>Flights</span>
+                    </button>
+                    <button onclick="openQuickBookingService('buses')" class="hero-service-tile">
+                        <i class="fa-solid fa-bus" style="color:#f97316;"></i>
+                        <span>Buses</span>
+                    </button>
+                </div>
+                <div class="hero-services-row secondary-row">
+                    <button onclick="triggerSurpriseTrip()" class="hero-service-chip">
+                        <i class="fa-solid fa-dice" style="color:#ec4899;"></i> <span>Surprise Me</span>
+                    </button>
+                    <a href="buddies.html" class="hero-service-chip">
+                        <i class="fa-solid fa-user-group" style="color:#a855f7;"></i> <span>Find Buddies</span>
+                    </a>
+                    <a href="community.html" class="hero-service-chip">
+                        <i class="fa-solid fa-camera-retro" style="color:#eab308;"></i> <span>Moments</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
@@ -429,7 +446,7 @@
         </div>
     </div>
 
-    <script src="script.js?v=30"></script>
+    <script src="script.js?v=31"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
