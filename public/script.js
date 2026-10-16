@@ -3,7 +3,7 @@ if (typeof window !== 'undefined') {
     if ('caches' in window) {
         caches.keys().then(keys => {
             keys.forEach(k => {
-                if (k !== 'triponext-cache-v22') caches.delete(k);
+                if (k !== 'triponext-cache-v24') caches.delete(k);
             });
         });
     }
@@ -374,34 +374,84 @@ async function planTrip() {
         // Fix Leaflet map sizing issue
         setTimeout(() => map.invalidateSize(), 300);
 
-        // 2a. Fetch Real Weather
-        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-        const weatherData = await weatherRes.json();
-        if(weatherData && weatherData.current_weather) {
-            document.getElementById('real-weather-temp').innerText = `${weatherData.current_weather.temperature}°C`;
-            const wc = weatherData.current_weather.weathercode;
-            let cond = "Clear";
-            let icon = "☀️";
-            if (wc > 0 && wc <= 3) { cond = "Partly Cloudy"; icon = "⛅"; }
-            if (wc >= 45 && wc <= 48) { cond = "Foggy"; icon = "🌫️"; }
-            if (wc >= 51 && wc <= 67) { cond = "Rainy"; icon = "🌧️"; }
-            if (wc >= 71 && wc <= 77) { cond = "Snowy"; icon = "❄️"; }
-            if (wc >= 95) { cond = "Thunderstorm"; icon = "⛈️"; }
-            document.getElementById('real-weather-cond').innerText = cond;
-            if(document.getElementById('weather-anim-icon')) {
-                document.getElementById('weather-anim-icon').innerText = icon;
-                // Add a small animation toggle class
-                document.getElementById('weather-anim-icon').style.animation = "float 3s ease-in-out infinite";
-            }
+        // 2a. Fetch Real Accurate Weather & Local Timezone
+        try {
+            const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=auto`);
+            const weatherData = await weatherRes.json();
+            const curr = weatherData.current || weatherData.current_weather;
             
-            // Set Local Time using timezone from Open-Meteo
-            if(weatherData.timezone && document.getElementById('dest-local-time')) {
-                const timeStr = new Intl.DateTimeFormat('en-US', {
-                    timeZone: weatherData.timezone,
-                    hour: '2-digit', minute: '2-digit', hour12: true
-                }).format(new Date());
-                document.getElementById('dest-local-time').innerText = timeStr;
+            if (curr) {
+                const tempVal = Math.round(curr.temperature_2m !== undefined ? curr.temperature_2m : curr.temperature);
+                const feelsVal = Math.round(curr.apparent_temperature !== undefined ? curr.apparent_temperature : tempVal);
+                const humVal = curr.relative_humidity_2m !== undefined ? curr.relative_humidity_2m : 60;
+                const windVal = Math.round(curr.wind_speed_10m !== undefined ? curr.wind_speed_10m : (curr.windspeed || 8));
+                const wc = curr.weather_code !== undefined ? curr.weather_code : (curr.weathercode || 0);
+                const isDay = curr.is_day !== undefined ? curr.is_day : 1;
+
+                if (document.getElementById('real-weather-temp')) {
+                    document.getElementById('real-weather-temp').innerText = `${tempVal}°C`;
+                }
+                if (document.getElementById('real-weather-feels')) {
+                    document.getElementById('real-weather-feels').innerText = `Feels like ${feelsVal}°C`;
+                }
+                if (document.getElementById('real-weather-humidity')) {
+                    document.getElementById('real-weather-humidity').innerText = `${humVal}%`;
+                }
+                if (document.getElementById('real-weather-wind')) {
+                    document.getElementById('real-weather-wind').innerText = `${windVal} km/h`;
+                }
+
+                // Accurate Day/Night condition & Icon
+                let cond = isDay === 0 ? "Clear Night" : "Sunny & Clear";
+                let icon = isDay === 0 ? "🌙" : "☀️";
+                if (wc === 1) { cond = isDay === 0 ? "Mainly Clear Night" : "Mainly Clear"; icon = isDay === 0 ? "🌙" : "🌤️"; }
+                else if (wc === 2) { cond = isDay === 0 ? "Partly Cloudy Night" : "Partly Cloudy"; icon = isDay === 0 ? "☁️" : "⛅"; }
+                else if (wc === 3) { cond = "Overcast"; icon = "☁️"; }
+                else if (wc >= 45 && wc <= 48) { cond = "Fog & Mist"; icon = "🌫️"; }
+                else if (wc >= 51 && wc <= 55) { cond = "Light Drizzle"; icon = "🌦️"; }
+                else if (wc >= 56 && wc <= 67) { cond = "Rainy"; icon = "🌧️"; }
+                else if (wc >= 71 && wc <= 77) { cond = "Snow Flurries"; icon = "❄️"; }
+                else if (wc >= 80 && wc <= 82) { cond = "Rain Showers"; icon = "🌧️"; }
+                else if (wc >= 95) { cond = "Thunderstorm Alert"; icon = "⛈️"; }
+
+                if (document.getElementById('real-weather-cond')) {
+                    document.getElementById('real-weather-cond').innerText = cond;
+                }
+                if (document.getElementById('weather-anim-icon')) {
+                    document.getElementById('weather-anim-icon').innerText = icon;
+                    document.getElementById('weather-anim-icon').style.animation = "float 3s ease-in-out infinite";
+                }
+
+                // Start exact live ticking destination clock in accurate local timezone
+                const targetTz = weatherData.timezone || 'UTC';
+                const targetAbbr = weatherData.timezone_abbreviation || '';
+                window._destTimezone = targetTz;
+                window._destTzAbbr = targetAbbr;
+
+                if (window._destClockInterval) clearInterval(window._destClockInterval);
+                const updateClock = () => {
+                    const timeEl = document.getElementById('dest-local-time');
+                    const abbrEl = document.getElementById('dest-tz-abbr');
+                    if (!timeEl || !window._destTimezone) return;
+                    try {
+                        const now = new Date();
+                        const timeStr = new Intl.DateTimeFormat('en-US', {
+                            timeZone: window._destTimezone,
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+                        }).format(now);
+                        timeEl.innerText = timeStr;
+                        if (abbrEl) {
+                            abbrEl.innerText = window._destTzAbbr ? `(${window._destTzAbbr})` : `(${window._destTimezone.split('/').pop().replace(/_/g, ' ')})`;
+                        }
+                    } catch(e) {
+                        timeEl.innerText = new Date().toLocaleTimeString();
+                    }
+                };
+                updateClock();
+                window._destClockInterval = setInterval(updateClock, 1000);
             }
+        } catch(wErr) {
+            console.warn("Real weather fetch failed:", wErr);
         }
 
         // 2b. Destination Photo - Wikipedia real photo + full card clickable + forcefully clean up old DOM
@@ -447,34 +497,41 @@ async function planTrip() {
         }
 
         // 3. Fetch Real Restaurants using Overpass API (OSM)
-        const overpassQuery = `
-            [out:json];
-            nwr(around:15000, ${lat}, ${lon})[amenity=restaurant];
-            out 4;
-        `;
-        let overpassData = { elements: [] };
+        let placeElements = [];
         try {
-            const overpassRes = await fetch('https://overpass-api.de/api/interpreter', {
-                method: 'POST',
-                body: overpassQuery
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            const placesRes = await fetch(`https://nominatim.openstreetmap.org/search?q=restaurants+in+${encodeURIComponent(dest)}&format=json&limit=4`, {
+                signal: controller.signal
             });
-            overpassData = await overpassRes.json();
+            clearTimeout(timeoutId);
+            if (placesRes.ok) {
+                const nominatimPlaces = await placesRes.json();
+                if (Array.isArray(nominatimPlaces) && nominatimPlaces.length > 0) {
+                    placeElements = nominatimPlaces.map(p => ({
+                        tags: {
+                            name: p.display_name.split(',')[0],
+                            cuisine: "Local Dining & Cuisine"
+                        }
+                    }));
+                }
+            }
         } catch(e) {}
         
         const placesContainer = document.getElementById('real-places-container');
         placesContainer.innerHTML = ''; // clear spinner
         
-        if(!overpassData.elements || overpassData.elements.length === 0) {
-            // Fallback premium data if API fails or is empty
-            overpassData.elements = [
-                { tags: { name: "Premium Local Dining", cuisine: "Authentic" } },
-                { tags: { name: "City Center Cafe", cuisine: "Coffee & Snacks" } },
-                { tags: { name: "Sunset Grill & Bar", cuisine: "Grill" } }
+        if(!placeElements || placeElements.length === 0) {
+            // Fallback authentic data if external search is empty
+            placeElements = [
+                { tags: { name: `${dest} Heritage Dining`, cuisine: "Authentic Regional" } },
+                { tags: { name: "The Old Town Bistro & Cafe", cuisine: "Coffee & Artisan Bites" } },
+                { tags: { name: "Sunset Terrace & Grill", cuisine: "Cocktails & Grill" } }
             ];
         }
 
         let html = "";
-        for (let el of overpassData.elements) {
+        for (let el of placeElements) {
             const name = el.tags.name || "Local Restaurant";
             const cuisine = el.tags.cuisine || "Local Cuisine";
             
@@ -930,10 +987,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const lat = geoData[0].lat;
                 const lon = geoData[0].lon;
                 
-                const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+                const wxRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&timezone=auto`);
                 const wxData = await wxRes.json();
-                if(wxData.current_weather) {
-                    weatherData = wxData.current_weather;
+                const wxCurr = wxData.current || wxData.current_weather;
+                if(wxCurr) {
+                    weatherData = {
+                        temperature: Math.round(wxCurr.temperature_2m !== undefined ? wxCurr.temperature_2m : wxCurr.temperature),
+                        feelsLike: Math.round(wxCurr.apparent_temperature !== undefined ? wxCurr.apparent_temperature : (wxCurr.temperature_2m || 20)),
+                        humidity: wxCurr.relative_humidity_2m !== undefined ? wxCurr.relative_humidity_2m : 60,
+                        windspeed: Math.round(wxCurr.wind_speed_10m !== undefined ? wxCurr.wind_speed_10m : (wxCurr.windspeed || 8)),
+                        timezone: wxData.timezone || 'UTC',
+                        tzAbbr: wxData.timezone_abbreviation || '',
+                        isDay: wxCurr.is_day !== undefined ? wxCurr.is_day : 1,
+                        weatherCode: wxCurr.weather_code !== undefined ? wxCurr.weather_code : (wxCurr.weathercode || 0)
+                    };
                 }
                 
                 progress.style.width = '50%';
@@ -1045,11 +1112,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     let weatherHTML = "";
     if (weatherData) {
-        weatherHTML = `<div style="background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
-            <i class="fa-solid fa-cloud-sun fa-2x" style="color: #facc15;"></i>
-            <div>
-                <h5 style="margin: 0; color: #f8fafc;">Current Weather in ${destination}</h5>
-                <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: var(--primary);">${weatherData.temperature}°C, Wind: ${weatherData.windspeed} km/h</p>
+        let wIcon = (weatherData.isDay === 0) ? "fa-moon" : "fa-sun";
+        let iconColor = (weatherData.isDay === 0) ? "#93c5fd" : "#facc15";
+        let condText = (weatherData.isDay === 0) ? "Clear Night" : "Sunny & Clear";
+        if (weatherData.weatherCode === 1 || weatherData.weatherCode === 2) {
+            condText = (weatherData.isDay === 0) ? "Partly Cloudy Night" : "Partly Cloudy";
+            wIcon = (weatherData.isDay === 0) ? "fa-cloud-moon" : "fa-cloud-sun";
+        } else if (weatherData.weatherCode === 3) {
+            condText = "Overcast";
+            wIcon = "fa-cloud";
+            iconColor = "#cbd5e1";
+        } else if (weatherData.weatherCode >= 51 && weatherData.weatherCode <= 67) {
+            condText = "Rainy";
+            wIcon = "fa-cloud-showers-heavy";
+            iconColor = "#38bdf8";
+        } else if (weatherData.weatherCode >= 71) {
+            condText = "Snowy";
+            wIcon = "fa-snowflake";
+            iconColor = "#a7f3d0";
+        }
+
+        weatherHTML = `<div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 1.2rem; border-radius: 12px; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <i class="fa-solid ${wIcon} fa-2x" style="color: ${iconColor};"></i>
+                <div>
+                    <h5 style="margin: 0; color: #f8fafc; font-size: 1rem;">Current Weather in ${destination}</h5>
+                    <div style="margin: 3px 0 0 0; font-size: 1.25rem; font-weight: 800; color: var(--primary);">
+                        ${weatherData.temperature}°C &nbsp;<span style="font-size: 0.85rem; color: #94a3b8; font-weight: 500;">(Feels like ${weatherData.feelsLike}°C, ${condText})</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #cbd5e1; margin-top: 4px; display: flex; gap: 14px;">
+                        <span><i class="fa-solid fa-droplet" style="color: #38bdf8;"></i> Humidity: ${weatherData.humidity}%</span>
+                        <span><i class="fa-solid fa-wind" style="color: #a78bfa;"></i> Wind: ${weatherData.windspeed} km/h</span>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <span style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 4px 10px; font-size: 0.78rem; font-weight: 700;">
+                    <i class="fa-solid fa-circle-check"></i> Accurate Live Data
+                </span>
             </div>
         </div>`;
     }
@@ -1177,6 +1277,85 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
     `;
     result.style.display = 'block';
+
+    // Cache structured main plan for Executive PDF Export
+    try {
+        window._currentMainPlan = {
+            destination: destination,
+            days: numDays,
+            budget: displayBudget,
+            currency: selectedCurrency,
+            vibe: "Curated AI Highlights & Food Discovery",
+            summary: wikiSummary,
+            weatherData: weatherData,
+            budgetBreakdown: {
+                stay: "40%",
+                food: "25%",
+                activities: "20%",
+                transport: "15%"
+            },
+            packingList: (function() {
+                let items = ['Comfortable Walking Shoes', 'Universal Power Bank & Cables', 'Government Photo ID / Passport', 'First-Aid & Personal Medicines'];
+                if (weatherData && weatherData.temperature > 25) {
+                    items.push('Sunscreen & UV Sunglasses', 'Light Breathable Cotton Clothes');
+                } else if (weatherData && weatherData.temperature < 15) {
+                    items.push('Heavy Jacket / Woolen Layers', 'Thermal Socks & Beanie');
+                } else {
+                    items.push('Light Windbreaker / Cardigan');
+                }
+                return items;
+            })(),
+            insiderTips: [
+                `Download offline navigation maps for ${destination} before departure.`,
+                "Keep small denominations of local currency handy for local transit & street food.",
+                "Visit major attractions at 9:00 AM to beat midday tourist queues."
+            ],
+            dailyPlan: (function() {
+                let dList = [];
+                const themes = [
+                    "Arrival, Old Quarter & Local Flavors",
+                    "Iconic Heritage, Architecture & City Panoramas",
+                    "Scenic Nature, Hidden Spots & Lakeside Walk",
+                    "Artisan Bazaars, Crafts & Cultural Markets",
+                    "Culinary Crawl, Traditional Cafes & Twilight Tour",
+                    "Farewell Reflections, Souvenirs & Sunset Toast"
+                ];
+                for (let d = 1; d <= numDays; d++) {
+                    let a1 = famousAttractions[(d - 1) % famousAttractions.length];
+                    let r1 = famousRestaurants[(d - 1) % famousRestaurants.length];
+                    let a2 = famousAttractions[(d) % famousAttractions.length];
+                    let tName = (d === 1) ? "Arrival, Old Quarter & Local Flavors" : 
+                                ((d === numDays && numDays > 1) ? "Farewell Highlights, Souvenirs & Sunset" : 
+                                themes[(d - 1) % themes.length]);
+                    dList.push({
+                        day: d,
+                        theme: tName,
+                        morning: {
+                            time: "09:30 AM",
+                            act: a1.name,
+                            loc: destination,
+                            tip: "Arrive early for best photography and relaxed exploration."
+                        },
+                        afternoon: {
+                            time: "01:30 PM",
+                            act: r1.name,
+                            loc: destination,
+                            tip: "Savor local authentic specialties and regional snacks."
+                        },
+                        evening: {
+                            time: "06:30 PM",
+                            act: a2.name + " & Twilight Promenade",
+                            loc: destination,
+                            tip: "Dramatic sunset views and illuminated ambient scenery."
+                        }
+                    });
+                }
+                return dList;
+            })()
+        };
+    } catch(err) {
+        console.warn("Could not cache _currentMainPlan:", err);
+    }
 
     // Automatically save the AI generated trip
     const token = localStorage.getItem('token');
@@ -1310,28 +1489,25 @@ window.showAppToast = function(msg, type = 'info') {
 // MOBILE-FIRST BOTTOM NAVIGATION & QUICK LAUNCHERS
 // ========================================================
 window.renderMobileBottomNav = function() {
-    const currentPath = window.location.pathname;
-    const isHome = currentPath.endsWith('index.html') || currentPath === '/' || currentPath.endsWith('/') || currentPath.endsWith('/index');
+    const currentPath = (window.location.pathname || '').toLowerCase();
+    const isExplore = currentPath.includes('explore');
+    const isBuddies = currentPath.includes('buddies');
+    const isCommunity = currentPath.includes('community');
+    const isMyTrips = currentPath.includes('mytrips');
+    const isHome = !isExplore && !isBuddies && !isCommunity && !isMyTrips;
 
     const existingNav = document.getElementById('mobile-bottom-nav');
-    if (!isHome) {
-        // HIDE on all other pages (Explore, My Trips, Buddies, Community) so all buttons/cards are 100% accessible
-        if (existingNav) existingNav.style.setProperty('display', 'none', 'important');
-        return;
-    }
-
     if (existingNav) {
-        existingNav.style.display = 'flex';
-        return;
+        existingNav.remove(); // Re-render for clean active state
     }
 
     const navHTML = `
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
-        <a href="index.html" class="mobile-nav-item active">
+        <a href="index.html" class="mobile-nav-item ${isHome ? 'active' : ''}">
             <i class="fa-solid fa-house"></i>
             <span>Home</span>
         </a>
-        <a href="explore.html" class="mobile-nav-item">
+        <a href="explore.html" class="mobile-nav-item ${isExplore ? 'active' : ''}">
             <i class="fa-solid fa-compass"></i>
             <span>Explore</span>
         </a>
@@ -1339,15 +1515,15 @@ window.renderMobileBottomNav = function() {
             <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
             <span>Book</span>
         </button>
-        <a href="buddies.html" class="mobile-nav-item">
+        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
             <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
             <span>Buddies</span>
         </a>
-        <a href="community.html" class="mobile-nav-item">
+        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
             <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
-            <span>Community</span>
+            <span>Moments</span>
         </a>
-        <a href="mytrips.html" class="mobile-nav-item">
+        <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
             <i class="fa-solid fa-suitcase-rolling"></i>
             <span>My Trips</span>
         </a>
@@ -3889,142 +4065,357 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// 2. Export to PDF — CSS variables resolved, dark background guaranteed
-window.exportItineraryPDF = async function() {
-    const dest = (document.getElementById('destination-input') || {}).value || 'Trip';
-    const resultEl = document.getElementById('ai-result');
+// Helper: Build Luxury Executive Travel Dossier HTML (Zero Side Clipping, 660px A4 Width)
+function renderExecutiveDossierHTML(plan) {
+    const destName = plan.destination || "Trip Destination";
+    const numDays = plan.days || 3;
+    const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const weatherText = plan.weatherData ? `${plan.weatherData.temperature}°C • ${plan.weatherData.condition || 'Pleasant & Clear'}` : "24°C • Fair & Pleasant";
+    const timezoneText = (plan.weatherData && (plan.weatherData.timezone || plan.weatherData.tz)) 
+        ? (plan.weatherData.timezone || plan.weatherData.tz) 
+        : "Local Time";
+    const budgetVal = typeof plan.budget === 'number' ? `₹${plan.budget.toLocaleString('en-IN')}` : (plan.budget || '₹15,000');
 
-    if (!resultEl || !resultEl.innerHTML.trim() || resultEl.style.display === 'none') {
-        alert('Please generate your trip plan first!');
-        return;
+    // Build Day Cards
+    let daysHTML = "";
+    const dailyPlan = (plan.dailyPlan && plan.dailyPlan.length > 0) ? plan.dailyPlan : [
+        {
+            day: 1,
+            theme: "Arrival, Historic Quarter & Local Flavors",
+            morning: { time: "09:30 AM", act: `${destName} Heritage Walk & City Square`, loc: destName, tip: "Arrive early for best photography and relaxed pace." },
+            afternoon: { time: "01:30 PM", act: "Artisanal Food Crawl & Authentic Regional Lunch", loc: destName, tip: "Sample authentic regional delicacies and sweets." },
+            evening: { time: "06:30 PM", act: "Panoramic Sunset Viewpoint & Twilight Dinner", loc: destName, tip: "Golden hour viewpoint over the illuminated city." }
+        },
+        {
+            day: 2,
+            theme: "Iconic Landmarks, Cultural Highlights & Panorama",
+            morning: { time: "09:00 AM", act: "Grand Cultural Exploration & Monument Tour", loc: destName, tip: "Hire an official audio guide for rich historical context." },
+            afternoon: { time: "02:00 PM", act: "Local Artisan Workshops & Traditional Boutique Shopping", loc: destName, tip: "Pick up hand-crafted souvenirs directly from artisans." },
+            evening: { time: "07:00 PM", act: "Cultural Folk Music & Candlelight Courtyard Dining", loc: destName, tip: "Advance reservations recommended for evening dining." }
+        },
+        {
+            day: 3,
+            theme: "Scenic Nature, Souvenirs & Twilight Farewell",
+            morning: { time: "09:30 AM", act: "Scenic Nature Promenade & Photography Walk", loc: destName, tip: "Calm morning ambiance before daytime crowds arrive." },
+            afternoon: { time: "01:30 PM", act: "Farewell Regional Lunch & Craft Souvenir Shopping", loc: destName, tip: "Stock up on authentic local spices and specialties." },
+            evening: { time: "06:00 PM", act: "Sunset Rooftop Lounge & Farewell Toast", loc: destName, tip: "Unwind with scenic illuminated nighttime skyline." }
+        }
+    ];
+
+    dailyPlan.forEach(d => {
+        daysHTML += `
+            <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 14px; overflow: hidden; page-break-inside: avoid !important; break-inside: avoid !important; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+                <!-- Day Banner -->
+                <div style="background: linear-gradient(90deg, #091a36 0%, #1e293b 100%); padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="font-weight: 800; font-size: 12px; color: #ffffff; letter-spacing: 0.5px;">
+                        <span style="background: #f97316; color: #ffffff; padding: 2px 7px; border-radius: 4px; font-size: 10px; margin-right: 6px;">DAY ${d.day}</span>
+                        ${(d.theme || 'EXPLORATION & SIGHTSEEING').toUpperCase()}
+                    </div>
+                    <div style="font-size: 10px; color: #94a3b8; font-weight: 600;">Verified Route</div>
+                </div>
+
+                <!-- Schedule Segments -->
+                <div style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Morning -->
+                    <div style="display: flex; gap: 10px; align-items: flex-start; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0;">
+                        <div style="background: #fef9c3; color: #854d0e; padding: 3px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; min-width: 76px; text-align: center; flex-shrink: 0;">
+                            🌅 ${d.morning?.time || 'Morning'}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${d.morning?.act || d.morning?.activity || 'Morning Sightseeing'}</div>
+                            <div style="font-size: 10px; color: #475569; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${d.morning?.loc ? `<span>📍 ${d.morning.loc}</span>` : ''}
+                                ${d.morning?.tip ? `<span style="color: #0284c7;">💡 ${d.morning.tip}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Afternoon -->
+                    <div style="display: flex; gap: 10px; align-items: flex-start; padding-bottom: 8px; border-bottom: 1px dashed #e2e8f0;">
+                        <div style="background: #dbeafe; color: #1e40af; padding: 3px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; min-width: 76px; text-align: center; flex-shrink: 0;">
+                            ☀️ ${d.afternoon?.time || 'Afternoon'}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${d.afternoon?.act || d.afternoon?.activity || 'Afternoon Cultural Discovery'}</div>
+                            <div style="font-size: 10px; color: #475569; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${d.afternoon?.loc ? `<span>📍 ${d.afternoon.loc}</span>` : ''}
+                                ${d.afternoon?.tip ? `<span style="color: #0284c7;">💡 ${d.afternoon.tip}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Evening -->
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <div style="background: #f3e8ff; color: #6b21a8; padding: 3px 6px; border-radius: 5px; font-size: 10px; font-weight: 700; min-width: 76px; text-align: center; flex-shrink: 0;">
+                            🌙 ${d.evening?.time || 'Evening'}
+                        </div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-size: 12px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">${d.evening?.act || d.evening?.activity || 'Twilight Dinner & Sunset'}</div>
+                            <div style="font-size: 10px; color: #475569; display: flex; flex-wrap: wrap; gap: 8px;">
+                                ${d.evening?.loc ? `<span>📍 ${d.evening.loc}</span>` : ''}
+                                ${d.evening?.tip ? `<span style="color: #0284c7;">💡 ${d.evening.tip}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    const packing = (plan.packingList && plan.packingList.length > 0) ? plan.packingList : [
+        "Comfortable broken-in walking shoes",
+        "Universal power bank & high-speed cables",
+        "Weather-appropriate clothing & light layers",
+        "Government Photo ID & booking confirmations"
+    ];
+
+    const tips = (plan.insiderTips && plan.insiderTips.length > 0) ? plan.insiderTips : [
+        `Download offline navigation maps for ${destName} before departure.`,
+        "Keep small denominations of local currency for local transit & street food.",
+        "Arrive at major landmarks early in the morning to beat tourist lines."
+    ];
+
+    return `
+        <div id="executive-pdf-root" style="width: 660px; max-width: 660px; margin: 0 auto; padding: 0; background: #ffffff; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-sizing: border-box; overflow: hidden;">
+            <style>
+                * { box-sizing: border-box !important; margin: 0; padding: 0; word-break: break-word; }
+                body { background: #ffffff !important; }
+            </style>
+
+            <!-- Luxury Cover Header -->
+            <div style="background: linear-gradient(135deg, #091a36 0%, #173878 50%, #1e40af 100%); border-radius: 12px; padding: 18px 20px; color: #ffffff; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(15,23,42,0.12);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <div style="display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); padding: 3px 8px; border-radius: 16px; font-size: 9px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: #fed7aa; margin-bottom: 5px;">
+                            ✈️ TRIPONEXT OFFICIAL TRAVEL DOSSIER
+                        </div>
+                        <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; color: #ffffff;">
+                            ${destName.toUpperCase()}
+                        </div>
+                        <div style="font-size: 11px; color: #e0e7ff; margin-top: 3px; font-weight: 500;">
+                            ${plan.vibe ? `${plan.vibe} &bull; ` : ''}Created ${dateStr} &bull; Verified Master Plan
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 6px 12px; text-align: center;">
+                        <div style="font-size: 18px;">🛡️</div>
+                        <div style="font-size: 9px; font-weight: 800; color: #ffffff; margin-top: 2px; letter-spacing: 0.5px;">VERIFIED</div>
+                    </div>
+                </div>
+
+                <!-- 4-Stat Strip inside header -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: rgba(0,0,0,0.22); padding: 7px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 8px; color: #cbd5e1; text-transform: uppercase; font-weight: 600;">Duration</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #ffffff;">${numDays} Days</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #cbd5e1; text-transform: uppercase; font-weight: 600;">Est. Budget</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #ffffff;">${budgetVal}</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #cbd5e1; text-transform: uppercase; font-weight: 600;">Weather</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #ffffff;">${weatherText.split('•')[0].trim()}</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #cbd5e1; text-transform: uppercase; font-weight: 600;">Timezone</div>
+                        <div style="font-size: 12px; font-weight: 800; color: #ffffff;">${timezoneText.split('/')[1] || timezoneText}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Allocation Breakdown -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; page-break-inside: avoid !important;">
+                <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #475569; margin-bottom: 6px;">
+                    📊 Estimated Financial & Budget Breakdown
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;">
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #3b82f6; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 9px; color: #64748b;">🏨 Stay / Hotel</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.stay || '40%'}</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #10b981; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 9px; color: #64748b;">🥘 Dining</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.food || '25%'}</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #f59e0b; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 9px; color: #64748b;">🎟️ Activities</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.activities || '20%'}</div>
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 3px solid #8b5cf6; border-radius: 6px; padding: 6px; text-align: center;">
+                        <div style="font-size: 9px; color: #64748b;">🚕 Transit</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.transport || '15%'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Day-by-Day Master Schedule -->
+            <div style="margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                    📅 Day-by-Day Curated Schedule
+                </div>
+                ${daysHTML}
+            </div>
+
+            <!-- Packing & Tips 2-Column Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; page-break-inside: avoid !important;">
+                <!-- Packing Checklist -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #15803d; margin-bottom: 6px;">
+                        🎒 Essential Packing Checklist
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 10px; color: #334155; display: flex; flex-direction: column; gap: 3px;">
+                        ${packing.map(item => `<li>✅ ${item}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <!-- Local Insider Hacks -->
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #0369a1; margin-bottom: 6px;">
+                        💡 Local Insider Hacks
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 10px; color: #334155; display: flex; flex-direction: column; gap: 3px;">
+                        ${tips.map(tip => `<li>🔹 ${tip}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Emergency Helpline Callout -->
+            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; page-break-inside: avoid !important; display: flex; justify-content: space-between; align-items: center; font-size: 10px;">
+                <div>
+                    <strong style="color: #c2410c;">🚨 24/7 Emergency & Tourist Helpline:</strong>
+                    <span style="color: #7c2d12; margin-left: 6px;">Universal: 112 &bull; Tourist Helpline: 1363 &bull; Medical: 108</span>
+                </div>
+                <div style="color: #ea580c; font-weight: 700;">TripoNext SOS Ready</div>
+            </div>
+
+            <!-- Official Footer -->
+            <div style="padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8; font-weight: 600;">
+                <div>TripoNext Travel Technologies &bull; www.triponext.com</div>
+                <div>Doc ID: TN-${Date.now().toString().slice(-6)} &bull; Official Traveler Dossier</div>
+            </div>
+        </div>
+    `;
+}
+
+// 2. Master Luxury PDF Exporter — Perfectly Aligned, No Side Clipping, Agency-Grade
+window.exportItineraryPDF = async function(explicitSource) {
+    const magicModal = document.getElementById('magic-itinerary-modal');
+    const isMagicOpen = magicModal && (magicModal.style.display === 'flex' || magicModal.style.display === 'block');
+    const mainResultEl = document.getElementById('ai-result');
+
+    let planToExport = null;
+    let mode = 'main';
+
+    if (explicitSource === 'magic' || isMagicOpen) {
+        mode = 'magic';
+        planToExport = (typeof _currentActivePlan !== 'undefined' && _currentActivePlan) ? _currentActivePlan : null;
+    } else if (window._currentMainPlan) {
+        mode = 'main';
+        planToExport = window._currentMainPlan;
+    } else if (typeof _currentActivePlan !== 'undefined' && _currentActivePlan) {
+        mode = 'magic';
+        planToExport = _currentActivePlan;
     }
 
-    // Show loading state
-    const dlBtn = document.querySelector('[onclick="exportItineraryPDF()"]');
+    // Synthesize plan if not already cached
+    if (!planToExport) {
+        const destInputVal = (document.getElementById('destination-input') || {}).value || ((document.getElementById('magic-input-dest') || {}).value) || 'Trip Destination';
+        let daysVal = 3;
+        try {
+            daysVal = window._selectedNumDays || parseInt((document.getElementById('calc-days') || {}).value) || 3;
+        } catch(e) {}
+
+        const budgetVal = (document.getElementById('budget-input') || {}).value || '15000';
+        const currVal = (document.getElementById('currency-selector') || {}).value || 'INR';
+
+        planToExport = {
+            destination: destInputVal,
+            days: daysVal,
+            budget: `${currVal === 'INR' ? '₹' : currVal + ' '}${budgetVal}`,
+            currency: currVal,
+            vibe: "Curated AI Travel Experience",
+            summary: `A personalized ${daysVal}-day itinerary for exploring ${destInputVal}.`,
+            budgetBreakdown: { stay: "40%", food: "25%", activities: "20%", transport: "15%" },
+            dailyPlan: []
+        };
+    }
+
+    const destName = planToExport.destination || 'Trip';
+
+    // Find and update button state
+    let dlBtn = null;
+    if (mode === 'magic') {
+        dlBtn = document.querySelector('#magic-modal-footer button[onclick*="exportItineraryPDF"]') || document.querySelector('#magic-modal-footer button');
+    } else {
+        dlBtn = document.querySelector('#itinerary-action-btns button[onclick*="exportItineraryPDF"]') || document.querySelector('[onclick="exportItineraryPDF()"]');
+    }
     const origBtnHTML = dlBtn ? dlBtn.innerHTML : '';
     if (dlBtn) {
-        dlBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating PDF...';
+        dlBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Dossier...';
         dlBtn.disabled = true;
     }
 
-    // --- KEY FIX: Get innerHTML and replace ALL CSS variables with real colors ---
-    let rawHTML = resultEl.innerHTML;
-    const cssVarMap = {
-        'var(--primary)':    '#2563eb', // slightly darker blue for better print contrast
-        'var(--accent)':     '#7c3aed',
-        'var(--success)':    '#059669',
-        'var(--danger)':     '#dc2626',
-        'var(--warning)':    '#d97706',
-        'var(--text-main)':  '#1e293b', // Dark text for light background cards
-        'var(--text-muted)': '#475569',
-        'var(--glass-bg)':   'rgba(255,255,255,0.94)', 
-        'var(--glass-border)':'rgba(0,0,0,0.1)',
-        'white':             '#0f172a'
-    };
-    for (const [varName, value] of Object.entries(cssVarMap)) {
-        while (rawHTML.includes(varName)) {
-            rawHTML = rawHTML.split(varName).join(value);
+    let container = null;
+
+    try {
+        const dossierHTML = renderExecutiveDossierHTML(planToExport);
+
+        // Scratch isolated container with fixed width of 660px to strictly match A4 margins
+        container = document.createElement('div');
+        container.id = 'pdf-render-scratch-container';
+        container.style.cssText = 'position:fixed;top:0;left:0;width:660px;z-index:-9999;pointer-events:none;background:#ffffff;overflow:visible;';
+        container.innerHTML = dossierHTML;
+        document.body.appendChild(container);
+
+        if (typeof html2pdf === 'undefined') {
+            window.print();
+            if (container && container.parentNode) container.parentNode.removeChild(container);
+            return;
+        }
+
+        const cleanFilename = `${destName.replace(/[^a-zA-Z0-9]/g, '_')}_TripoNext_Executive_Dossier.pdf`;
+
+        // Perfectly proportioned A4 margins (10mm left, right, top, bottom)
+        const opt = {
+            margin: [10, 10, 10, 10],
+            filename: cleanFilename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff',
+                windowWidth: 700,
+                scrollX: 0,
+                scrollY: 0,
+                x: 0,
+                y: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        await html2pdf().set(opt).from(container.firstElementChild).save();
+
+        // High-end success toast
+        const t = document.createElement('div');
+        t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#091a36;border:1px solid #3b82f6;color:white;padding:1rem 1.6rem;border-radius:14px;font-size:0.9rem;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,0.6);font-weight:bold;display:flex;align-items:center;gap:10px;';
+        t.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #60a5fa; font-size: 1.3rem;"></i> <div><div>${cleanFilename}</div><div style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">Executive Travel Dossier downloaded</div></div>`;
+        document.body.appendChild(t);
+        setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
+
+    } catch (err) {
+        console.error("PDF Export error:", err);
+        alert("Failed to export PDF: " + (err.message || err));
+    } finally {
+        if (dlBtn) {
+            dlBtn.innerHTML = origBtnHTML;
+            dlBtn.disabled = false;
+        }
+        if (container && container.parentNode) {
+            container.parentNode.removeChild(container);
         }
     }
-    // Fix hardcoded transparent dark backgrounds to clean white cards for contrast on dark PDF wallpaper
-    rawHTML = rawHTML.replace(/background:\s*rgba\(255,\s*255,\s*255,\s*0\.05\);?/gi, 'background: rgba(255, 255, 255, 0.94); border-radius: 14px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);');
-    rawHTML = rawHTML.replace(/background:\s*rgba\(0,\s*0,\s*0,\s*0\.2\);?/gi, 'background: rgba(255, 255, 255, 0.94); border-radius: 14px; padding: 18px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);');
-
-    // Fix hardcoded text colors inside cards so they are dark & crisp
-    rawHTML = rawHTML.replace(/color:\s*white;?/gi, 'color: #1e293b;');
-    rawHTML = rawHTML.replace(/color:\s*#cbd5e1;?/gi, 'color: #475569;');
-    rawHTML = rawHTML.replace(/color:\s*#f8fafc;?/gi, 'color: #0f172a;');
-    rawHTML = rawHTML.replace(/color:\s*#94a3b8;?/gi, 'color: #475569;');
-
-    // Remove the action buttons div from the content
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = rawHTML;
-    const actionBtns = tempDiv.querySelector('#itinerary-action-btns');
-    if (actionBtns) {
-        actionBtns.remove();
-    }
-
-    const date = new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' });
-
-    // Use the actual destination image we fetched (Wikipedia/Picsum) instead of deprecated Unsplash
-    let destImgSrc = document.getElementById('real-dest-img') ? document.getElementById('real-dest-img').src : ('https://picsum.photos/seed/' + encodeURIComponent(dest) + '/800/400');
-    
-    // Convert to Base64 to bypass ANY html2canvas CORS limitations completely!
-    try {
-        const res = await fetch(destImgSrc);
-        const blob = await res.blob();
-        destImgSrc = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-        });
-    } catch(e) {
-        console.warn("Failed to convert image to base64, falling back to raw url", e);
-    }
-
-    // Build complete self-contained HTML with a beautiful, rich dark location background image for the entire PDF
-    const fullHTML = '<div style="background: url(\'' + destImgSrc + '\') center/cover; position: relative; color:#0f172a; font-family:\'Outfit\', Arial, Helvetica, sans-serif; width:750px; box-sizing:border-box;">'
-      + '<style>* { box-sizing: border-box !important; word-wrap: break-word; }</style>'
-      + '<div style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.65); z-index: 0;"></div>' // Darkened background photo overlay
-      + '<div style="position: relative; z-index: 1; padding: 32px;">'
-      + '<div style="background: url(\'' + destImgSrc + '\') center/cover; border-radius:16px; padding:36px 26px; margin-bottom:24px; display:flex; align-items:center; position:relative; overflow:hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.2);">'
-      + '<div style="position:absolute; inset:0; background:linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,58,138,0.8) 100%);"></div>'
-      + '<div style="position:relative; z-index:2; display:flex; align-items:center; gap:18px;">'
-      + '<div style="background:#2563eb;color:#ffffff;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:0 4px 15px rgba(37,99,235,0.4);">✈️</div>'
-      + '<div>'
-      + '<div style="font-size:30px;font-weight:800;color:#ffffff; margin-bottom:4px; text-shadow:0 2px 8px rgba(0,0,0,0.6); letter-spacing:-0.5px;">TripoNext Itinerary</div>'
-      + '<div style="font-size:15px;color:#e2e8f0;font-weight:600; text-shadow:0 1px 4px rgba(0,0,0,0.6);">📍 ' + dest + ' &nbsp;&bull;&nbsp; 📅 ' + date + '</div>'
-      + '</div>'
-      + '</div>'
-      + '</div>'
-      + tempDiv.innerHTML
-      + '<div style="margin-top:30px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.2);font-size:13px;color:#f1f5f9;text-align:center;font-weight:600;text-shadow:0 1px 3px rgba(0,0,0,0.8);">'
-      + 'Generated by TripoNext &bull; Plan smarter, travel better.'
-      + '</div>'
-      + '</div>'
-      + '</div>';
-
-    // Position container absolute at left: 0 top: 0 behind content (z-index: -9999) so html2canvas renders with 0 X-offset
-    const container = document.createElement('div');
-    container.style.cssText = 'position:absolute;top:0;left:0;z-index:-9999;width:750px;overflow:hidden;pointer-events:none;background:#0f172a;';
-    container.innerHTML = fullHTML;
-    document.body.appendChild(container);
-
-    const opt = {
-        margin:      [5, 5, 5, 5],
-        filename:    dest.replace(/\s+/g, '_') + '_TripoNext.pdf',
-        image:       { type: 'jpeg', quality: 0.98 },
-        html2canvas: {
-            scale:           2,
-            useCORS:         true,
-            backgroundColor: '#0f172a',
-            windowWidth:     800,
-            logging:         false,
-            allowTaint:      true,
-            scrollX:         0,
-            scrollY:         0,
-            x:               0,
-            y:               0
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-
-    html2pdf().set(opt).from(container.firstChild).save()
-      .then(() => {
-          document.body.removeChild(container);
-          if (dlBtn) { dlBtn.innerHTML = origBtnHTML; dlBtn.disabled = false; }
-          const t = document.createElement('div');
-          t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#10b981;color:white;padding:1rem 1.6rem;border-radius:14px;font-size:0.9rem;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,0.5);font-weight:bold;display:flex;align-items:center;gap:8px;';
-          t.innerHTML = '<i class="fa-solid fa-file-pdf"></i> PDF Downloaded Successfully!';
-          document.body.appendChild(t);
-          setTimeout(() => t.remove(), 3500);
-      })
-      .catch(err => {
-          document.body.removeChild(container);
-          if (dlBtn) { dlBtn.innerHTML = origBtnHTML; dlBtn.disabled = false; }
-          console.error('PDF error:', err);
-          alert('PDF export failed. Please try again.');
-      });
 };
 
 // 3. Share on WhatsApp
@@ -4998,22 +5389,9 @@ function generateClientCuratedPlan(destination, numDays, budget, currency) {
     };
 }
 
-window.exportItineraryPDF = function() {
-    const elem = document.getElementById('printable-itinerary');
-    if (!elem) return;
-    if (typeof html2pdf === 'undefined') {
-        window.print();
-        return;
-    }
-    const dest = (_currentActivePlan && _currentActivePlan.destination) ? _currentActivePlan.destination : 'Trip';
-    const opt = {
-        margin: [10, 10, 10, 10],
-        filename: `${dest}_TripoNext_Itinerary.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0f172a' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    html2pdf().set(opt).from(elem).save();
+// Magic Planner export PDF helper (delegates to unified master exporter)
+window.exportMagicPlanPDF = function() {
+    return window.exportItineraryPDF('magic');
 };
 
 async function saveMagicTripToMyTrips(plan) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'triponext-cache-v22';
+const CACHE_NAME = 'triponext-cache-v25';
 const STATIC_ASSETS = [
   '/',
   '/login.html',
@@ -62,7 +62,15 @@ self.addEventListener('fetch', event => {
         caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
       }
       return networkResponse;
-    }).catch(() => caches.match(event.request))
+    }).catch(async () => {
+      const match = await caches.match(event.request);
+      if (match) return match;
+      if (event.request.mode === 'navigate') {
+        const fallback = await caches.match('/index.html');
+        if (fallback) return fallback;
+      }
+      return new Response('Content unavailable offline', { status: 503, headers: { 'Content-Type': 'text/plain' } });
+    })
   );
 });
 

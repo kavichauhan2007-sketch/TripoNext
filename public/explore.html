@@ -626,7 +626,7 @@
 
                 // Toast Feedback
                 const toast = document.createElement('div');
-                toast.style.css?v=23Text = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#10b981,#059669);color: white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:600;z-index:999999;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
+                toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:linear-gradient(135deg,#10b981,#059669);color: white;padding:0.9rem 1.4rem;border-radius:12px;font-weight:600;z-index:999999;box-shadow:0 10px 25px rgba(0,0,0,0.5);display:flex;align-items:center;gap:8px;';
                 toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${data.message || 'Hidden Gem added successfully!'}`;
                 document.body.appendChild(toast);
                 setTimeout(() => toast.remove(), 4000);

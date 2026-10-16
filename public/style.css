@@ -2054,11 +2054,79 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
     display: flex !important;
 }
 
-/* HIDE BOTTOM PANELS ON ALL OTHER PAGES (Explore, My Trips, Buddies, Community) */
-.explore-bg .mobile-bottom-nav,
-.mytrips-bg .mobile-bottom-nav,
-.community-bg .mobile-bottom-nav,
-body.page-other .mobile-bottom-nav,
+/* Mobile Bottom Navigation - Active across all pages on mobile viewports */
+@media (max-width: 868px) {
+    body, body.home-page, body.explore-bg, body.mytrips-bg, body.community-bg, body.page-other {
+        padding-bottom: 84px !important;
+    }
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: none !important;
+        border-radius: 0 !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+        background: rgba(10, 15, 29, 0.96) !important;
+        backdrop-filter: blur(20px) !important;
+        z-index: 1000 !important;
+        padding: 0 0.5rem !important;
+        padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+        height: 64px !important;
+    }
+
+    .mobile-nav-item {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        color: #94a3b8 !important;
+        text-decoration: none !important;
+        background: transparent !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: 4px 2px !important;
+        font-size: 0.65rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.2px !important;
+        transition: all 0.2s ease !important;
+        flex: 1 !important;
+        min-width: 0 !important;
+        gap: 3px !important;
+        -webkit-tap-highlight-color: transparent !important;
+    }
+    .mobile-nav-item i {
+        font-size: 1.15rem !important;
+        transition: transform 0.2s ease, color 0.2s ease !important;
+    }
+    .mobile-nav-item span {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 100% !important;
+        font-size: 0.65rem !important;
+    }
+    .mobile-nav-item:hover,
+    .mobile-nav-item:active {
+        color: #f8fafc !important;
+    }
+    .mobile-nav-item.active {
+        color: var(--primary) !important;
+    }
+    .mobile-nav-item.active i {
+        transform: translateY(-2px) !important;
+        color: var(--primary) !important;
+        filter: drop-shadow(0 2px 6px rgba(249, 115, 22, 0.5)) !important;
+    }
+    .mobile-nav-item.active span {
+        font-weight: 700 !important;
+        color: #ffffff !important;
+    }
+}
+
 .explore-bg .floating-toolbox-btn,
 .mytrips-bg .floating-toolbox-btn,
 .community-bg .floating-toolbox-btn,
@@ -2076,24 +2144,28 @@ body.page-other .floating-toolbox-btn,
 body.has-active-modal .mobile-bottom-nav,
 body.has-active-modal .floating-toolbox-btn,
 body.has-active-modal #toolbox-modal,
-body:has(.booking-hub-modal[style*="display: flex"]),
-body:has(.booking-hub-modal[style*="display: block"]),
-body:has(.payment-modal-overlay[style*="display: flex"]),
-body:has(.payment-modal-overlay[style*="display: block"]),
-body:has(#ticket-voucher-modal[style*="display: flex"]),
-body:has(#ticket-voucher-modal[style*="display: block"]),
-body:has(#magic-itinerary-modal[style*="display: flex"]),
-body:has(#magic-itinerary-modal[style*="display: block"]),
-body:has(.settings-hub-modal[style*="display: flex"]),
-body:has(.settings-hub-modal[style*="display: block"]),
-body:has(#sub-feature-modal[style*="display: flex"]),
-body:has(#sub-feature-modal[style*="display: block"]),
-body:has(#editTripModal[style*="display: flex"]),
-body:has(#editTripModal[style*="display: block"]),
-body:has(#expenseModal[style*="display: flex"]),
-body:has(#expenseModal[style*="display: block"]),
-body:has(#booking-detail-modal[style*="display: flex"]),
-body:has(#booking-detail-modal[style*="display: block"]) {
+body:has(.booking-hub-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.booking-hub-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(.payment-modal-overlay[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.payment-modal-overlay[style*="display: block"]) .mobile-bottom-nav,
+body:has(#ticket-voucher-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#ticket-voucher-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(#magic-itinerary-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#magic-itinerary-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(.settings-hub-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(.settings-hub-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(#sub-feature-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#sub-feature-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(#editTripModal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#editTripModal[style*="display: block"]) .mobile-bottom-nav,
+body:has(#expenseModal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#expenseModal[style*="display: block"]) .mobile-bottom-nav,
+body:has(#booking-detail-modal[style*="display: flex"]) .mobile-bottom-nav,
+body:has(#booking-detail-modal[style*="display: block"]) .mobile-bottom-nav,
+body:has(.booking-hub-modal[style*="display: flex"]) .floating-toolbox-btn,
+body:has(#magic-itinerary-modal[style*="display: flex"]) .floating-toolbox-btn,
+body:has(.settings-hub-modal[style*="display: flex"]) .floating-toolbox-btn,
+body:has(#sub-feature-modal[style*="display: flex"]) .floating-toolbox-btn {
     display: none !important;
     opacity: 0 !important;
     pointer-events: none !important;
@@ -2331,18 +2403,114 @@ body.phone-mode-active .mobile-bottom-nav {
     }
 
     .bento-grid {
-        grid-template-columns: 1fr !important;
-        gap: 1rem !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 1.2rem !important;
     }
 
-    .map-card, .weather-card, .itinerary-card, .budget-card, .places-card {
-        grid-column: span 1 !important;
+    .bento-grid > *,
+    .card,
+    .bookings-card,
+    .ai-itinerary-card,
+    #dest-photo-card,
+    .packing-card,
+    .recommendations-card,
+    .currency-card,
+    .weather-card,
+    .budget-card,
+    .map-card {
+        grid-column: auto !important;
+        grid-row: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
         height: auto !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
         padding: 1.2rem !important;
     }
 
+    #real-map,
     #map {
-        height: 250px !important;
+        height: 260px !important;
+        min-height: 260px !important;
+        width: 100% !important;
+    }
+
+    /* Mobile Native App Service Grid */
+    .hero-quick-actions {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.65rem !important;
+        width: 100% !important;
+        margin-top: 1.25rem !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .hero-quick-actions > * {
+        white-space: normal !important;
+        flex-shrink: 1 !important;
+        font-size: 0.82rem !important;
+        padding: 0.75rem 0.5rem !important;
+        border-radius: 14px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+        line-height: 1.2 !important;
+    }
+    .hero-quick-actions > *:first-child {
+        grid-column: span 2 !important;
+        padding: 0.85rem 1rem !important;
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
+        border-radius: 16px !important;
+        box-shadow: 0 4px 18px rgba(139, 92, 246, 0.45) !important;
+    }
+
+    /* Compact Circular Back Button on Mobile */
+    .nav-back-home-pill {
+        padding: 6px 10px !important;
+        border-radius: 50% !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 0.9rem !important;
+        flex-shrink: 0 !important;
+    }
+    .nav-back-home-pill span {
+        display: none !important;
+    }
+
+    .active-bookings-section {
+        padding: 0 0.8rem !important;
+        margin-top: 1.2rem !important;
+    }
+    .active-bookings-section > div {
+        padding: 1.1rem !important;
+        border-radius: 16px !important;
+    }
+
+    .page-container {
+        padding: 5rem 1rem 5.5rem 1rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .destinations-grid,
+    .trips-grid,
+    .buddies-grid,
+    .moments-grid,
+    .buddies-list {
+        grid-template-columns: 1fr !important;
+        width: 100% !important;
     }
 
     .modal-overlay {
