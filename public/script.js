@@ -168,6 +168,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="notif-list" id="notif-list"></div>
                 </div>
             </div>
+            <button class="top-mfa-badge-btn" onclick="openMfaSettingsModal()" title="Two-Factor Authentication (MFA)" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#34d399; border-radius:10px; padding:0.4rem 0.75rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:0.8rem; font-weight:600; margin-right:8px; transition:all 0.2s ease;">
+                <i class="fa-solid fa-shield-halved"></i> <span>2FA</span>
+            </button>
             <button class="top-profile-btn" onclick="openGlobalSettings()" title="Profile & Settings" style="background:linear-gradient(135deg, rgba(249,115,22,0.2), rgba(234,179,8,0.2)); border:1px solid rgba(249,115,22,0.4); color:white; border-radius:50%; width:38px; height:38px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.15rem;">
                 <i class="fa-solid fa-user"></i>
             </button>

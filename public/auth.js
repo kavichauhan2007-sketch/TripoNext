@@ -481,8 +481,34 @@ window.loginAsGuest = function() {
     window.location.href = 'index.html';
 };
 
+// Interactive preview of the MFA screen
+window.previewMfaScreen = function() {
+    startMfaVerification({
+        mfa_required: true,
+        mfa_token: 'preview-demo-challenge-token',
+        user_email_masked: 'demo***@triponext.com',
+        expires_in: 300
+    });
+    showMfaStatus('Interactive 2FA Preview Mode. Test the 6-digit code or switch to recovery code.', 'info');
+};
+
+// Auto-fill demo account with 2FA enabled
+window.fillDemo2faLogin = function() {
+    const emailEl = document.getElementById('login-email');
+    const passEl = document.getElementById('login-password');
+    if (emailEl && passEl) {
+        emailEl.value = 'demo2fa@triponext.com';
+        passEl.value = 'Password123!';
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.dispatchEvent(new Event('submit', { cancelable: true }));
+        }
+    }
+};
+
 // Global export for window scope
 window.toggleMfaRecoveryMethod = toggleMfaRecoveryMethod;
 window.requestMfaEmailOtp = requestMfaEmailOtp;
 window.cancelMfaVerification = cancelMfaVerification;
 window.toggleAuth = toggleAuth;
+
