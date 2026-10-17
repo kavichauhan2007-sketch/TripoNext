@@ -1835,6 +1835,23 @@ window.openGlobalSettings = async function() {
                 </div>
             </div>
 
+            <!-- Two-Factor Authentication (MFA) -->
+            <div class="settings-item-row" onclick="openMfaSettingsModal()">
+                <div class="settings-item-left">
+                    <div class="settings-item-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="settings-item-title">Two-Factor Authentication (MFA)</div>
+                        <div class="settings-item-subtitle" id="mfa-settings-status-sub">Protect account with TOTP authenticator</div>
+                    </div>
+                </div>
+                <div class="settings-item-right">
+                    <span id="mfa-settings-status-badge" style="background:rgba(255,255,255,0.08); color:#cbd5e1; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:700;">Security</span>
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </div>
+
             <!-- Offline Data Manager -->
             <div class="settings-item-row" onclick="openOfflineManager()">
                 <div class="settings-item-left">
@@ -1887,6 +1904,7 @@ window.openGlobalSettings = async function() {
     `;
 
     modal.style.display = 'flex';
+    if (typeof refreshMfaBadge === 'function') refreshMfaBadge();
 };
 
 window.closeGlobalSettings = function() {
@@ -1952,6 +1970,616 @@ window.saveProfileChanges = async function() {
         showAppToast('Profile saved in local storage! ✨', 'success');
         toggleEditProfileView();
     }
+};
+
+// ========================================================
+// TWO-FACTOR AUTHENTICATION (MFA) SETTINGS & CONTROLLER
+// ========================================================
+
+window.refreshMfaBadge = async function() {
+    const badge = document.getElementById('mfa-settings-status-badge');
+    const subtitle = document.getElementById('mfa-settings-status-sub');
+    const token = localStorage.getItem('token');
+    if (!token || !badge) return;
+
+    try {
+        const res = await fetch('/api/auth/mfa/status', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.mfa_enabled) {
+                badge.textContent = 'Active';
+                badge.style.background = 'rgba(16, 185, 129, 0.2)';
+                badge.style.color = '#34d399';
+                if (subtitle) subtitle.textContent = `Active • ${data.remaining_recovery_codes} backup code(s) left`;
+            } else {
+                badge.textContent = 'Not Enabled';
+                badge.style.background = 'rgba(239, 68, 68, 0.15)';
+                badge.style.color = '#f87171';
+                if (subtitle) subtitle.textContent = 'Protect account with TOTP authenticator';
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to fetch MFA status:', e);
+    }
+};
+
+window.openMfaSettingsModal = async function() {
+    let modal = document.getElementById('mfa-settings-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'mfa-settings-modal';
+        modal.className = 'settings-hub-modal';
+        modal.style.display = 'none';
+        document.body.appendChild(modal);
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAppToast('Please log in to manage security settings', 'error');
+        return;
+    }
+
+    modal.innerHTML = `
+    <div class="settings-hub-dialog" style="max-width: 520px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-shield-halved" style="color:var(--primary)"></i> Two-Factor Authentication
+            </h3>
+            <button onclick="closeMfaSettingsModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div style="text-align:center; padding: 3rem 1rem;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:var(--primary); margin-bottom:1rem;"></i>
+            <p style="color:#94a3b8; margin:0;">Loading security profile...</p>
+        </div>
+    </div>
+    `;
+    modal.style.display = 'flex';
+
+    try {
+        const res = await fetch('/api/auth/mfa/status', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Status request failed');
+        const statusData = await res.json();
+        renderMfaSettingsContent(statusData);
+    } catch (e) {
+        modal.innerHTML = `
+        <div class="settings-hub-dialog" style="max-width: 520px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="margin:0; color:#f87171;"><i class="fa-solid fa-circle-exclamation"></i> Error</h3>
+                <button onclick="closeMfaSettingsModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">&times;</button>
+            </div>
+            <p style="color:#cbd5e1;">Unable to load MFA settings at this time. Please make sure you are logged in and try again.</p>
+            <button onclick="closeMfaSettingsModal()" style="background:var(--primary); border:none; color:white; padding:0.6rem 1.2rem; border-radius:8px; cursor:pointer;">Close</button>
+        </div>
+        `;
+    }
+};
+
+window.closeMfaSettingsModal = function() {
+    const modal = document.getElementById('mfa-settings-modal');
+    if (modal) modal.style.display = 'none';
+    if (typeof refreshMfaBadge === 'function') refreshMfaBadge();
+};
+
+window.renderMfaSettingsContent = function(statusData) {
+    const modal = document.getElementById('mfa-settings-modal');
+    if (!modal) return;
+
+    const isEnabled = statusData.mfa_enabled;
+    const enrolledDate = statusData.enrolled_at ? new Date(statusData.enrolled_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently';
+
+    modal.innerHTML = `
+    <div class="settings-hub-dialog" style="max-width: 520px;">
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;">
+            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid fa-shield-halved" style="color:${isEnabled ? '#34d399' : 'var(--primary)'}"></i> Two-Factor Authentication
+            </h3>
+            <button onclick="closeMfaSettingsModal()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <div id="mfa-modal-alert" style="display:none; padding:0.75rem 1rem; border-radius:10px; margin-bottom:1rem; font-size:0.85rem;"></div>
+
+        <!-- Status Card -->
+        <div style="background:rgba(255,255,255,0.04); border:1px solid ${isEnabled ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.1)'}; border-radius:16px; padding:1.2rem; margin-bottom:1.2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
+                <div style="font-weight:600; font-size:0.95rem; color:#f1f5f9;">
+                    Protection Status
+                </div>
+                <span style="background:${isEnabled ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.15)'}; color:${isEnabled ? '#34d399' : '#f87171'}; padding:3px 12px; border-radius:12px; font-size:0.78rem; font-weight:700;">
+                    ${isEnabled ? '● Active' : '○ Not Enabled'}
+                </span>
+            </div>
+            <p style="font-size:0.85rem; color:#94a3b8; margin:0 0 0.8rem 0; line-height:1.5;">
+                ${isEnabled
+                    ? `Your TripoNext account is protected with a time-based one-time password (TOTP) authenticator app. Enrolled on ${enrolledDate}.`
+                    : 'Secure your TripoNext account with two-factor authentication. When enabled, signing in requires both your password and a 6-digit verification code from your authenticator app.'
+                }
+            </p>
+            ${isEnabled ? `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; background:rgba(0,0,0,0.2); padding:0.6rem 0.8rem; border-radius:8px;">
+                    <span style="color:#cbd5e1;"><i class="fa-solid fa-ticket" style="color:var(--primary); margin-right:6px;"></i> Active Recovery Codes:</span>
+                    <strong style="color:${statusData.remaining_recovery_codes <= 2 ? '#f87171' : '#34d399'};">${statusData.remaining_recovery_codes} of 8 remaining</strong>
+                </div>
+            ` : ''}
+        </div>
+
+        <!-- Dynamic Action Area -->
+        <div id="mfa-action-container">
+            ${!isEnabled ? `
+                <!-- Enrollment Trigger Button -->
+                <button onclick="startEnrollmentFlow()" style="width:100%; padding:0.9rem; background:linear-gradient(135deg, var(--primary), var(--accent)); border:none; color:white; font-size:1rem; font-weight:600; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                    <i class="fa-solid fa-lock"></i> Set Up Two-Factor Authentication
+                </button>
+            ` : `
+                <!-- Enabled Options -->
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <button onclick="startRegenerateCodesFlow()" style="width:100%; padding:0.8rem; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#e2e8f0; font-size:0.9rem; font-weight:600; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fa-solid fa-rotate" style="color:#38bdf8;"></i> Regenerate Backup Recovery Codes
+                    </button>
+                    <button onclick="startDisableMfaFlow()" style="width:100%; padding:0.8rem; background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#f87171; font-size:0.9rem; font-weight:600; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;">
+                        <i class="fa-solid fa-shield-slash"></i> Turn Off Two-Factor Authentication
+                    </button>
+                    <button onclick="loadMfaAuditLogs()" style="width:100%; padding:0.7rem; background:transparent; border:none; color:#94a3b8; font-size:0.82rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                        <i class="fa-solid fa-clock-rotate-left"></i> View Security Audit History
+                    </button>
+                </div>
+            `}
+        </div>
+
+        <!-- Audit Log Container -->
+        <div id="mfa-audit-container" style="display:none; margin-top:1.2rem; max-height:180px; overflow-y:auto; background:rgba(0,0,0,0.3); border-radius:10px; padding:0.8rem;"></div>
+    </div>
+    `;
+};
+
+// 1. Enrollment Flow
+window.startEnrollmentFlow = function() {
+    const container = document.getElementById('mfa-action-container');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.2rem;">
+        <h4 style="margin:0 0 0.8rem 0; font-size:0.95rem; color:var(--primary); display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-key"></i> Step 1: Re-authenticate
+        </h4>
+        <p style="font-size:0.82rem; color:#94a3b8; margin:0 0 1rem 0;">
+            Please enter your current account password to begin setting up Two-Factor Authentication.
+        </p>
+        <div style="margin-bottom:1rem;">
+            <input type="password" id="mfa-enroll-pass" placeholder="Enter Current Password" style="width:100%; padding:0.75rem 1rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none; font-size:0.95rem;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button onclick="openMfaSettingsModal()" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">Cancel</button>
+            <button onclick="submitEnrollPassword()" id="mfa-enroll-pass-btn" style="background:var(--primary); border:none; color:white; padding:0.5rem 1.2rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                Continue <i class="fa-solid fa-arrow-right" style="margin-left:4px;"></i>
+            </button>
+        </div>
+    </div>
+    `;
+};
+
+window.submitEnrollPassword = async function() {
+    const passInput = document.getElementById('mfa-enroll-pass');
+    const pass = passInput ? passInput.value : '';
+    if (!pass) {
+        showAppToast('Please enter your password to continue', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('mfa-enroll-pass-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking...';
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/auth/mfa/enroll', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ current_password: pass })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (res.ok) {
+            renderEnrollmentQrStep(data);
+        } else {
+            showAppToast(data.error || 'Password verification failed', 'error');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showAppToast('Network error during enrollment setup', 'error');
+    }
+};
+
+window.renderEnrollmentQrStep = function(enrollData) {
+    const container = document.getElementById('mfa-action-container');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.2rem;">
+        <h4 style="margin:0 0 0.8rem 0; font-size:0.95rem; color:var(--primary); display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-qrcode"></i> Step 2: Scan QR Code & Confirm
+        </h4>
+        <p style="font-size:0.82rem; color:#94a3b8; margin:0 0 1rem 0; line-height:1.4;">
+            Scan this QR code using Google Authenticator, Microsoft Authenticator, Authy, or 1Password.
+        </p>
+
+        <!-- QR Code -->
+        <div style="text-align:center; margin-bottom:1rem; background:white; padding:10px; border-radius:12px; display:inline-block; margin-left:auto; margin-right:auto; box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+            <img src="${enrollData.qr_code}" alt="MFA QR Code" style="width:180px; height:180px; display:block;">
+        </div>
+
+        <!-- Manual Key -->
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; font-size:0.75rem; color:#cbd5e1; margin-bottom:4px;">Manual Setup Key (if camera unavailable):</label>
+            <div style="display:flex; gap:6px;">
+                <input type="text" readonly value="${enrollData.secret}" style="flex:1; padding:0.5rem 0.8rem; background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#facc15; font-family:monospace; font-size:0.85rem; letter-spacing:1px;">
+                <button type="button" onclick="copyMfaText('${enrollData.secret}', 'Setup key copied to clipboard!')" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; padding:0 0.8rem; cursor:pointer;">
+                    <i class="fa-regular fa-copy"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Confirm 6-digit Code -->
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; font-size:0.75rem; color:#cbd5e1; margin-bottom:4px;">Enter the 6-digit code shown in your app:</label>
+            <input type="text" id="mfa-confirm-code" inputmode="numeric" maxlength="6" placeholder="000000" style="width:100%; padding:0.75rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius:8px; color:white; text-align:center; font-size:1.3rem; letter-spacing:6px; font-weight:700; outline:none;">
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button onclick="openMfaSettingsModal()" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">Cancel</button>
+            <button onclick="submitEnrollmentConfirmation()" id="mfa-confirm-btn" style="background:linear-gradient(135deg, var(--primary), var(--accent)); border:none; color:white; padding:0.6rem 1.4rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                <i class="fa-solid fa-check"></i> Activate MFA
+            </button>
+        </div>
+    </div>
+    `;
+
+    setTimeout(() => {
+        const inp = document.getElementById('mfa-confirm-code');
+        if (inp) inp.focus();
+    }, 100);
+};
+
+window.submitEnrollmentConfirmation = async function() {
+    const codeInput = document.getElementById('mfa-confirm-code');
+    const code = codeInput ? codeInput.value.trim() : '';
+    if (!code || code.length < 6) {
+        showAppToast('Please enter the 6-digit code from your authenticator app', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('mfa-confirm-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Activating...';
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/auth/mfa/confirm-enrollment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (res.ok) {
+            showAppToast('Two-Factor Authentication is now active! 🎉', 'success');
+            renderRecoveryCodesDisplay(data.recovery_codes, true);
+            refreshMfaBadge();
+        } else {
+            showAppToast(data.error || 'Failed to activate MFA with that code', 'error');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showAppToast('Network error during activation', 'error');
+    }
+};
+
+window.renderRecoveryCodesDisplay = function(codes, isInitial = false) {
+    const container = document.getElementById('mfa-action-container');
+    if (!container) return;
+
+    const codesFormatted = (codes || []).map(c => `<div style="background:rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1); padding:0.5rem; border-radius:6px; font-family:monospace; font-size:0.95rem; font-weight:700; color:#38bdf8; text-align:center; letter-spacing:1px;">${c}</div>`).join('');
+
+    container.innerHTML = `
+    <div style="background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); border-radius:14px; padding:1.2rem;">
+        <h4 style="margin:0 0 0.5rem 0; font-size:1rem; color:#34d399; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-shield-check"></i> ${isInitial ? 'Setup Complete: Save Recovery Codes' : 'New Recovery Codes Generated'}
+        </h4>
+        <p style="font-size:0.82rem; color:#cbd5e1; margin:0 0 1rem 0; line-height:1.4;">
+            <strong>Important:</strong> If you lose access to your authenticator app, each of these one-time codes can be used once to access your account. Store them securely.
+        </p>
+
+        <!-- Grid of Codes -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:1.2rem;">
+            ${codesFormatted}
+        </div>
+
+        <!-- Copy & Download actions -->
+        <div style="display:flex; gap:8px; margin-bottom:1rem;">
+            <button type="button" onclick="copyMfaText('${(codes || []).join('\\n')}', 'All 8 recovery codes copied!')" style="flex:1; padding:0.6rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <i class="fa-regular fa-copy"></i> Copy Codes
+            </button>
+            <button type="button" onclick="downloadRecoveryCodes(${JSON.stringify(codes).replace(/"/g, '&quot;')})" style="flex:1; padding:0.6rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:8px; font-size:0.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <i class="fa-solid fa-download"></i> Download .txt
+            </button>
+        </div>
+
+        <button onclick="openMfaSettingsModal()" style="width:100%; padding:0.75rem; background:linear-gradient(135deg, #10b981, #059669); border:none; color:white; border-radius:8px; font-weight:600; cursor:pointer;">
+            <i class="fa-solid fa-circle-check"></i> I have saved my codes
+        </button>
+    </div>
+    `;
+};
+
+// 2. Disable Flow
+window.startDisableMfaFlow = function() {
+    const container = document.getElementById('mfa-action-container');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.25); border-radius:14px; padding:1.2rem;">
+        <h4 style="margin:0 0 0.8rem 0; font-size:0.95rem; color:#f87171; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-triangle-exclamation"></i> Turn Off Two-Factor Authentication
+        </h4>
+        <p style="font-size:0.82rem; color:#cbd5e1; margin:0 0 1rem 0; line-height:1.4;">
+            This will remove the extra security protection from your account. To confirm, enter your current password and a 6-digit authenticator code (or backup code).
+        </p>
+        <div style="margin-bottom:0.8rem;">
+            <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">Current Password</label>
+            <input type="password" id="mfa-disable-pass" placeholder="Account Password" style="width:100%; padding:0.65rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">Authenticator Code or Backup Code</label>
+            <input type="text" id="mfa-disable-code" placeholder="6-digit code or XXXX-XXXX" style="width:100%; padding:0.65rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button onclick="openMfaSettingsModal()" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">Cancel</button>
+            <button onclick="submitDisableMfa()" id="mfa-disable-btn" style="background:#ef4444; border:none; color:white; padding:0.5rem 1.2rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                Disable Protection
+            </button>
+        </div>
+    </div>
+    `;
+};
+
+window.submitDisableMfa = async function() {
+    const current_password = document.getElementById('mfa-disable-pass')?.value || '';
+    const code = document.getElementById('mfa-disable-code')?.value || '';
+
+    if (!current_password || !code) {
+        showAppToast('Please provide both password and verification code', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('mfa-disable-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Disabling...';
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/auth/mfa/disable', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ current_password, code })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (res.ok) {
+            showAppToast('Two-Factor Authentication disabled.', 'success');
+            openMfaSettingsModal();
+        } else {
+            showAppToast(data.error || 'Failed to disable MFA', 'error');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showAppToast('Network error while disabling MFA', 'error');
+    }
+};
+
+// 3. Regenerate Recovery Codes Flow
+window.startRegenerateCodesFlow = function() {
+    const container = document.getElementById('mfa-action-container');
+    if (!container) return;
+
+    container.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:14px; padding:1.2rem;">
+        <h4 style="margin:0 0 0.8rem 0; font-size:0.95rem; color:#38bdf8; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-rotate"></i> Regenerate Backup Recovery Codes
+        </h4>
+        <p style="font-size:0.82rem; color:#cbd5e1; margin:0 0 1rem 0; line-height:1.4;">
+            Generating new recovery codes will instantly invalidate all previous codes. Enter your password to continue.
+        </p>
+        <div style="margin-bottom:0.8rem;">
+            <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">Current Password</label>
+            <input type="password" id="mfa-regen-pass" placeholder="Account Password" style="width:100%; padding:0.65rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="font-size:0.75rem; color:#94a3b8; display:block; margin-bottom:4px;">Authenticator 6-Digit Code (Optional verification)</label>
+            <input type="text" id="mfa-regen-code" placeholder="000000" maxlength="6" inputmode="numeric" style="width:100%; padding:0.65rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+            <button onclick="openMfaSettingsModal()" style="background:transparent; border:1px solid rgba(255,255,255,0.2); color:#cbd5e1; padding:0.5rem 1rem; border-radius:8px; cursor:pointer;">Cancel</button>
+            <button onclick="submitRegenerateCodes()" id="mfa-regen-btn" style="background:#0284c7; border:none; color:white; padding:0.5rem 1.2rem; border-radius:8px; font-weight:600; cursor:pointer;">
+                Generate New Codes
+            </button>
+        </div>
+    </div>
+    `;
+};
+
+window.submitRegenerateCodes = async function() {
+    const current_password = document.getElementById('mfa-regen-pass')?.value || '';
+    const code = document.getElementById('mfa-regen-code')?.value || '';
+
+    if (!current_password) {
+        showAppToast('Please enter your account password', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('mfa-regen-btn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/auth/mfa/recovery-codes/regenerate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ current_password, code })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+
+        if (res.ok) {
+            showAppToast('New backup codes generated! Previous codes invalidated.', 'success');
+            renderRecoveryCodesDisplay(data.recovery_codes, false);
+            refreshMfaBadge();
+        } else {
+            showAppToast(data.error || 'Failed to regenerate codes', 'error');
+        }
+    } catch (e) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        showAppToast('Network error while regenerating codes', 'error');
+    }
+};
+
+// 4. View Security Audit Logs
+window.loadMfaAuditLogs = async function() {
+    const container = document.getElementById('mfa-audit-container');
+    if (!container) return;
+
+    if (container.style.display === 'block') {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML = '<div style="text-align:center; color:#94a3b8; font-size:0.8rem;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching audit logs...</div>';
+
+    const token = localStorage.getItem('token');
+    try {
+        const res = await fetch('/api/auth/mfa/audit-logs', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const logs = data.audit_logs || [];
+
+        if (logs.length === 0) {
+            container.innerHTML = '<div style="color:#94a3b8; font-size:0.8rem; text-align:center;">No recent security events recorded.</div>';
+            return;
+        }
+
+        const logRows = logs.map(l => {
+            const dateStr = new Date(l.created_at).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            const isSuccess = l.status === 'SUCCESS';
+            return `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:5px 0; border-bottom:1px solid rgba(255,255,255,0.06); font-size:0.78rem;">
+                <div>
+                    <span style="color:${isSuccess ? '#34d399' : '#f87171'}; font-weight:600;">${l.event.replace(/_/g, ' ')}</span>
+                    <span style="color:#64748b; margin-left:6px;">(${l.ip_address || 'local'})</span>
+                </div>
+                <span style="color:#94a3b8;">${dateStr}</span>
+            </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+        <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:6px; font-weight:600;">Recent Security Activity</div>
+        ${logRows}
+        `;
+    } catch (e) {
+        container.innerHTML = '<div style="color:#f87171; font-size:0.8rem;">Failed to load audit logs.</div>';
+    }
+};
+
+// Clipboard and download helpers
+window.copyMfaText = function(text, successMsg) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => {
+            showAppToast(successMsg || 'Copied to clipboard!', 'success');
+        }).catch(() => {
+            fallbackCopyText(text, successMsg);
+        });
+    } else {
+        fallbackCopyText(text, successMsg);
+    }
+};
+
+function fallbackCopyText(text, successMsg) {
+    const el = document.createElement('textarea');
+    el.value = text;
+    document.body.appendChild(el);
+    el.select();
+    try {
+        document.execCommand('copy');
+        showAppToast(successMsg || 'Copied to clipboard!', 'success');
+    } catch (e) {
+        showAppToast('Failed to copy. Please copy manually.', 'error');
+    }
+    document.body.removeChild(el);
+}
+
+window.downloadRecoveryCodes = function(codes) {
+    const content = `TripoNext - Multi-Factor Authentication Backup Recovery Codes
+Account: ${JSON.parse(localStorage.getItem('user') || '{}').email || 'Your Account'}
+Generated: ${new Date().toISOString()}
+
+============================================================
+IMPORTANT:
+Each recovery code below can only be used ONCE to sign into
+your TripoNext account if you lose access to your authenticator app.
+Keep these codes in a secure, confidential place.
+============================================================
+
+${(codes || []).map((c, i) => `[${i + 1}] ${c}`).join('\n')}
+
+============================================================
+`;
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `triponext-recovery-codes-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showAppToast('Backup codes downloaded as .txt', 'success');
 };
 
 window.toggleAppTheme = function(theme) {
