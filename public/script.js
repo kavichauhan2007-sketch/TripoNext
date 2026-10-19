@@ -1577,9 +1577,11 @@ window.showAppToast = function(msg, type = 'info') {
 // ========================================================
 window.renderMobileBottomNav = function() {
     const currentPath = (window.location.pathname || '').toLowerCase();
-    const isExplore = currentPath.includes('explore') || currentPath.includes('buddies') || currentPath.includes('community');
+    const isExplore = currentPath.includes('explore');
+    const isBuddies = currentPath.includes('buddies');
+    const isCommunity = currentPath.includes('community');
     const isMyTrips = currentPath.includes('mytrips');
-    const isHome = !isExplore && !isMyTrips;
+    const isHome = !isExplore && !isBuddies && !isCommunity && !isMyTrips;
 
     const existingNav = document.getElementById('mobile-bottom-nav');
     if (existingNav) {
@@ -1606,18 +1608,24 @@ window.renderMobileBottomNav = function() {
             </div>
             <span>Book</span>
         </button>
+        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-user-group" style="color:${isBuddies ? 'var(--primary)' : '#38bdf8'};"></i>
+            </div>
+            <span>Buddies</span>
+        </a>
+        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-camera-retro" style="color:${isCommunity ? 'var(--primary)' : '#f59e0b'};"></i>
+            </div>
+            <span>Moments</span>
+        </a>
         <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
             <div class="nav-item-icon-box">
                 <i class="fa-solid fa-suitcase-rolling"></i>
             </div>
             <span>My Trips</span>
         </a>
-        <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
-            <div class="nav-item-icon-box">
-                <i class="fa-solid fa-circle-user"></i>
-            </div>
-            <span>Profile</span>
-        </button>
     </nav>
     `;
     document.body.insertAdjacentHTML('beforeend', navHTML);

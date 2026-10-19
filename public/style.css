@@ -2250,8 +2250,8 @@ body.home-page {
     bottom: 22px;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    max-width: 580px;
+    width: 92%;
+    max-width: 660px;
     height: 72px;
     background: rgba(9, 14, 28, 0.95);
     backdrop-filter: blur(28px);
@@ -2261,7 +2261,7 @@ body.home-page {
     z-index: 9990;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1rem;
+    padding: 0 0.8rem;
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.75), 0 0 25px rgba(249, 115, 22, 0.12);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -2277,10 +2277,10 @@ body.home-page {
     border: none;
     cursor: pointer;
     flex: 1 1 0;
-    max-width: 20%;
+    max-width: 17%;
     height: 100%;
-    padding: 6px 2px;
-    font-size: 0.74rem;
+    padding: 6px 1px;
+    font-size: 0.72rem;
     font-weight: 500;
     transition: all 0.22s ease;
     white-space: nowrap !important;
@@ -2404,31 +2404,32 @@ body.home-page .mobile-bottom-nav {
 
     .mobile-nav-item {
         flex: 1 1 0 !important;
-        max-width: 20% !important;
+        max-width: 16.666% !important;
         padding: 4px 1px !important;
         height: 100% !important;
         gap: 2px !important;
     }
     .nav-item-icon-box {
-        width: 36px !important;
-        height: 26px !important;
+        width: 32px !important;
+        height: 24px !important;
     }
     .mobile-nav-item i {
-        font-size: 1.22rem !important;
+        font-size: 1.15rem !important;
     }
     .mobile-nav-item span {
-        font-size: 0.69rem !important;
+        font-size: 0.65rem !important;
         font-weight: 600 !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        letter-spacing: 0px !important;
     }
     .mobile-nav-item.nav-item-action {
-        transform: translateY(-8px) !important;
+        transform: translateY(-6px) !important;
     }
     .nav-item-action-bubble {
-        width: 42px !important;
-        height: 42px !important;
+        width: 38px !important;
+        height: 38px !important;
     }
 }
 
