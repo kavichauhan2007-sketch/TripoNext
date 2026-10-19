@@ -61,7 +61,7 @@ const authenticateToken = (req, res, next) => {
 
 // API: Register User
 app.post('/api/register', async (req, res) => {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone } = req.body;
     if (!name || !email || !password) {
         return res.status(400).json({ error: 'Name, email, and password are required' });
     }
@@ -73,6 +73,7 @@ app.post('/api/register', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        const userPhone = (phone && typeof phone === 'string' && phone.trim()) ? phone.trim() : '';
         const newUser = await db.insert('users', {
             name: name.trim(),
             email: normalizedEmail,
@@ -80,13 +81,14 @@ app.post('/api/register', async (req, res) => {
             referral_code: "TRIP-" + Math.floor(1000 + Math.random() * 9000),
             referral_credits: 500,
             avatar: "avatar-1",
+            cover_image: "assets/mountain.jpg",
             home_city: "Delhi, India",
             travel_style: "Balanced",
-            phone: "+91 98765 43210"
+            phone: userPhone
         });
 
         const token = jwt.sign({ id: newUser.id, email: newUser.email, name: newUser.name }, SECRET_KEY);
-        res.json({ token, user: { id: newUser.id, name: newUser.name, email: newUser.email } });
+        res.json({ token, user: { id: newUser.id, name: newUser.name, email: newUser.email, phone: newUser.phone || '' } });
     } catch (e) {
         console.error('Registration error:', e);
         res.status(500).json({ error: 'Server error during registration' });
@@ -153,7 +155,7 @@ app.post('/api/login', async (req, res) => {
 
         // Standard direct session token for non-MFA accounts
         const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, SECRET_KEY);
-        res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+        res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone || '' } });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ error: 'Server error during login' });
@@ -403,7 +405,7 @@ app.post(['/api/auth/mfa/verify', '/auth/mfa/verify'], async (req, res) => {
                 const sessionToken = jwt.sign({ id: user.id, email: user.email, name: user.name }, SECRET_KEY);
                 return res.json({
                     token: sessionToken,
-                    user: { id: user.id, name: user.name, email: user.email }
+                    user: { id: user.id, name: user.name, email: user.email, phone: user.phone || '' }
                 });
             };
 
@@ -726,10 +728,16 @@ app.get('/api/trips', authenticateToken, async (req, res) => {
 
 // API: Update Trip
 app.put('/api/trips/:id', authenticateToken, async (req, res) => {
-    const { destination, dates, budget, itinerary } = req.body;
+    const { destination, dates, budget, itinerary, status } = req.body;
     const tripId = req.params.id;
     try {
-        const updated = await db.update('trips', tripId, { destination, dates, budget, itinerary });
+        const updateData = {};
+        if (destination !== undefined) updateData.destination = destination;
+        if (dates !== undefined) updateData.dates = dates;
+        if (budget !== undefined) updateData.budget = budget;
+        if (itinerary !== undefined) updateData.itinerary = itinerary;
+        if (status !== undefined) updateData.status = status;
+        const updated = await db.update('trips', tripId, updateData);
         if (!updated) return res.status(404).json({ error: 'Trip not found or unauthorized' });
         res.json({ success: true, trip: updated });
     } catch (e) {
@@ -1095,6 +1103,7 @@ app.get('/api/user/profile', async (req, res) => {
             phone: "+91 98765 43210",
             bio: "Passionate road-tripper, mountain lover & culture explorer.",
             avatar: "avatar-1",
+            cover_image: "assets/mountain.jpg",
             home_city: "Delhi, India",
             travel_style: "Adventure & Cultural",
             referral_code: "TRIP-7492",
@@ -1111,6 +1120,7 @@ app.get('/api/user/profile', async (req, res) => {
                 phone: "+91 98765 43210",
                 bio: "Passionate road-tripper, mountain lover & culture explorer.",
                 avatar: "avatar-1",
+                cover_image: "assets/mountain.jpg",
                 home_city: "Delhi, India",
                 travel_style: "Adventure & Cultural",
                 referral_code: "TRIP-7492",
@@ -1122,11 +1132,12 @@ app.get('/api/user/profile', async (req, res) => {
             if (!user) {
                 return res.json({
                     id: decoded.id,
-                    name: decoded.name || "Rahul Sharma",
+                    name: decoded.name || "Traveler",
                     email: decoded.email,
-                    phone: "+91 98765 43210",
+                    phone: "",
                     bio: "Wanderlust-driven explorer discovering secret gems.",
                     avatar: "avatar-1",
+                    cover_image: "assets/mountain.jpg",
                     home_city: "Delhi, India",
                     travel_style: "Balanced",
                     referral_code: "TRIP-" + (String(decoded.id).slice(-4) || '7492'),
@@ -1137,9 +1148,10 @@ app.get('/api/user/profile', async (req, res) => {
                 id: user.id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone || "+91 98765 43210",
+                phone: user.phone || "",
                 bio: user.bio || "Wanderlust-driven explorer discovering secret gems.",
                 avatar: user.avatar || "avatar-1",
+                cover_image: user.cover_image || "assets/mountain.jpg",
                 home_city: user.home_city || "Delhi, India",
                 travel_style: user.travel_style || "Balanced",
                 referral_code: user.referral_code || ("TRIP-" + (String(user.id).slice(-4) || '7492')),
@@ -1154,7 +1166,7 @@ app.get('/api/user/profile', async (req, res) => {
 app.put('/api/user/profile', async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    const { name, phone, bio, avatar, home_city, travel_style } = req.body;
+    const { name, phone, bio, avatar, cover_image, home_city, travel_style } = req.body;
 
     if (!token || token.startsWith('guest-token') || token.startsWith('local-token')) {
         return res.json({ success: true, message: "Profile saved successfully", user: req.body });
@@ -1165,11 +1177,17 @@ app.put('/api/user/profile', async (req, res) => {
             return res.json({ success: true, message: "Profile saved successfully", user: req.body });
         }
         try {
-            await db.update('users', decoded.id, {
-                ...(name ? { name } : {}),
-                phone, bio, avatar, home_city, travel_style
-            });
-            res.json({ success: true, user: { id: decoded.id, name, phone, bio, avatar, home_city, travel_style } });
+            const updateFields = {};
+            if (name !== undefined) updateFields.name = name;
+            if (phone !== undefined) updateFields.phone = phone;
+            if (bio !== undefined) updateFields.bio = bio;
+            if (avatar !== undefined) updateFields.avatar = avatar;
+            if (cover_image !== undefined) updateFields.cover_image = cover_image;
+            if (home_city !== undefined) updateFields.home_city = home_city;
+            if (travel_style !== undefined) updateFields.travel_style = travel_style;
+
+            await db.update('users', decoded.id, updateFields);
+            res.json({ success: true, user: { id: decoded.id, ...updateFields } });
         } catch (dbErr) {
             res.status(500).json({ error: 'Database update failed' });
         }

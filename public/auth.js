@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.removeItem('triponext_explicit_logout');
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.removeItem('user_profile_cache');
                     window.location.href = 'index.html';
                 } else {
                     showAuthAlert(data.error || 'Invalid email or password.');
@@ -68,7 +69,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (user) {
                     sessionStorage.removeItem('triponext_explicit_logout');
                     localStorage.setItem('token', 'local-token-' + Date.now());
-                    localStorage.setItem('user', JSON.stringify({ name: user.name, email: user.email }));
+                    localStorage.setItem('user', JSON.stringify({ name: user.name, email: user.email, phone: user.phone || '' }));
+                    localStorage.removeItem('user_profile_cache');
                     window.location.href = 'index.html';
                 } else {
                     showAuthAlert("Invalid email or password.");
@@ -83,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const name = document.getElementById('reg-name').value.trim();
             const email = document.getElementById('reg-email').value.trim();
+            const phone = document.getElementById('reg-phone') ? document.getElementById('reg-phone').value.trim() : '';
             const password = document.getElementById('reg-password').value;
             const submitBtn = registerForm.querySelector('button[type="submit"]');
 
@@ -94,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
+                    body: JSON.stringify({ name, email, password, phone })
                 });
 
                 const data = await res.json();
@@ -105,6 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.removeItem('triponext_explicit_logout');
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.removeItem('user_profile_cache');
                     window.location.href = 'index.html';
                 } else {
                     showAuthAlert(data.error || 'Registration failed.');
@@ -118,11 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (localUsers.find(u => u.email === email)) {
                     showAuthAlert("Email already exists");
                 } else {
-                    localUsers.push({ name, email, password });
+                    localUsers.push({ name, email, password, phone });
                     localStorage.setItem('localUsers', JSON.stringify(localUsers));
                     sessionStorage.removeItem('triponext_explicit_logout');
                     localStorage.setItem('token', 'local-token-' + Date.now());
-                    localStorage.setItem('user', JSON.stringify({ name, email }));
+                    localStorage.setItem('user', JSON.stringify({ name, email, phone }));
+                    localStorage.removeItem('user_profile_cache');
                     window.location.href = 'index.html';
                 }
             }
@@ -180,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     sessionStorage.removeItem('triponext_explicit_logout');
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.removeItem('user_profile_cache');
 
                     setTimeout(() => {
                         window.location.href = 'index.html';

@@ -2247,23 +2247,23 @@ body.home-page {
 .mobile-bottom-nav {
     display: none;
     position: fixed;
-    bottom: 18px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     width: auto;
     min-width: 0;
-    max-width: 650px;
-    height: 62px;
-    background: rgba(15, 23, 42, 0.94);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    max-width: 720px;
+    height: 70px;
+    background: rgba(12, 19, 36, 0.96);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 40px;
     z-index: 9990;
     justify-content: space-around;
     align-items: center;
-    padding: 0 1.2rem;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65), 0 0 20px rgba(249, 115, 22, 0.12);
+    padding: 0 1.6rem;
+    box-shadow: 0 16px 45px rgba(0, 0, 0, 0.7), 0 0 25px rgba(249, 115, 22, 0.15);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -2283,6 +2283,7 @@ body.home-page {
     transition: all 0.2s ease;
     white-space: nowrap !important;
     gap: 4px;
+    flex-shrink: 0;
 }
 .mobile-nav-item span {
     white-space: nowrap !important;
@@ -2338,7 +2339,7 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
 /* Mobile Bottom Navigation - Active across all pages on mobile viewports */
 @media (max-width: 868px) {
     body, body.home-page, body.explore-bg, body.mytrips-bg, body.community-bg, body.page-other {
-        padding-bottom: 84px !important;
+        padding-bottom: 92px !important;
     }
     .mobile-bottom-nav {
         display: flex !important;
@@ -2350,15 +2351,18 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
         max-width: 100% !important;
         transform: none !important;
         border-radius: 0 !important;
+        border-left: none !important;
+        border-right: none !important;
+        border-bottom: none !important;
         border-top: 1px solid rgba(255, 255, 255, 0.14) !important;
-        background: rgba(10, 15, 29, 0.96) !important;
-        backdrop-filter: blur(20px) !important;
-        -webkit-backdrop-filter: blur(20px) !important;
+        background: rgba(9, 14, 26, 0.97) !important;
+        backdrop-filter: blur(24px) !important;
+        -webkit-backdrop-filter: blur(24px) !important;
         z-index: 99990 !important;
-        padding: 0 4px !important;
+        padding: 0 6px !important;
         padding-bottom: env(safe-area-inset-bottom, 0px) !important;
-        height: 60px !important;
-        box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.6) !important;
+        height: 68px !important;
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.7) !important;
     }
 
     .mobile-nav-item {
@@ -2371,19 +2375,19 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
         background: transparent !important;
         border: none !important;
         cursor: pointer !important;
-        padding: 4px 1px !important;
-        font-size: 0.64rem !important;
+        padding: 5px 2px !important;
+        font-size: 0.68rem !important;
         font-weight: 600 !important;
-        letter-spacing: -0.2px !important;
+        letter-spacing: normal !important;
         transition: all 0.2s ease !important;
         flex: 1 1 0 !important;
         max-width: none !important;
         min-width: 0 !important;
-        gap: 2px !important;
+        gap: 3px !important;
         -webkit-tap-highlight-color: transparent !important;
     }
     .mobile-nav-item i {
-        font-size: 1.14rem !important;
+        font-size: 1.2rem !important;
         transition: transform 0.2s ease, color 0.2s ease !important;
     }
     .mobile-nav-item span {
@@ -2391,8 +2395,9 @@ body.phone-mode-active.home-page .mobile-bottom-nav {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         max-width: 100% !important;
-        font-size: 0.63rem !important;
-        line-height: 1 !important;
+        font-size: 0.68rem !important;
+        line-height: 1.1 !important;
+        font-weight: 600 !important;
     }
     .mobile-nav-item:hover,
     .mobile-nav-item:active {
@@ -2997,14 +3002,18 @@ body.phone-mode-active .mobile-bottom-nav {
 }
 
 .settings-hub-dialog {
-    background: linear-gradient(180deg, #0e172a 0%, #090e1d 100%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: 
+        linear-gradient(180deg, rgba(10, 17, 34, 0.93) 0%, rgba(6, 10, 22, 0.97) 100%),
+        url('assets/hero.jpg') center/cover no-repeat;
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 24px;
     width: 95%;
     max-width: 580px;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85), 0 0 40px rgba(14, 165, 233, 0.12);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85), 0 0 50px rgba(249, 115, 22, 0.15);
     color: #fff;
     padding: 0 0 1.5rem 0;
     position: relative;
@@ -3014,7 +3023,7 @@ body.phone-mode-active .mobile-bottom-nav {
 /* Scenic Travel Cover Banner */
 .profile-cover-banner {
     width: 100%;
-    height: 140px;
+    height: 145px;
     background-size: cover;
     background-position: center 35%;
     position: relative;
@@ -3023,13 +3032,83 @@ body.phone-mode-active .mobile-bottom-nav {
     justify-content: space-between;
     padding: 1rem 1.2rem;
     border-radius: 24px 24px 0 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    transition: background-image 0.3s ease;
 }
 
 .profile-cover-top {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.profile-change-cover-btn {
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.profile-change-cover-btn:hover {
+    background: var(--primary);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+/* Cover Image Picker Tray */
+.profile-cover-picker-tray {
+    background: rgba(15, 23, 42, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 1rem;
+    margin: 0.8rem 1.5rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.25s ease;
+}
+.cover-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin: 8px 0;
+}
+.cover-preset-thumb {
+    height: 54px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid transparent;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 3px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+.cover-preset-thumb:hover, .cover-preset-thumb.active {
+    transform: translateY(-2px);
+    border-color: var(--primary);
+}
+.cover-preset-thumb span {
+    font-size: 0.62rem;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .profile-badge-gold {
@@ -4049,4 +4128,61 @@ body.phone-mode-active .mobile-bottom-nav {
     background: rgba(239, 68, 68, 0.2);
     color: #f87171;
     border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* ========================================================
+   TRIPS FILTER & COMPLETED TRIPS STYLING (MYTRIPS.HTML)
+   ======================================================== */
+.trips-filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.4rem;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+}
+.trips-filter-bar::-webkit-scrollbar {
+    display: none;
+}
+.trip-filter-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #94a3b8;
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+.trip-filter-pill:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+}
+.trip-filter-pill.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 4px 15px rgba(249, 115, 22, 0.35);
+}
+
+.trip-card.trip-completed-card {
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.96)) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 25px rgba(16, 185, 129, 0.12) !important;
+}
+
+.travel-stat-item {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.travel-stat-item:hover {
+    transform: translateY(-2px);
+}
+.travel-stat-item:hover .stat-number {
+    color: var(--primary);
 }

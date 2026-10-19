@@ -1612,7 +1612,7 @@ window.renderMobileBottomNav = function() {
         </a>
         <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
             <i class="fa-solid fa-suitcase-rolling"></i>
-            <span>Trips</span>
+            <span>My Trips</span>
         </a>
         <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
             <i class="fa-solid fa-user-gear"></i>
@@ -1713,7 +1713,7 @@ window.openGlobalSettings = async function() {
 
     // Fetch user profile from API or local storage
     const token = localStorage.getItem('token');
-    let user = JSON.parse(localStorage.getItem('user')) || { name: 'Rahul Sharma', email: 'rahul@triponext.com' };
+    const storedUser = JSON.parse(localStorage.getItem('user')) || {};
     
     if (!_userProfileCache) {
         try {
@@ -1727,33 +1727,65 @@ window.openGlobalSettings = async function() {
             console.warn('Backend profile fetch fallback to local:', e);
         }
     }
-    const profile = _userProfileCache || {
-        name: user.name || "Rahul Sharma",
-        email: user.email || "rahul@triponext.com",
-        phone: "+91 98765 43210",
-        bio: "Explorer & Mountain Wanderer",
-        avatar: "avatar-1",
-        home_city: "Delhi, India",
-        travel_style: "Adventure & Cultural",
-        referral_code: "TRIP-7492",
-        referral_credits: 500
-    };
+    const profile = _userProfileCache || {};
+
+    const realName = (storedUser.name && storedUser.name !== 'Rahul Sharma') ? storedUser.name : (profile.name || storedUser.name || 'Traveler');
+    const realEmail = (storedUser.email && storedUser.email !== 'rahul.traveler@triponext.com' && storedUser.email !== 'rahul@triponext.com') ? storedUser.email : (profile.email || storedUser.email || 'traveler@triponext.com');
+    const realPhone = profile.phone || storedUser.phone || '';
+
+    const currentCover = localStorage.getItem('user_profile_cover') || profile.cover_image || 'assets/mountain.jpg';
 
     const isOnline = navigator.onLine;
-    const localTripsCount = (JSON.parse(localStorage.getItem('localTrips') || '[]')).length;
+    const localTripsList = JSON.parse(localStorage.getItem('localTrips') || '[]');
+    const savedTripsCount = localTripsList.length;
+    const completedTripsCount = localTripsList.filter(t => t.status === 'completed' || t.completed === true).length;
 
     modal.innerHTML = `
     <div class="settings-hub-dialog">
-        <!-- 1. TRAVEL COVER BANNER WITH SCENIC MOUNTAIN IMAGE -->
-        <div class="profile-cover-banner" style="background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.88) 100%), url('assets/mountain.jpg');">
+        <!-- 1. TRAVEL COVER BANNER WITH CHANGEABLE SCENIC IMAGE -->
+        <div class="profile-cover-banner" id="profile-cover-banner" style="background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.88) 100%), url('${currentCover}');">
             <div class="profile-cover-top">
                 <span class="profile-badge-gold"><i class="fa-solid fa-crown" style="color:#fbbf24;"></i> TripoNext Explorer</span>
-                <button onclick="closeGlobalSettings()" class="profile-cover-close-btn" title="Close Profile">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="toggleCoverPickerTray()" class="profile-change-cover-btn" title="Change Cover Photo">
+                        <i class="fa-solid fa-camera"></i> Change Cover
+                    </button>
+                    <button onclick="closeGlobalSettings()" class="profile-cover-close-btn" title="Close Profile">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
             </div>
             <div class="profile-cover-tagline">
                 <span><i class="fa-solid fa-compass"></i> Wandering & Exploring</span>
+            </div>
+        </div>
+
+        <!-- COVER IMAGE PICKER TRAY (EXPANDABLE) -->
+        <div id="profile-cover-picker-tray" class="profile-cover-picker-tray" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.82rem; font-weight:700; color:#fff;"><i class="fa-solid fa-image" style="color:var(--primary); margin-right:5px;"></i> Choose Cover Background</span>
+                <button onclick="toggleCoverPickerTray()" style="background:none; border:none; color:#94a3b8; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="cover-presets-grid">
+                <div class="cover-preset-thumb ${currentCover === 'assets/mountain.jpg' ? 'active' : ''}" style="background-image:url('assets/mountain.jpg');" onclick="selectProfileCover('assets/mountain.jpg')">
+                    <span>🏔️ Peaks</span>
+                </div>
+                <div class="cover-preset-thumb ${currentCover === 'assets/beach.jpg' ? 'active' : ''}" style="background-image:url('assets/beach.jpg');" onclick="selectProfileCover('assets/beach.jpg')">
+                    <span>🏖️ Beach</span>
+                </div>
+                <div class="cover-preset-thumb ${currentCover === 'assets/hero.jpg' ? 'active' : ''}" style="background-image:url('assets/hero.jpg');" onclick="selectProfileCover('assets/hero.jpg')">
+                    <span>🚗 Roadtrip</span>
+                </div>
+                <div class="cover-preset-thumb ${currentCover.includes('photo-1509316975850') ? 'active' : ''}" style="background-image:url('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=400&q=70');" onclick="selectProfileCover('https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=80')">
+                    <span>🏜️ Desert</span>
+                </div>
+                <div class="cover-preset-thumb ${currentCover.includes('photo-1519681393784') ? 'active' : ''}" style="background-image:url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=400&q=70');" onclick="selectProfileCover('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80')">
+                    <span>🌌 Starry</span>
+                </div>
+            </div>
+            <div style="display:flex; gap:6px; margin-top:8px;">
+                <input type="url" id="custom-cover-url-input" placeholder="Or paste image URL (https://...)" style="flex:1; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; border-radius:8px; padding:5px 8px; font-size:0.75rem;">
+                <button onclick="applyCustomCoverUrl()" style="background:var(--primary); border:none; color:#fff; border-radius:8px; padding:5px 12px; font-size:0.75rem; font-weight:600; cursor:pointer;">Apply</button>
             </div>
         </div>
 
@@ -1772,33 +1804,33 @@ window.openGlobalSettings = async function() {
 
             <div class="profile-details-block">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <h3 id="profile-name-display" style="margin:0; font-size:1.3rem; color:#fff;">${profile.name}</h3>
+                    <h3 id="profile-name-display" style="margin:0; font-size:1.3rem; color:#fff;">${realName}</h3>
                     <i class="fa-solid fa-circle-check" style="color:#38bdf8;" title="Verified Traveler"></i>
                 </div>
                 <p class="profile-bio-text">${profile.bio || 'Living for spontaneous roadtrips and secret viewpoints.'}</p>
                 <div class="profile-meta-row">
-                    <span><i class="fa-regular fa-envelope"></i> ${profile.email}</span>
-                    <span><i class="fa-solid fa-phone"></i> ${profile.phone || '+91 98765 43210'}</span>
+                    <span><i class="fa-regular fa-envelope"></i> ${realEmail}</span>
+                    <span><i class="fa-solid fa-phone"></i> ${realPhone ? realPhone : '<a href="javascript:void(0)" onclick="toggleEditProfileView()" style="color:#38bdf8; text-decoration:underline;">+ Add Phone</a>'}</span>
                     <span><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${profile.home_city || 'Delhi, India'}</span>
                     <span><i class="fa-solid fa-compass" style="color:#38bdf8"></i> ${profile.travel_style || 'Adventure'}</span>
                 </div>
             </div>
 
-            <!-- TRAVEL STATS STRIP -->
+            <!-- TRAVEL STATS STRIP (Connected directly to My Trips) -->
             <div class="profile-travel-stats">
-                <div class="travel-stat-item">
-                    <span class="stat-number">${localTripsCount > 0 ? localTripsCount : '4'}</span>
-                    <span class="stat-label">Saved Trips</span>
+                <div class="travel-stat-item" onclick="window.location.href='mytrips.html'" title="Click to view all saved trips">
+                    <span class="stat-number" id="profile-saved-trips-count">${savedTripsCount}</span>
+                    <span class="stat-label"><i class="fa-solid fa-suitcase-rolling" style="font-size:0.65rem; margin-right:3px;"></i> Saved Trips</span>
                 </div>
                 <div class="travel-stat-divider"></div>
-                <div class="travel-stat-item">
-                    <span class="stat-number">12</span>
-                    <span class="stat-label">Places Visited</span>
+                <div class="travel-stat-item" onclick="window.location.href='mytrips.html?filter=completed'" title="Click to view completed trips">
+                    <span class="stat-number" id="profile-completed-trips-count" style="color:#10b981;">${completedTripsCount}</span>
+                    <span class="stat-label"><i class="fa-solid fa-circle-check" style="font-size:0.65rem; margin-right:3px;"></i> Completed</span>
                 </div>
                 <div class="travel-stat-divider"></div>
-                <div class="travel-stat-item">
-                    <span class="stat-number">₹${profile.referral_credits || 500}</span>
-                    <span class="stat-label">Travel Coins</span>
+                <div class="travel-stat-item" onclick="openReferEarnModal()" title="View Travel Rewards">
+                    <span class="stat-number" style="color:#facc15;">₹${profile.referral_credits || 500}</span>
+                    <span class="stat-label"><i class="fa-solid fa-coins" style="font-size:0.65rem; margin-right:3px;"></i> Travel Coins</span>
                 </div>
             </div>
         </div>
@@ -1827,11 +1859,11 @@ window.openGlobalSettings = async function() {
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.8rem; margin-bottom:0.8rem;">
                 <div>
                     <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Full Name</label>
-                    <input type="text" id="edit-name" value="${profile.name}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                    <input type="text" id="edit-name" value="${realName}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
                 </div>
                 <div>
                     <label style="font-size:0.75rem; color:#cbd5e1; display:block; margin-bottom:4px;">Phone Number</label>
-                    <input type="text" id="edit-phone" value="${profile.phone || '+91 98765 43210'}" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
+                    <input type="text" id="edit-phone" value="${realPhone}" placeholder="+91 98765 43210" style="width:100%; padding:0.6rem 0.8rem; border-radius:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:white; outline:none;">
                 </div>
             </div>
 
@@ -2067,6 +2099,7 @@ window.saveProfileChanges = async function() {
             // Update local user storage
             const localUser = JSON.parse(localStorage.getItem('user')) || {};
             localUser.name = name;
+            localUser.phone = phone;
             localStorage.setItem('user', JSON.stringify(localUser));
 
             // Update UI elements
@@ -2077,14 +2110,75 @@ window.saveProfileChanges = async function() {
 
             showAppToast('Profile updated successfully! ✨', 'success');
             toggleEditProfileView();
+            // Re-render to refresh phone and meta display
+            if (typeof openGlobalSettings === 'function') openGlobalSettings();
         } else {
             showAppToast('Failed to save profile changes.', 'error');
         }
     } catch (e) {
         console.warn('Saving profile offline:', e);
         _userProfileCache = { ...(_userProfileCache || {}), ...updatedData };
+        const localUser = JSON.parse(localStorage.getItem('user')) || {};
+        localUser.name = name;
+        localUser.phone = phone;
+        localStorage.setItem('user', JSON.stringify(localUser));
         showAppToast('Profile saved in local storage! ✨', 'success');
         toggleEditProfileView();
+        if (typeof openGlobalSettings === 'function') openGlobalSettings();
+    }
+};
+
+window.toggleCoverPickerTray = function() {
+    const tray = document.getElementById('profile-cover-picker-tray');
+    if (tray) {
+        tray.style.display = tray.style.display === 'none' ? 'block' : 'none';
+    }
+};
+
+window.selectProfileCover = async function(imageUrl) {
+    if (!imageUrl) return;
+    localStorage.setItem('user_profile_cover', imageUrl);
+    const banner = document.getElementById('profile-cover-banner');
+    if (banner) {
+        banner.style.backgroundImage = `linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.88) 100%), url('${imageUrl}')`;
+    }
+    if (_userProfileCache) {
+        _userProfileCache.cover_image = imageUrl;
+    }
+    // Update active thumb style
+    document.querySelectorAll('.cover-preset-thumb').forEach(thumb => {
+        if (thumb.style.backgroundImage && thumb.style.backgroundImage.includes(imageUrl)) {
+            thumb.classList.add('active');
+        } else {
+            thumb.classList.remove('active');
+        }
+    });
+
+    const token = localStorage.getItem('token');
+    if (token) {
+        try {
+            await fetch('/api/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ cover_image: imageUrl })
+            });
+        } catch (e) {
+            console.warn('Cover photo saved locally:', e);
+        }
+    }
+    if (window.showAppToast) {
+        window.showAppToast('Cover background updated! 🌄', 'success');
+    }
+    toggleCoverPickerTray();
+};
+
+window.applyCustomCoverUrl = function() {
+    const input = document.getElementById('custom-cover-url-input');
+    if (input && input.value.trim()) {
+        selectProfileCover(input.value.trim());
     }
 };
 

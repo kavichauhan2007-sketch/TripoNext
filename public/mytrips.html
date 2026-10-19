@@ -271,6 +271,19 @@
 
         <!-- 1. PLANNED TRIPS SECTION -->
         <div id="section-planned-trips">
+            <!-- Filter Pills Bar -->
+            <div class="trips-filter-bar">
+                <button class="trip-filter-pill active" id="filter-all" onclick="filterTrips('all')">
+                    <i class="fa-solid fa-layer-group"></i> All Trips (<span id="count-filter-all">0</span>)
+                </button>
+                <button class="trip-filter-pill" id="filter-active" onclick="filterTrips('active')">
+                    <i class="fa-solid fa-paper-plane"></i> Planned (<span id="count-filter-active">0</span>)
+                </button>
+                <button class="trip-filter-pill" id="filter-completed" onclick="filterTrips('completed')">
+                    <i class="fa-solid fa-circle-check"></i> Completed (<span id="count-filter-completed">0</span>)
+                </button>
+            </div>
+
             <div id="trips-container" class="trips-grid">
                 <div style="text-align:center; width:100%; grid-column:1/-1; padding:3rem; color:#94a3b8;">
                     <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
@@ -409,8 +422,14 @@
     <script>
         let allTripsData = [];
         let allBookingsData = [];
+        let currentTripFilter = 'all';
 
         document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const filterParam = urlParams.get('filter');
+            if (filterParam === 'completed' || filterParam === 'active') {
+                currentTripFilter = filterParam;
+            }
             initNetworkStatus();
             loadTrips();
             loadBookings();
@@ -493,10 +512,19 @@
             }
         }
 
+        // Filter trips by All / Active / Completed
+        function filterTrips(type) {
+            currentTripFilter = type;
+            document.querySelectorAll('.trip-filter-pill').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.getElementById(`filter-${type}`);
+            if (activeBtn) activeBtn.classList.add('active');
+            renderTripsList();
+        }
+        window.filterTrips = filterTrips;
+
         // 4. LOAD PLANNED TRIPS
         async function loadTrips() {
             const token = localStorage.getItem('token');
-            const container = document.getElementById('trips-container');
             const countBadge = document.getElementById('trips-count-badge');
 
             let dbTrips = [];
@@ -516,11 +544,15 @@
             // In offline mode or if local drafts exist
             let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
             
-            // Deduplicate if identical destination and dates
+            // Merge & Deduplicate
             const combined = [...(Array.isArray(dbTrips) ? dbTrips : [])];
             localTrips.forEach(lt => {
-                const alreadyExists = combined.some(ct => String(ct.id) === String(lt.id) || (ct.destination === lt.destination && ct.dates === lt.dates));
-                if (!alreadyExists) {
+                const existingIdx = combined.findIndex(ct => String(ct.id) === String(lt.id) || (ct.destination === lt.destination && ct.dates === lt.dates));
+                if (existingIdx !== -1) {
+                    if (lt.status && !combined[existingIdx].status) {
+                        combined[existingIdx].status = lt.status;
+                    }
+                } else {
                     lt.is_offline_draft = true;
                     combined.push(lt);
                 }
@@ -528,6 +560,31 @@
 
             allTripsData = combined;
             if (countBadge) countBadge.textContent = allTripsData.length;
+
+            renderTripsList();
+        }
+
+        // Render trips list with active filter
+        function renderTripsList() {
+            const container = document.getElementById('trips-container');
+            if (!container) return;
+
+            // Update badge counts
+            const totalCount = allTripsData.length;
+            const activeCount = allTripsData.filter(t => t.status !== 'completed').length;
+            const completedCount = allTripsData.filter(t => t.status === 'completed').length;
+
+            const cAll = document.getElementById('count-filter-all');
+            const cAct = document.getElementById('count-filter-active');
+            const cComp = document.getElementById('count-filter-completed');
+            if (cAll) cAll.textContent = totalCount;
+            if (cAct) cAct.textContent = activeCount;
+            if (cComp) cComp.textContent = completedCount;
+
+            // Highlight active filter pill
+            document.querySelectorAll('.trip-filter-pill').forEach(btn => btn.classList.remove('active'));
+            const activePill = document.getElementById(`filter-${currentTripFilter}`);
+            if (activePill) activePill.classList.add('active');
 
             if (allTripsData.length === 0) {
                 container.innerHTML = `
@@ -548,27 +605,61 @@
                 return;
             }
 
+            // Apply filter
+            let filtered = allTripsData;
+            if (currentTripFilter === 'completed') {
+                filtered = allTripsData.filter(t => t.status === 'completed');
+            } else if (currentTripFilter === 'active') {
+                filtered = allTripsData.filter(t => t.status !== 'completed');
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                <div class="empty-state-box" style="grid-column: 1/-1;">
+                    <i class="fa-solid ${currentTripFilter === 'completed' ? 'fa-award' : 'fa-compass'}"></i>
+                    <h3>No ${currentTripFilter === 'completed' ? 'Completed' : 'Active'} Trips</h3>
+                    <p>${currentTripFilter === 'completed' 
+                        ? 'You haven\'t marked any trips as completed yet. Complete an active trip to see it listed here and reflected in your Profile achievements!' 
+                        : 'All your planned trips are completed! Plan a new exciting journey now.'}</p>
+                    <div style="display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
+                        <button onclick="filterTrips('all')" class="btn-small" style="background:rgba(255,255,255,0.12); color:#fff; border:1px solid rgba(255,255,255,0.2); padding:0.6rem 1.1rem; border-radius:10px; cursor:pointer; font-weight:600;">
+                            <i class="fa-solid fa-layer-group"></i> View All Trips
+                        </button>
+                        <button onclick="window.location.href='index.html'" class="btn-small btn-primary" style="padding:0.6rem 1.1rem; border-radius:10px; font-weight:600;">
+                            <i class="fa-solid fa-plus"></i> Plan New Trip
+                        </button>
+                    </div>
+                </div>
+                `;
+                return;
+            }
+
             const formatter = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' });
             let html = '';
 
-            allTripsData.slice().reverse().forEach(trip => {
+            filtered.slice().reverse().forEach(trip => {
                 const safeId = String(trip.id || Math.random());
                 const safeDest = (trip.destination || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const safeDates = (trip.dates || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                 const budgetVal = Number(trip.budget) || 0;
                 const isOfflineDraft = trip.is_offline_draft || false;
+                const isCompleted = trip.status === 'completed';
 
                 html += `
-                    <div class="trip-card">
+                    <div class="trip-card ${isCompleted ? 'trip-completed-card' : ''}">
                         <div class="trip-header" style="display:flex; justify-content:space-between; align-items:flex-start;">
                             <div>
-                                <h3 style="margin:0; font-size:1.25rem; color:#fff; display:flex; align-items:center; gap:6px;">
+                                <h3 style="margin:0; font-size:1.22rem; color:#fff; display:flex; align-items:center; gap:6px;">
                                     <i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${trip.destination || 'Unspecified'}
                                 </h3>
-                                <div style="margin-top:4px;">
+                                <div style="margin-top:6px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                    ${isCompleted ? 
+                                        '<span style="background:rgba(16,185,129,0.22); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Completed Trip</span>' :
+                                        '<span style="background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-paper-plane"></i> Planned Trip</span>'
+                                    }
                                     ${isOfflineDraft ? 
                                         '<span style="background:rgba(245,158,11,0.2); color:#fbbf24; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-arrow-up"></i> Offline Draft</span>' : 
-                                        '<span style="background:rgba(16,185,129,0.2); color:#34d399; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-check"></i> Cloud Synced</span>'
+                                        '<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-check"></i> Cloud Synced</span>'
                                     }
                                 </div>
                             </div>
@@ -584,7 +675,20 @@
                             <p style="margin:4px 0;"><i class="fa-regular fa-calendar" style="color:#38bdf8; margin-right:6px;"></i> ${trip.dates || 'Dates not specified'}</p>
                         </div>
 
-                        <div style="display:flex; gap:0.6rem; margin-top:0.4rem;">
+                        <!-- Mark Completed / Reopen Action Button -->
+                        <div>
+                            ${isCompleted ? `
+                                <button onclick="toggleTripCompletion('${safeId}')" style="background:rgba(148,163,184,0.14); border:1px solid rgba(148,163,184,0.3); color:#cbd5e1; padding:0.6rem 0.9rem; border-radius:8px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; width:100%; transition:all 0.2s;" title="Restore this trip to planned itineraries">
+                                    <i class="fa-solid fa-rotate-left"></i> Reopen Trip (Mark as Planned)
+                                </button>
+                            ` : `
+                                <button onclick="toggleTripCompletion('${safeId}')" style="background:linear-gradient(135deg, rgba(16,185,129,0.22), rgba(5,150,105,0.32)); border:1px solid rgba(16,185,129,0.5); color:#34d399; padding:0.6rem 0.9rem; border-radius:8px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; width:100%; box-shadow:0 2px 10px rgba(16,185,129,0.18); transition:all 0.2s;" title="Mark this trip as completed">
+                                    <i class="fa-solid fa-circle-check"></i> Complete Trip (Mark Done)
+                                </button>
+                            `}
+                        </div>
+
+                        <div style="display:flex; gap:0.6rem; margin-top:0.1rem;">
                             <button class="btn-small btn-primary" onclick="openEditModal('${safeId}', '${safeDest}', '${safeDates}', ${budgetVal})" style="flex:1; border-radius: 8px;">
                                 <i class="fa-solid fa-pen-to-square"></i> Edit
                             </button>
@@ -602,6 +706,58 @@
 
             container.innerHTML = html;
         }
+
+        // Toggle Trip Completion (Mark Completed / Planned)
+        async function toggleTripCompletion(id) {
+            const targetId = String(id);
+            const trip = allTripsData.find(t => String(t.id) === targetId);
+            const isCurrentlyCompleted = trip && trip.status === 'completed';
+            const newStatus = isCurrentlyCompleted ? 'active' : 'completed';
+
+            // 1. In-memory update
+            if (trip) {
+                trip.status = newStatus;
+            }
+
+            // 2. LocalStorage update
+            let localTrips = JSON.parse(localStorage.getItem('localTrips') || '[]');
+            let found = false;
+            localTrips = localTrips.map(t => {
+                if (String(t.id) === targetId) {
+                    found = true;
+                    return { ...t, status: newStatus };
+                }
+                return t;
+            });
+            if (!found && trip) {
+                localTrips.push({ ...trip, status: newStatus });
+            }
+            localStorage.setItem('localTrips', JSON.stringify(localTrips));
+
+            // 3. Server sync if logged in
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    await fetch(`/api/trips/${encodeURIComponent(targetId)}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ status: newStatus })
+                    });
+                } catch(e) {
+                    console.warn("Could not sync trip completion status to backend", e);
+                }
+            }
+
+            if (window.showAppToast) {
+                window.showAppToast(newStatus === 'completed' ? '🎉 Trip marked as Completed!' : 'Trip restored to Planned itineraries.', 'success');
+            }
+
+            renderTripsList();
+        }
+        window.toggleTripCompletion = toggleTripCompletion;
 
         // 5. LOAD CONFIRMED BOOKINGS (HOTELS, CABS, FLIGHTS, BUSES)
         async function loadBookings() {
