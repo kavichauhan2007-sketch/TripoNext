@@ -43,40 +43,6 @@
             font-size: 0.88rem;
         }
 
-        /* Network Status Bar */
-        .network-status-banner {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: rgba(30, 41, 59, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border-radius: 14px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1.5rem;
-            font-size: 0.85rem;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .network-status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-        }
-        .badge-online {
-            background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        .badge-offline {
-            background: rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
         /* Pill Tabs Switcher */
         .mytrips-tabs {
             display: flex;
@@ -240,21 +206,6 @@
                 </button>
                 <button onclick="window.location.href='index.html'" class="btn-small btn-primary" style="display:flex; align-items:center; gap:6px; border-radius:12px; padding:0.6rem 1rem;">
                     <i class="fa-solid fa-plus"></i> Plan New Trip
-                </button>
-            </div>
-        </div>
-
-        <!-- Network & Offline Status Banner -->
-        <div class="network-status-banner" id="network-status-banner">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span class="network-status-badge badge-online" id="net-status-badge">
-                    <i class="fa-solid fa-circle-dot"></i> <span id="net-status-text">Online • Cloud Connected</span>
-                </span>
-                <span style="color:#94a3b8; font-size:0.82rem;" id="net-status-desc">Trips and bookings synced in real-time.</span>
-            </div>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <button class="btn-clear-cache" onclick="clearOfflineDataManually()" title="Clear offline cached data">
-                    <i class="fa-solid fa-broom"></i> Clear Offline Cache
                 </button>
             </div>
         </div>
@@ -437,35 +388,15 @@
 
         // 1. NETWORK STATUS MONITOR
         function initNetworkStatus() {
-            const badge = document.getElementById('net-status-badge');
-            const text = document.getElementById('net-status-text');
-            const desc = document.getElementById('net-status-desc');
-
-            function updateStatus() {
-                if (navigator.onLine) {
-                    badge.className = 'network-status-badge badge-online';
-                    text.textContent = 'Online • Cloud Connected';
-                    desc.textContent = 'Trips and bookings synced in real-time.';
-                } else {
-                    badge.className = 'network-status-badge badge-offline';
-                    text.textContent = 'Offline Mode';
-                    desc.textContent = 'Showing cached trips. Connect to internet to sync changes.';
-                }
-            }
-
             window.addEventListener('online', () => {
-                updateStatus();
                 if (window.showAppToast) window.showAppToast('You are back online! Syncing...', 'success');
                 loadTrips();
                 loadBookings();
             });
 
             window.addEventListener('offline', () => {
-                updateStatus();
-                if (window.showAppToast) window.showAppToast('You are offline. Showing cached trips.', 'info');
+                if (window.showAppToast) window.showAppToast('Offline mode: Showing saved trips.', 'info');
             });
-
-            updateStatus();
         }
 
         // 2. CLEAR OFFLINE DATA ACTION
@@ -658,8 +589,7 @@
                                         '<span style="background:rgba(59,130,246,0.18); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-paper-plane"></i> Planned Trip</span>'
                                     }
                                     ${isOfflineDraft ? 
-                                        '<span style="background:rgba(245,158,11,0.2); color:#fbbf24; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-arrow-up"></i> Offline Draft</span>' : 
-                                        '<span style="background:rgba(16,185,129,0.15); color:#34d399; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-check"></i> Cloud Synced</span>'
+                                        '<span style="background:rgba(245,158,11,0.2); color:#fbbf24; padding:2px 8px; border-radius:12px; font-size:0.75rem; font-weight:600;"><i class="fa-solid fa-cloud-arrow-up"></i> Offline Draft</span>' : ''
                                     }
                                 </div>
                             </div>

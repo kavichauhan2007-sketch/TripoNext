@@ -1577,11 +1577,9 @@ window.showAppToast = function(msg, type = 'info') {
 // ========================================================
 window.renderMobileBottomNav = function() {
     const currentPath = (window.location.pathname || '').toLowerCase();
-    const isExplore = currentPath.includes('explore');
-    const isBuddies = currentPath.includes('buddies');
-    const isCommunity = currentPath.includes('community');
+    const isExplore = currentPath.includes('explore') || currentPath.includes('buddies') || currentPath.includes('community');
     const isMyTrips = currentPath.includes('mytrips');
-    const isHome = !isExplore && !isBuddies && !isCommunity && !isMyTrips;
+    const isHome = !isExplore && !isMyTrips;
 
     const existingNav = document.getElementById('mobile-bottom-nav');
     if (existingNav) {
@@ -1591,31 +1589,33 @@ window.renderMobileBottomNav = function() {
     const navHTML = `
     <nav class="mobile-bottom-nav" id="mobile-bottom-nav">
         <a href="index.html" class="mobile-nav-item ${isHome ? 'active' : ''}">
-            <i class="fa-solid fa-house"></i>
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-house"></i>
+            </div>
             <span>Home</span>
         </a>
         <a href="explore.html" class="mobile-nav-item ${isExplore ? 'active' : ''}">
-            <i class="fa-solid fa-compass"></i>
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-compass"></i>
+            </div>
             <span>Explore</span>
         </a>
-        <button class="mobile-nav-item" onclick="openBookingsHub('hotels')" title="Book Hotels, Flights, Cabs">
-            <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
+        <button class="mobile-nav-item nav-item-action" onclick="openBookingsHub('hotels')" title="Book Hotels, Flights, Cabs">
+            <div class="nav-item-action-bubble">
+                <i class="fa-solid fa-ticket"></i>
+            </div>
             <span>Book</span>
         </button>
-        <a href="buddies.html" class="mobile-nav-item ${isBuddies ? 'active' : ''}">
-            <i class="fa-solid fa-user-group" style="color:#38bdf8;"></i>
-            <span>Buddies</span>
-        </a>
-        <a href="community.html" class="mobile-nav-item ${isCommunity ? 'active' : ''}">
-            <i class="fa-solid fa-camera-retro" style="color:#f59e0b;"></i>
-            <span>Moments</span>
-        </a>
         <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
-            <i class="fa-solid fa-suitcase-rolling"></i>
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-suitcase-rolling"></i>
+            </div>
             <span>My Trips</span>
         </a>
         <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
-            <i class="fa-solid fa-user-gear"></i>
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-circle-user"></i>
+            </div>
             <span>Profile</span>
         </button>
     </nav>
@@ -5747,11 +5747,11 @@ function escapeToolboxHtml(text) {
 // and ensures bottom dock is never displayed on other pages
 // ========================================================
 window.updateModalActiveState = function() {
-    // Native CSS :has() selectors handle modal hiding automatically and efficiently without JS overhead
+    const isMobile = window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active');
     const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
     const nav = document.getElementById('mobile-bottom-nav');
     const toolbox = document.getElementById('floating-toolbox-btn');
-    if (!isHome) {
+    if (!isHome && !isMobile) {
         if (nav) nav.style.setProperty('display', 'none', 'important');
         if (toolbox) toolbox.style.setProperty('display', 'none', 'important');
     }
@@ -5761,8 +5761,9 @@ if (typeof window !== 'undefined') {
     window.addEventListener('resize', () => {
         const nav = document.getElementById('mobile-bottom-nav');
         if (!nav) return;
+        const isMobile = window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active');
         const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
-        if (!isHome) {
+        if (!isHome && !isMobile) {
             nav.style.display = 'none';
             return;
         }
