@@ -830,27 +830,37 @@ app.post('/api/ai-chat', async (req, res) => {
     if (process.env.GEMINI_API_KEY) {
         try {
             const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-            const systemInstruction = `You are TripoNext AI, an expert, enthusiastic personal travel assistant. 
-Help travelers with personalized recommendations, secret viewpoints, budget tips, authentic local eateries, packing essentials, and weather guidance. Keep answers friendly, concise, and structured with emojis and bullet points.`;
+            const tripContext = currentTrip ? `\nCurrent Destination Context: ${currentTrip}` : '';
+            const systemInstruction = `You are TripoNext AI, an expert, enthusiastic personal travel buddy & local guide.
+Help travelers with personalized recommendations, secret viewpoints, budget tips, authentic local eateries, packing essentials, and weather guidance.${tripContext}
+Keep answers friendly, concise, and structured with emojis and bullet points.`;
             
             const prompt = `${systemInstruction}\n\nUser Question: ${message}`;
             const response = await ai.models.generateContent({
                 model: 'gemini-3.8-flash',
                 contents: prompt
             });
-            return res.json({ reply: response.text });
+            if (response && response.text) {
+                return res.json({ reply: response.text });
+            }
         } catch (e) {
             console.warn('Gemini chat error, using local fallback assistant:', e.message);
         }
     }
 
     const lower = message.toLowerCase();
-    if (lower.includes('budget') || lower.includes('cost') || lower.includes('money')) {
-        return res.json({ reply: "💡 **TripoNext Budget Pro-Tip:** Split stays using our MyTrips Expense Splitter, book trains or shared outstation cabs, and opt for boutique heritage homestays to save up to 40%!" });
+    if (lower.includes('budget') || lower.includes('cost') || lower.includes('money') || lower.includes('calculator')) {
+        return res.json({ reply: "💡 **TripoNext Budget Pro-Tips:**\n• Use the Budget Calculator (top of the page) to estimate daily expenses\n• Book trains or shared outstation cabs to save up to 50% on transit\n• Boutique heritage homestays can save up to 40% compared to luxury resorts\n• Track group split expenses in MyTrips!" });
     } else if (lower.includes('packing') || lower.includes('pack')) {
-        return res.json({ reply: "🎒 **Essential Travel Packing Checklist:**\n• Portable power bank & universal adapter\n• Lightweight waterproof jacket\n• Comfortable trail walking shoes\n• Offline downloaded maps & emergency documents" });
+        return res.json({ reply: "🎒 **Essential Travel Packing Checklist:**\n• High-capacity power bank (10,000mAh+) & universal adapter\n• Lightweight waterproof jacket & breathable layers\n• Comfortable trail walking shoes & blister kit\n• Government photo ID, travel insurance, & offline maps" });
+    } else if (lower.includes('goa')) {
+        return res.json({ reply: "🏖️ **3-Day Goa Travel Highlights:**\n• **Day 1:** North Goa – Anjuna flea market, sunset at Chapora Fort, and Curlies\n• **Day 2:** South Goa heritage – Fontainhas Latin Quarter, Se Cathedral, and quiet Palolem beach\n• **Day 3:** Water sports at Calangute and seafood shacks in Candolim!" });
+    } else if (lower.includes('manali')) {
+        return res.json({ reply: "🏔️ **Manali Travel Highlights:**\n• Solang Valley for paragliding and scenic snow viewpoints\n• Old Manali for artistic cafes and Hadimba Devi Temple\n• Thermal inner-wear, windbreaker jacket, and UV sunglasses are essential\n• Check Rohtang Pass permits before heading up!" });
+    } else if (lower.includes('jaipur')) {
+        return res.json({ reply: "🏰 **Hidden Gems in Jaipur:**\n• Panna Meena Ka Kund stepwell near Amber Fort\n• Sunrise hike up to Nahargarh Fort for a breathtaking city view\n• Authentic Pyaz Kachori at Rawat Mishtan Bhandar\n• Handcrafted pottery in the lanes of the Pink City" });
     } else {
-        return res.json({ reply: `✨ Here are top recommendations for you! I recommend exploring early in the morning to beat the crowds, asking locals for secret food joints, and downloading your itinerary for offline mode.` });
+        return res.json({ reply: `✨ **TripoNext AI Travel Tip:**\n• Great question about *${message}*!\n• Start mornings early to beat tourist rush hours\n• Always ask local vendors for regional delicacies\n• Check the **Currency** and **Phrases** tabs right here in your Travel Toolbox for quick conversions & speech translations!` });
     }
 });
 

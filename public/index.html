@@ -116,8 +116,8 @@
                     <button type="button" onclick="triggerSurpriseTrip()" class="hero-smart-pill surprise-pill">
                         <i class="fa-solid fa-dice"></i> 🎲 Surprise Destination
                     </button>
-                    <button type="button" onclick="toggleGlobalAiChatbot()" class="hero-smart-pill ai-assist-pill">
-                        <i class="fa-solid fa-robot"></i> 🤖 Ask AI Assistant
+                    <button type="button" onclick="openToolboxWithTab('ai')" class="hero-smart-pill ai-assist-pill">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ Ask AI Assistant
                     </button>
                 </div>
                 <div class="hero-trending-bar">
@@ -457,54 +457,7 @@
         </div>
     </div>
 
-    <!-- Floating Global AI Chatbot Launcher Button -->
-    <div class="ai-bot-fab" id="ai-bot-fab" onclick="toggleGlobalAiChatbot()" title="TripoNext AI Travel Assistant">
-        <div class="ai-bot-fab-inner">
-            <i class="fa-solid fa-wand-magic-sparkles"></i>
-        </div>
-        <span class="ai-bot-fab-label">AI Assistant</span>
-        <span class="ai-online-dot"></span>
-    </div>
-
-    <!-- Global AI Chatbot Drawer -->
-    <div id="global-ai-chat-drawer" class="ai-chat-drawer">
-        <div class="ai-chat-header">
-            <div class="ai-chat-header-info">
-                <div class="ai-bot-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
-                <div>
-                    <h4>TripoNext AI</h4>
-                    <span class="ai-status-indicator"><span class="dot"></span> Online (Gemini 3.8 Flash)</span>
-                </div>
-            </div>
-            <div class="ai-chat-header-actions">
-                <button class="ai-header-btn" onclick="openFeedbackModal()" title="Leave Feedback"><i class="fa-regular fa-comment-dots"></i> Feedback</button>
-                <button class="ai-header-btn" onclick="clearGlobalAiChat()" title="Clear Chat"><i class="fa-solid fa-trash-can"></i></button>
-                <button class="ai-header-btn close-btn" onclick="toggleGlobalAiChatbot()" title="Close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-        </div>
-        <div class="ai-chat-body" id="global-ai-chat-body">
-            <div class="ai-chat-welcome" id="ai-chat-welcome">
-                <div class="welcome-icon">🌍</div>
-                <h5>Namaste! Main aapka AI Travel Buddy hoon.</h5>
-                <p>Destinations, budget tips, packing advice ya local food ke baare me poochhein!</p>
-                <div class="ai-quick-prompts">
-                    <button type="button" onclick="sendQuickAiPrompt('Plan a 3-day budget trip to Goa')">🏖️ 3 days in Goa</button>
-                    <button type="button" onclick="sendQuickAiPrompt('What to pack for Manali in winter?')">🎒 Manali packing tips</button>
-                    <button type="button" onclick="sendQuickAiPrompt('Best hidden places in Jaipur')">🏰 Hidden gems in Jaipur</button>
-                    <button type="button" onclick="sendQuickAiPrompt('How does TripoNext budget calculator work?')">💡 Budget calculator help</button>
-                </div>
-            </div>
-            <div id="global-ai-messages" class="global-ai-messages"></div>
-        </div>
-        <div class="ai-chat-footer">
-            <form id="global-ai-chat-form" onsubmit="handleGlobalAiChatSubmit(event)">
-                <input type="text" id="global-ai-input" placeholder="Ask anything about your trip..." autocomplete="off">
-                <button type="submit" id="global-ai-send-btn" title="Send Message"><i class="fa-solid fa-paper-plane"></i></button>
-            </form>
-        </div>
-    </div>
-
-    <script src="script.js?v=33"></script>
+    <script src="script.js?v=34"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

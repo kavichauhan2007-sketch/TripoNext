@@ -619,10 +619,6 @@ function openBudgetCalculator() {
     if (toolbox) {
         toolbox.style.setProperty('display', 'none', 'important');
     }
-    const aiFab = document.getElementById('ai-bot-fab');
-    if (aiFab) {
-        aiFab.style.setProperty('display', 'none', 'important');
-    }
 }
 
 function closeBudgetCalculator() {
@@ -638,10 +634,6 @@ function closeBudgetCalculator() {
     const toolbox = document.getElementById('floating-toolbox-btn');
     if (toolbox && isHome) {
         toolbox.style.removeProperty('display');
-    }
-    const aiFab = document.getElementById('ai-bot-fab');
-    if (aiFab) {
-        aiFab.style.removeProperty('display');
     }
 }
 
@@ -670,107 +662,39 @@ window.quickFillDest = function(destName) {
 };
 
 // ========================================================
-// GLOBAL AI TRAVEL ASSISTANT CHATBOT
 // ========================================================
-window.toggleGlobalAiChatbot = function() {
-    const drawer = document.getElementById('global-ai-chat-drawer');
-    const bottomNav = document.getElementById('mobile-bottom-nav');
-    const aiFab = document.getElementById('ai-bot-fab');
-    if (!drawer) return;
+// GLOBAL AI TRAVEL ASSISTANT (Powered via Travel Toolbox)
+// ========================================================
+window.openToolboxWithTab = function(tabName = 'ai') {
+    if (typeof injectFloatingToolbox === 'function') injectFloatingToolbox();
+    const modal = document.getElementById('toolbox-modal');
+    if (!modal) return;
     
-    const isOpen = drawer.classList.contains('open');
-    if (isOpen) {
-        drawer.classList.remove('open');
-        document.body.classList.remove('has-active-modal');
-        const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
-        if (bottomNav && isHome) {
-            bottomNav.style.removeProperty('display');
-            bottomNav.style.display = 'flex';
-        }
-        if (aiFab) aiFab.style.removeProperty('display');
-    } else {
-        drawer.classList.add('open');
-        document.body.classList.add('has-active-modal');
-        if (bottomNav) bottomNav.style.setProperty('display', 'none', 'important');
-        if (aiFab) aiFab.style.setProperty('display', 'none', 'important');
-        const input = document.getElementById('global-ai-input');
-        if (input) setTimeout(() => input.focus(), 200);
+    modal.classList.add('show');
+    const targetBtn = document.getElementById(`tb-tab-${tabName}`) || document.querySelector(`.toolbox-tab-btn[onclick*="${tabName}"]`);
+    if (typeof switchToolboxTab === 'function') switchToolboxTab(tabName, targetBtn);
+
+    if (tabName === 'ai') {
+        setTimeout(() => {
+            const input = document.getElementById('tb-ai-input');
+            if (input) input.focus();
+        }, 150);
     }
+};
+
+window.toggleGlobalAiChatbot = function() {
+    window.openToolboxWithTab('ai');
 };
 
 window.toggleChatbot = window.toggleGlobalAiChatbot;
 
 window.sendQuickAiPrompt = function(promptText) {
-    const input = document.getElementById('global-ai-input');
+    const input = document.getElementById('tb-ai-input');
     if (input) {
         input.value = promptText;
-        const form = document.getElementById('global-ai-chat-form');
+        const form = document.getElementById('tb-ai-form');
         if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     }
-};
-
-window.clearGlobalAiChat = function() {
-    const msgs = document.getElementById('global-ai-messages');
-    if (msgs) msgs.innerHTML = '';
-    const welcome = document.getElementById('ai-chat-welcome');
-    if (welcome) welcome.style.display = 'block';
-};
-
-window.handleGlobalAiChatSubmit = async function(e) {
-    if (e && e.preventDefault) e.preventDefault();
-    const input = document.getElementById('global-ai-input');
-    if (!input) return;
-    const text = input.value.trim();
-    if (!text) return;
-
-    const msgs = document.getElementById('global-ai-messages');
-    const welcome = document.getElementById('ai-chat-welcome');
-    if (welcome) welcome.style.display = 'none';
-
-    // Add user message
-    const userDiv = document.createElement('div');
-    userDiv.className = 'ai-chat-msg user';
-    userDiv.textContent = text;
-    msgs.appendChild(userDiv);
-
-    input.value = '';
-    const body = document.getElementById('global-ai-chat-body');
-    if (body) body.scrollTop = body.scrollHeight;
-
-    // Add thinking bot message
-    const botDiv = document.createElement('div');
-    botDiv.className = 'ai-chat-msg bot';
-    botDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px; color:#38bdf8;"></i> TripoNext AI is thinking...';
-    msgs.appendChild(botDiv);
-    if (body) body.scrollTop = body.scrollHeight;
-
-    try {
-        const dest = document.getElementById('destination-input')?.value || '';
-        const res = await fetch('/api/ai-chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: text, currentTrip: dest })
-        });
-        const data = await res.json();
-        if (data && data.reply) {
-            // Format bold text and bullet points cleanly
-            let formatted = data.reply
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                .replace(/• (.*?)(?=(\n|$))/g, '<li>$1</li>');
-            if (formatted.includes('<li>')) {
-                formatted = formatted.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
-            }
-            formatted = formatted.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-            botDiv.innerHTML = formatted;
-        } else {
-            botDiv.textContent = "I'm having a brief connection delay. Please try asking again in a moment!";
-        }
-    } catch (err) {
-        botDiv.textContent = "Network error. Please make sure your server is running.";
-    }
-
-    if (body) body.scrollTop = body.scrollHeight;
 };
 
 
@@ -5514,7 +5438,7 @@ window.injectFloatingToolbox = function() {
     const btn = document.createElement('button');
     btn.id = 'floating-toolbox-btn';
     btn.className = 'floating-toolbox-btn';
-    btn.title = 'Travel Toolbox (Currency, Translator, SOS)';
+    btn.title = 'Travel Toolbox & AI Assistant';
     btn.innerHTML = '<i class="fa-solid fa-toolbox"></i>';
     btn.onclick = () => {
         if (typeof toggleToolbox === 'function') toggleToolbox();
@@ -5529,14 +5453,18 @@ window.injectFloatingToolbox = function() {
     modal.innerHTML = `
         <div class="toolbox-header">
             <h4 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
-                <i class="fa-solid fa-compass" style="color:var(--primary)"></i> Travel Toolbox
+                <i class="fa-solid fa-toolbox" style="color:var(--primary)"></i> Travel Toolbox
             </h4>
-            <button onclick="toggleToolbox()" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span class="toolbox-online-tag"><span class="dot"></span> Online</span>
+                <button onclick="toggleToolbox()" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
         </div>
         <div class="toolbox-tabs">
-            <button class="toolbox-tab-btn active" onclick="switchToolboxTab('currency', this)"><i class="fa-solid fa-coins"></i> Currency</button>
-            <button class="toolbox-tab-btn" onclick="switchToolboxTab('phrases', this)"><i class="fa-solid fa-language"></i> Phrases</button>
-            <button class="toolbox-tab-btn" onclick="switchToolboxTab('sos', this)"><i class="fa-solid fa-triangle-exclamation"></i> SOS</button>
+            <button class="toolbox-tab-btn active" id="tb-tab-ai" onclick="switchToolboxTab('ai', this)"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Assist</button>
+            <button class="toolbox-tab-btn" id="tb-tab-currency" onclick="switchToolboxTab('currency', this)"><i class="fa-solid fa-coins"></i> Currency</button>
+            <button class="toolbox-tab-btn" id="tb-tab-phrases" onclick="switchToolboxTab('phrases', this)"><i class="fa-solid fa-language"></i> Phrases</button>
+            <button class="toolbox-tab-btn" id="tb-tab-sos" onclick="switchToolboxTab('sos', this)"><i class="fa-solid fa-triangle-exclamation"></i> SOS</button>
         </div>
         <div class="toolbox-body" id="toolbox-body">
             <!-- Injected by tab -->
@@ -5544,22 +5472,150 @@ window.injectFloatingToolbox = function() {
     `;
     document.body.appendChild(modal);
 
-    renderCurrencyTab();
+    renderAiTab();
 };
 
 window.toggleToolbox = function() {
     const m = document.getElementById('toolbox-modal');
-    if (m) m.classList.toggle('show');
+    if (m) {
+        m.classList.toggle('show');
+        if (m.classList.contains('show')) {
+            const activeTab = document.querySelector('.toolbox-tab-btn.active');
+            if (!activeTab || activeTab.id === 'tb-tab-ai') {
+                setTimeout(() => {
+                    const input = document.getElementById('tb-ai-input');
+                    if (input) input.focus();
+                }, 150);
+            }
+        }
+    }
 };
 
 window.switchToolboxTab = function(tabName, btn) {
     document.querySelectorAll('.toolbox-tab-btn').forEach(b => b.classList.remove('active'));
     if (btn) btn.classList.add('active');
 
-    if (tabName === 'currency') renderCurrencyTab();
+    if (tabName === 'ai') renderAiTab();
+    else if (tabName === 'currency') renderCurrencyTab();
     else if (tabName === 'phrases') renderPhrasesTab();
     else if (tabName === 'sos') renderSOSTab();
 };
+
+let _toolboxAiMessages = [];
+
+function renderAiTab() {
+    const body = document.getElementById('toolbox-body');
+    if (!body) return;
+
+    body.innerHTML = `
+        <div class="tb-ai-container">
+            <div class="tb-ai-msg-list" id="tb-ai-messages"></div>
+            <form id="tb-ai-form" onsubmit="handleToolboxAiSubmit(event)" class="tb-ai-input-bar">
+                <input type="text" id="tb-ai-input" placeholder="Ask AI about places, packing, budget..." autocomplete="off">
+                <button type="submit" id="tb-ai-send-btn" title="Send Question"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    `;
+
+    renderToolboxAiMessages();
+}
+
+function renderToolboxAiMessages() {
+    const list = document.getElementById('tb-ai-messages');
+    if (!list) return;
+
+    if (_toolboxAiMessages.length === 0) {
+        list.innerHTML = `
+            <div class="tb-ai-welcome">
+                <div class="tb-ai-welcome-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 3.8 Flash</div>
+                <h5>Namaste! Main aapka AI Travel Buddy hoon.</h5>
+                <p>Destinations, budget tips, packing advice ya secret viewpoints ke baare me poochhein!</p>
+                <div class="tb-ai-chips">
+                    <button type="button" onclick="sendQuickAiPrompt('Plan a 3-day budget trip to Goa')">🏖️ 3 days in Goa</button>
+                    <button type="button" onclick="sendQuickAiPrompt('What to pack for Manali in winter?')">🎒 Manali packing tips</button>
+                    <button type="button" onclick="sendQuickAiPrompt('Best hidden places in Jaipur')">🏰 Hidden gems in Jaipur</button>
+                    <button type="button" onclick="sendQuickAiPrompt('How does TripoNext budget calculator work?')">💡 Budget calculator help</button>
+                </div>
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = _toolboxAiMessages.map(m => {
+        return `<div class="tb-ai-msg ${m.role}">${m.html}</div>`;
+    }).join('');
+
+    list.scrollTop = list.scrollHeight;
+}
+
+window.clearToolboxAiChat = function() {
+    _toolboxAiMessages = [];
+    renderToolboxAiMessages();
+};
+
+window.handleToolboxAiSubmit = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const input = document.getElementById('tb-ai-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    _toolboxAiMessages.push({
+        role: 'user',
+        html: escapeToolboxHtml(text)
+    });
+    input.value = '';
+    renderToolboxAiMessages();
+
+    const list = document.getElementById('tb-ai-messages');
+    const thinkingEl = document.createElement('div');
+    thinkingEl.className = 'tb-ai-msg bot';
+    thinkingEl.id = 'tb-ai-thinking';
+    thinkingEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px; color:#f97316;"></i> TripoNext AI is thinking...';
+    if (list) {
+        list.appendChild(thinkingEl);
+        list.scrollTop = list.scrollHeight;
+    }
+
+    try {
+        const dest = document.getElementById('destination-input')?.value || '';
+        const res = await fetch('/api/ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, currentTrip: dest })
+        });
+        const data = await res.json();
+        
+        let replyHtml = "✨ I am ready to help you plan! Ask me about destinations, secret spots, or travel budgets.";
+        if (data && data.reply) {
+            let formatted = data.reply
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/• (.*?)(?=(\n|$))/g, '<li>$1</li>');
+            if (formatted.includes('<li>')) {
+                formatted = formatted.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+            }
+            formatted = formatted.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+            replyHtml = formatted;
+        }
+
+        _toolboxAiMessages.push({
+            role: 'bot',
+            html: replyHtml
+        });
+    } catch (err) {
+        _toolboxAiMessages.push({
+            role: 'bot',
+            html: "💡 **Travel Assistant Tip:** Check out our Currency converter and Audio phrases right in this toolbox! Network connection will reconnect shortly."
+        });
+    }
+
+    renderToolboxAiMessages();
+};
+
+function escapeToolboxHtml(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
 
 // ========================================================
 // ACTIVE MODAL & PANEL VISIBILITY MONITOR
