@@ -1612,7 +1612,7 @@ window.renderMobileBottomNav = function() {
         </a>
         <a href="mytrips.html" class="mobile-nav-item ${isMyTrips ? 'active' : ''}">
             <i class="fa-solid fa-suitcase-rolling"></i>
-            <span>My Trips</span>
+            <span>Trips</span>
         </a>
         <button class="mobile-nav-item" onclick="openGlobalSettings()" title="Account & Settings">
             <i class="fa-solid fa-user-gear"></i>
@@ -1744,34 +1744,66 @@ window.openGlobalSettings = async function() {
 
     modal.innerHTML = `
     <div class="settings-hub-dialog">
-        <!-- Close Bar -->
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-            <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
-                <i class="fa-solid fa-gear" style="color:var(--primary)"></i> Account & Settings
-            </h3>
-            <button onclick="closeGlobalSettings()" style="background:none; border:none; color:#94a3b8; font-size:1.3rem; cursor:pointer;">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+        <!-- 1. TRAVEL COVER BANNER WITH SCENIC MOUNTAIN IMAGE -->
+        <div class="profile-cover-banner" style="background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.88) 100%), url('assets/mountain.jpg');">
+            <div class="profile-cover-top">
+                <span class="profile-badge-gold"><i class="fa-solid fa-crown" style="color:#fbbf24;"></i> TripoNext Explorer</span>
+                <button onclick="closeGlobalSettings()" class="profile-cover-close-btn" title="Close Profile">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="profile-cover-tagline">
+                <span><i class="fa-solid fa-compass"></i> Wandering & Exploring</span>
+            </div>
         </div>
 
-        <!-- 1. USER PROFILE CARD -->
-        <div class="profile-card-header">
-            <div class="profile-avatar-large" id="profile-avatar-display">
-                ${profile.avatar === 'avatar-2' ? '🏖️' : profile.avatar === 'avatar-3' ? '🎒' : profile.avatar === 'avatar-4' ? '🏛️' : profile.avatar === 'avatar-5' ? '✈️' : profile.avatar === 'avatar-6' ? '📸' : '🏔️'}
-            </div>
-            <div class="profile-info" style="flex:1;">
-                <h3 id="profile-name-display">${profile.name}</h3>
-                <p><i class="fa-regular fa-envelope"></i> ${profile.email}</p>
-                <p><i class="fa-solid fa-phone"></i> ${profile.phone || '+91 98765 43210'}</p>
-                <div class="profile-tags">
-                    <span class="profile-tag-pill"><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${profile.home_city || 'Delhi, India'}</span>
-                    <span class="profile-tag-pill"><i class="fa-solid fa-compass" style="color:#38bdf8"></i> ${profile.travel_style || 'Adventure'}</span>
+        <!-- 2. USER PROFILE INFO (Overlapping avatar + stats) -->
+        <div class="profile-main-card">
+            <div class="profile-avatar-row">
+                <div class="profile-avatar-large" id="profile-avatar-display">
+                    ${profile.avatar === 'avatar-2' ? '🏖️' : profile.avatar === 'avatar-3' ? '🎒' : profile.avatar === 'avatar-4' ? '🏛️' : profile.avatar === 'avatar-5' ? '✈️' : profile.avatar === 'avatar-6' ? '📸' : '🏔️'}
+                </div>
+                <div class="profile-actions-top">
+                    <button class="profile-edit-btn" onclick="toggleEditProfileView()">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit Profile
+                    </button>
                 </div>
             </div>
-            <button class="profile-edit-btn" onclick="toggleEditProfileView()">
-                <i class="fa-solid fa-pen-to-square"></i> Edit
-            </button>
+
+            <div class="profile-details-block">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <h3 id="profile-name-display" style="margin:0; font-size:1.3rem; color:#fff;">${profile.name}</h3>
+                    <i class="fa-solid fa-circle-check" style="color:#38bdf8;" title="Verified Traveler"></i>
+                </div>
+                <p class="profile-bio-text">${profile.bio || 'Living for spontaneous roadtrips and secret viewpoints.'}</p>
+                <div class="profile-meta-row">
+                    <span><i class="fa-regular fa-envelope"></i> ${profile.email}</span>
+                    <span><i class="fa-solid fa-phone"></i> ${profile.phone || '+91 98765 43210'}</span>
+                    <span><i class="fa-solid fa-location-dot" style="color:var(--primary)"></i> ${profile.home_city || 'Delhi, India'}</span>
+                    <span><i class="fa-solid fa-compass" style="color:#38bdf8"></i> ${profile.travel_style || 'Adventure'}</span>
+                </div>
+            </div>
+
+            <!-- TRAVEL STATS STRIP -->
+            <div class="profile-travel-stats">
+                <div class="travel-stat-item">
+                    <span class="stat-number">${localTripsCount > 0 ? localTripsCount : '4'}</span>
+                    <span class="stat-label">Saved Trips</span>
+                </div>
+                <div class="travel-stat-divider"></div>
+                <div class="travel-stat-item">
+                    <span class="stat-number">12</span>
+                    <span class="stat-label">Places Visited</span>
+                </div>
+                <div class="travel-stat-divider"></div>
+                <div class="travel-stat-item">
+                    <span class="stat-number">₹${profile.referral_credits || 500}</span>
+                    <span class="stat-label">Travel Coins</span>
+                </div>
+            </div>
         </div>
+
+        <div style="padding: 0 1.5rem;">
 
         <!-- Inline Edit Profile Form (Hidden by default) -->
         <div id="edit-profile-form" style="display:none; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:16px; padding:1.2rem; margin-bottom:1.2rem;">
@@ -1909,7 +1941,7 @@ window.openGlobalSettings = async function() {
                     </div>
                     <div>
                         <div class="settings-item-title">Help & Support</div>
-                        <div class="settings-item-subtitle">24x7 AI assistant, WhatsApp & FAQs</div>
+                        <div class="settings-item-subtitle">24x7 Travel support, WhatsApp & FAQs</div>
                     </div>
                 </div>
                 <div class="settings-item-right">
@@ -1978,10 +2010,11 @@ window.openGlobalSettings = async function() {
 
         <!-- 4. LOGOUT & FOOTER -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:1.2rem; padding-top:0.8rem; border-top:1px solid rgba(255,255,255,0.08);">
-            <span style="font-size:0.75rem; color:#64748b;">TripoNext v2.5 Mobile • Gemini AI Powered</span>
+            <span style="font-size:0.75rem; color:#64748b;">TripoNext v2.5 • Premium Travel Companion</span>
             <button onclick="logout()" style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); color:#f87171; border-radius:8px; padding:0.4rem 0.9rem; font-size:0.82rem; font-weight:600; cursor:pointer;">
                 <i class="fa-solid fa-right-from-bracket"></i> Log Out
             </button>
+        </div>
         </div>
     </div>
     `;
@@ -5455,13 +5488,10 @@ window.injectFloatingToolbox = function() {
             <h4 style="margin:0; color:#fff; display:flex; align-items:center; gap:8px;">
                 <i class="fa-solid fa-toolbox" style="color:var(--primary)"></i> Travel Toolbox
             </h4>
-            <div style="display:flex; align-items:center; gap:8px;">
-                <span class="toolbox-online-tag"><span class="dot"></span> Online</span>
-                <button onclick="toggleToolbox()" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;" title="Close"><i class="fa-solid fa-xmark"></i></button>
-            </div>
+            <button onclick="toggleToolbox()" style="background:none; border:none; color:#94a3b8; font-size:1.1rem; cursor:pointer;" title="Close"><i class="fa-solid fa-xmark"></i></button>
         </div>
         <div class="toolbox-tabs">
-            <button class="toolbox-tab-btn active" id="tb-tab-ai" onclick="switchToolboxTab('ai', this)"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Assist</button>
+            <button class="toolbox-tab-btn active" id="tb-tab-ai" onclick="switchToolboxTab('ai', this)"><i class="fa-solid fa-compass"></i> Assistant</button>
             <button class="toolbox-tab-btn" id="tb-tab-currency" onclick="switchToolboxTab('currency', this)"><i class="fa-solid fa-coins"></i> Currency</button>
             <button class="toolbox-tab-btn" id="tb-tab-phrases" onclick="switchToolboxTab('phrases', this)"><i class="fa-solid fa-language"></i> Phrases</button>
             <button class="toolbox-tab-btn" id="tb-tab-sos" onclick="switchToolboxTab('sos', this)"><i class="fa-solid fa-triangle-exclamation"></i> SOS</button>
@@ -5511,7 +5541,7 @@ function renderAiTab() {
         <div class="tb-ai-container">
             <div class="tb-ai-msg-list" id="tb-ai-messages"></div>
             <form id="tb-ai-form" onsubmit="handleToolboxAiSubmit(event)" class="tb-ai-input-bar">
-                <input type="text" id="tb-ai-input" placeholder="Ask AI about places, packing, budget..." autocomplete="off">
+                <input type="text" id="tb-ai-input" placeholder="Ask about secret places, packing, budget..." autocomplete="off">
                 <button type="submit" id="tb-ai-send-btn" title="Send Question"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
         </div>
@@ -5527,8 +5557,8 @@ function renderToolboxAiMessages() {
     if (_toolboxAiMessages.length === 0) {
         list.innerHTML = `
             <div class="tb-ai-welcome">
-                <div class="tb-ai-welcome-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini 3.8 Flash</div>
-                <h5>Namaste! Main aapka AI Travel Buddy hoon.</h5>
+                <div class="tb-ai-welcome-badge"><i class="fa-solid fa-compass"></i> TripoNext Travel Concierge</div>
+                <h5>Namaste! Main aapka personal Travel Buddy hoon.</h5>
                 <p>Destinations, budget tips, packing advice ya secret viewpoints ke baare me poochhein!</p>
                 <div class="tb-ai-chips">
                     <button type="button" onclick="sendQuickAiPrompt('Plan a 3-day budget trip to Goa')">🏖️ 3 days in Goa</button>

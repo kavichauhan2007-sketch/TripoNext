@@ -34,7 +34,7 @@ const _localFallbackStore = {
 let _idCounter = 1000;
 
 function generateId() {
-    return String(Date.now()) + '-' + Math.floor(Math.random() * 1000);
+    return crypto.randomUUID();
 }
 
 /**
