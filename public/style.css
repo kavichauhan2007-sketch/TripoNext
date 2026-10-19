@@ -2338,37 +2338,6 @@ body.home-page {
     font-weight: 700;
 }
 
-/* Center Standout Bookings Bubble */
-.mobile-nav-item.nav-item-action {
-    transform: translateY(-4px);
-}
-.nav-item-action-bubble {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #ffffff !important;
-    box-shadow: 0 6px 18px rgba(249, 115, 22, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.4);
-    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    border: 2px solid rgba(255, 255, 255, 0.18);
-}
-.nav-item-action-bubble i {
-    font-size: 1.15rem;
-    color: #ffffff !important;
-}
-.mobile-nav-item.nav-item-action:hover .nav-item-action-bubble {
-    transform: scale(1.08) translateY(-2px);
-    box-shadow: 0 8px 25px rgba(249, 115, 22, 0.65);
-}
-.mobile-nav-item.nav-item-action span {
-    font-weight: 600;
-    color: #cbd5e1;
-    margin-top: 1px;
-}
-
 body.home-page .mobile-bottom-nav {
     display: flex !important;
 }
@@ -2423,13 +2392,6 @@ body.home-page .mobile-bottom-nav {
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         letter-spacing: 0px !important;
-    }
-    .mobile-nav-item.nav-item-action {
-        transform: translateY(-6px) !important;
-    }
-    .nav-item-action-bubble {
-        width: 38px !important;
-        height: 38px !important;
     }
 }
 

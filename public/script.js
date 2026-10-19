@@ -1602,9 +1602,9 @@ window.renderMobileBottomNav = function() {
             </div>
             <span>Explore</span>
         </a>
-        <button class="mobile-nav-item nav-item-action" onclick="openBookingsHub('hotels')" title="Book Hotels, Flights, Cabs">
-            <div class="nav-item-action-bubble">
-                <i class="fa-solid fa-ticket"></i>
+        <button class="mobile-nav-item" onclick="openBookingsHub('hotels')" title="Book Hotels, Flights, Cabs">
+            <div class="nav-item-icon-box">
+                <i class="fa-solid fa-ticket" style="color:#10b981;"></i>
             </div>
             <span>Book</span>
         </button>
