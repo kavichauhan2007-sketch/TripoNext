@@ -168,9 +168,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="notif-list" id="notif-list"></div>
                 </div>
             </div>
-            <button class="top-mfa-badge-btn" onclick="openMfaSettingsModal()" title="Two-Factor Authentication (MFA)" style="background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.35); color:#34d399; border-radius:10px; padding:0.4rem 0.75rem; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:0.8rem; font-weight:600; margin-right:8px; transition:all 0.2s ease;">
-                <i class="fa-solid fa-shield-halved"></i> <span>2FA</span>
-            </button>
             <button class="top-profile-btn" onclick="openGlobalSettings()" title="Profile & Settings" style="background:linear-gradient(135deg, rgba(249,115,22,0.2), rgba(234,179,8,0.2)); border:1px solid rgba(249,115,22,0.4); color:white; border-radius:50%; width:38px; height:38px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.15rem;">
                 <i class="fa-solid fa-user"></i>
             </button>
@@ -609,14 +606,173 @@ async function planTrip() {
 // --- Budget Calculator Modal Logic ---
 
 function openBudgetCalculator() {
-    const mainDest = document.getElementById('destination-input').value;
-    if(mainDest) document.getElementById('calc-dest').value = mainDest;
-    document.getElementById('budget-modal').style.display = 'flex';
+    const mainDest = document.getElementById('destination-input')?.value;
+    if(mainDest && document.getElementById('calc-dest')) document.getElementById('calc-dest').value = mainDest;
+    const modal = document.getElementById('budget-modal');
+    if (modal) modal.style.display = 'flex';
+    document.body.classList.add('has-active-modal');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    if (bottomNav) {
+        bottomNav.style.setProperty('display', 'none', 'important');
+    }
+    const toolbox = document.getElementById('floating-toolbox-btn');
+    if (toolbox) {
+        toolbox.style.setProperty('display', 'none', 'important');
+    }
+    const aiFab = document.getElementById('ai-bot-fab');
+    if (aiFab) {
+        aiFab.style.setProperty('display', 'none', 'important');
+    }
 }
 
 function closeBudgetCalculator() {
-    document.getElementById('budget-modal').style.display = 'none';
+    const modal = document.getElementById('budget-modal');
+    if (modal) modal.style.display = 'none';
+    document.body.classList.remove('has-active-modal');
+    const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    if (bottomNav && isHome) {
+        bottomNav.style.removeProperty('display');
+        bottomNav.style.display = 'flex';
+    }
+    const toolbox = document.getElementById('floating-toolbox-btn');
+    if (toolbox && isHome) {
+        toolbox.style.removeProperty('display');
+    }
+    const aiFab = document.getElementById('ai-bot-fab');
+    if (aiFab) {
+        aiFab.style.removeProperty('display');
+    }
 }
+
+window.setHeroMode = function(mode) {
+    document.querySelectorAll('.hero-mode-pill').forEach(p => p.classList.remove('active'));
+    const pill = document.getElementById(`tab-mode-${mode}`);
+    if (pill) pill.classList.add('active');
+    
+    if (mode === 'hotels' || mode === 'flights' || mode === 'cabs') {
+        openBookingsHub(mode);
+    } else if (mode === 'planner') {
+        const destInp = document.getElementById('destination-input');
+        if (destInp) destInp.focus();
+    }
+};
+
+window.quickFillDest = function(destName) {
+    const input = document.getElementById('destination-input');
+    if (input) {
+        input.value = destName;
+        input.focus();
+        if (typeof showAppToast === 'function') {
+            showAppToast(`📍 Selected ${destName}! Tap 'Plan It' to start`, 'info');
+        }
+    }
+};
+
+// ========================================================
+// GLOBAL AI TRAVEL ASSISTANT CHATBOT
+// ========================================================
+window.toggleGlobalAiChatbot = function() {
+    const drawer = document.getElementById('global-ai-chat-drawer');
+    const bottomNav = document.getElementById('mobile-bottom-nav');
+    const aiFab = document.getElementById('ai-bot-fab');
+    if (!drawer) return;
+    
+    const isOpen = drawer.classList.contains('open');
+    if (isOpen) {
+        drawer.classList.remove('open');
+        document.body.classList.remove('has-active-modal');
+        const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
+        if (bottomNav && isHome) {
+            bottomNav.style.removeProperty('display');
+            bottomNav.style.display = 'flex';
+        }
+        if (aiFab) aiFab.style.removeProperty('display');
+    } else {
+        drawer.classList.add('open');
+        document.body.classList.add('has-active-modal');
+        if (bottomNav) bottomNav.style.setProperty('display', 'none', 'important');
+        if (aiFab) aiFab.style.setProperty('display', 'none', 'important');
+        const input = document.getElementById('global-ai-input');
+        if (input) setTimeout(() => input.focus(), 200);
+    }
+};
+
+window.toggleChatbot = window.toggleGlobalAiChatbot;
+
+window.sendQuickAiPrompt = function(promptText) {
+    const input = document.getElementById('global-ai-input');
+    if (input) {
+        input.value = promptText;
+        const form = document.getElementById('global-ai-chat-form');
+        if (form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    }
+};
+
+window.clearGlobalAiChat = function() {
+    const msgs = document.getElementById('global-ai-messages');
+    if (msgs) msgs.innerHTML = '';
+    const welcome = document.getElementById('ai-chat-welcome');
+    if (welcome) welcome.style.display = 'block';
+};
+
+window.handleGlobalAiChatSubmit = async function(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const input = document.getElementById('global-ai-input');
+    if (!input) return;
+    const text = input.value.trim();
+    if (!text) return;
+
+    const msgs = document.getElementById('global-ai-messages');
+    const welcome = document.getElementById('ai-chat-welcome');
+    if (welcome) welcome.style.display = 'none';
+
+    // Add user message
+    const userDiv = document.createElement('div');
+    userDiv.className = 'ai-chat-msg user';
+    userDiv.textContent = text;
+    msgs.appendChild(userDiv);
+
+    input.value = '';
+    const body = document.getElementById('global-ai-chat-body');
+    if (body) body.scrollTop = body.scrollHeight;
+
+    // Add thinking bot message
+    const botDiv = document.createElement('div');
+    botDiv.className = 'ai-chat-msg bot';
+    botDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right:6px; color:#38bdf8;"></i> TripoNext AI is thinking...';
+    msgs.appendChild(botDiv);
+    if (body) body.scrollTop = body.scrollHeight;
+
+    try {
+        const dest = document.getElementById('destination-input')?.value || '';
+        const res = await fetch('/api/ai-chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, currentTrip: dest })
+        });
+        const data = await res.json();
+        if (data && data.reply) {
+            // Format bold text and bullet points cleanly
+            let formatted = data.reply
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/• (.*?)(?=(\n|$))/g, '<li>$1</li>');
+            if (formatted.includes('<li>')) {
+                formatted = formatted.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+            }
+            formatted = formatted.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+            botDiv.innerHTML = formatted;
+        } else {
+            botDiv.textContent = "I'm having a brief connection delay. Please try asking again in a moment!";
+        }
+    } catch (err) {
+        botDiv.textContent = "Network error. Please make sure your server is running.";
+    }
+
+    if (body) body.scrollTop = body.scrollHeight;
+};
+
 
 // Haversine formula to calculate distance between two lat/lon points in km
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -4324,6 +4480,11 @@ window.renderActiveBookings = async function(targetContainerId) {
     const renderToContainer = (container) => {
         if (!container) return;
         if (activeBookings.length === 0) {
+            if (container.id === 'active-bookings-list') {
+                const sec = document.getElementById('active-bookings-section');
+                if (sec) sec.style.display = 'none';
+                return;
+            }
             container.innerHTML = `
             <div style="text-align: center; padding: 2.5rem 1.5rem; background: rgba(15,23,42,0.4); border: 2px dashed rgba(255,255,255,0.1); border-radius: 16px; grid-column: 1 / -1;">
                 <div style="font-size: 2.2rem; margin-bottom: 0.5rem; color: #64748b;"><i class="fa-solid fa-ticket"></i></div>
@@ -4338,6 +4499,11 @@ window.renderActiveBookings = async function(targetContainerId) {
             </div>
             `;
             return;
+        }
+
+        if (container.id === 'active-bookings-list') {
+            const sec = document.getElementById('active-bookings-section');
+            if (sec) sec.style.display = 'block';
         }
 
         let html = '';

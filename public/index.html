@@ -54,6 +54,25 @@
             <h1 data-i18n="hero_title">Plan Your Dream Trip in Seconds</h1>
             <p data-i18n="hero_subtitle">One smart platform for maps, weather, places, itineraries, and budget.</p>
             
+            <!-- Unified Travel Mode Tabs (Smart, Sleek Segmented Switcher) -->
+            <div class="hero-mode-dock" id="hero-mode-dock">
+                <button type="button" class="hero-mode-pill active" id="tab-mode-planner" onclick="setHeroMode('planner')">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Smart Planner</span>
+                </button>
+                <button type="button" class="hero-mode-pill" id="tab-mode-hotels" onclick="openBookingsHub('hotels')">
+                    <i class="fa-solid fa-hotel"></i> <span>Stays</span>
+                </button>
+                <button type="button" class="hero-mode-pill" id="tab-mode-flights" onclick="openBookingsHub('flights')">
+                    <i class="fa-solid fa-plane-departure"></i> <span>Flights</span>
+                </button>
+                <button type="button" class="hero-mode-pill" id="tab-mode-cabs" onclick="openBookingsHub('cabs')">
+                    <i class="fa-solid fa-taxi"></i> <span>Cabs & Buses</span>
+                </button>
+                <a href="buddies.html" class="hero-mode-pill" id="tab-mode-buddies">
+                    <i class="fa-solid fa-user-group"></i> <span>Travel Buddies</span>
+                </a>
+            </div>
+
             <div class="search-bar">
                 <div class="input-group search-group-dest">
                     <i class="fa-solid fa-location-dot"></i>
@@ -88,46 +107,33 @@
                 </button>
             </div>
 
-            <!-- Quick Feature Launchers / AI Magic Planner & Services Hub -->
-            <div class="hero-quick-actions" id="hero-quick-actions">
-                <button onclick="openMagicPlanner()" class="hero-magic-btn">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Magic Planner
-                </button>
-                <div class="hero-services-row">
-                    <button onclick="openQuickBookingService('hotels')" class="hero-service-tile">
-                        <i class="fa-solid fa-hotel" style="color:#f59e0b;"></i>
-                        <span>Hotels</span>
+            <!-- Sleek Feature Actions & Trending Destinations -->
+            <div class="hero-actions-container">
+                <div class="hero-smart-chips">
+                    <button type="button" onclick="openMagicPlanner()" class="hero-smart-pill magic-pill">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI Day-by-Day Magic Plan
                     </button>
-                    <button onclick="openQuickBookingService('cabs')" class="hero-service-tile">
-                        <i class="fa-solid fa-taxi" style="color:#10b981;"></i>
-                        <span>Cabs</span>
+                    <button type="button" onclick="triggerSurpriseTrip()" class="hero-smart-pill surprise-pill">
+                        <i class="fa-solid fa-dice"></i> 🎲 Surprise Destination
                     </button>
-                    <button onclick="openQuickBookingService('flights')" class="hero-service-tile">
-                        <i class="fa-solid fa-plane-departure" style="color:#38bdf8;"></i>
-                        <span>Flights</span>
-                    </button>
-                    <button onclick="openQuickBookingService('buses')" class="hero-service-tile">
-                        <i class="fa-solid fa-bus" style="color:#f97316;"></i>
-                        <span>Buses</span>
+                    <button type="button" onclick="toggleGlobalAiChatbot()" class="hero-smart-pill ai-assist-pill">
+                        <i class="fa-solid fa-robot"></i> 🤖 Ask AI Assistant
                     </button>
                 </div>
-                <div class="hero-services-row secondary-row">
-                    <button onclick="triggerSurpriseTrip()" class="hero-service-chip">
-                        <i class="fa-solid fa-dice" style="color:#ec4899;"></i> <span>Surprise Me</span>
-                    </button>
-                    <a href="buddies.html" class="hero-service-chip">
-                        <i class="fa-solid fa-user-group" style="color:#a855f7;"></i> <span>Find Buddies</span>
-                    </a>
-                    <a href="community.html" class="hero-service-chip">
-                        <i class="fa-solid fa-camera-retro" style="color:#eab308;"></i> <span>Moments</span>
-                    </a>
+                <div class="hero-trending-bar">
+                    <span class="trending-badge"><i class="fa-solid fa-fire"></i> Popular:</span>
+                    <button type="button" class="trending-dest-chip" onclick="quickFillDest('Manali')">Manali</button>
+                    <button type="button" class="trending-dest-chip" onclick="quickFillDest('Goa')">Goa</button>
+                    <button type="button" class="trending-dest-chip" onclick="quickFillDest('Jaipur')">Jaipur</button>
+                    <button type="button" class="trending-dest-chip" onclick="quickFillDest('Bali')">Bali</button>
+                    <button type="button" class="trending-dest-chip" onclick="quickFillDest('Paris')">Paris</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Dedicated Bookings & Active Tickets Section -->
-    <section class="active-bookings-section" id="active-bookings-section" style="max-width: 1200px; margin: 1.8rem auto 1rem auto; padding: 0 1.5rem;">
+    <!-- Dedicated Bookings & Active Tickets Section (Hidden by default unless bookings exist) -->
+    <section class="active-bookings-section" id="active-bookings-section" style="display: none; max-width: 1200px; margin: 1.8rem auto 1rem auto; padding: 0 1.5rem;">
         <div style="background: rgba(15, 23, 42, 0.75); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px; padding: 1.4rem; backdrop-filter: blur(16px); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.8rem;">
                 <div>
@@ -398,20 +404,25 @@
             <a href="https://github.com" target="_blank" rel="noopener" style="color: var(--text-muted); margin: 0 10px; text-decoration: none;"><i class="fa-brands fa-github"></i></a>
         </div>
         <p>&copy; 2026 TripoNext. Crafted with <i class="fa-solid fa-heart" style="color: #ef4444;"></i> for explorers.</p>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openFeedbackModal()" style="color:var(--primary); text-decoration:none;"><i class="fa-regular fa-comment-dots"></i> Feedback & Rating</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
 
     <!-- Budget Calculator Modal -->
-    <div id="budget-modal" class="modal-overlay">
+    <div id="budget-modal" class="modal-overlay" onclick="if(event.target === this) closeBudgetCalculator()">
         <div class="modal-content glassmorphism">
-            <h3><i class="fa-solid fa-calculator"></i> Estimated Budget Calculator</h3>
-            <p style="font-size: 0.9rem; color: #cbd5e1;">Answer a few questions to get an accurate estimated cost.</p>
+            <div class="modal-header-row">
+                <h3><i class="fa-solid fa-calculator" style="color:var(--primary)"></i> Estimated Budget Calculator</h3>
+                <button type="button" class="modal-close-icon" onclick="closeBudgetCalculator()" title="Close Calculator">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <p style="font-size: 0.88rem; color: #cbd5e1; margin-top: 4px; margin-bottom: 1.2rem;">Answer a few questions to get an accurate estimated cost for your journey.</p>
             
-            <label>Leaving From (City/Country) <button class="btn-small" style="font-size: 0.7rem; padding: 2px 5px;" onclick="fetchUserLocation()"><i class="fa-solid fa-location-crosshairs"></i> Get My Location</button></label>
-            <input type="text" id="calc-origin" placeholder="e.g. New York">
+            <label>Leaving From (City/Country) <button class="btn-small" style="font-size: 0.7rem; padding: 2px 6px; margin-left: 6px;" onclick="fetchUserLocation()"><i class="fa-solid fa-location-crosshairs"></i> Get My Location</button></label>
+            <input type="text" id="calc-origin" placeholder="e.g. New Delhi, Mumbai, New York">
 
             <label>Going To</label>
-            <input type="text" id="calc-dest" placeholder="e.g. Paris">
+            <input type="text" id="calc-dest" placeholder="e.g. Manali, Goa, Paris">
 
             <div id="dist-display" style="color: var(--success); font-size: 0.85rem; margin-bottom: 10px;"></div>
 
@@ -439,14 +450,61 @@
                 <option value="500">Street Food (Budget / Quick Bites)</option>
             </select>
 
-            <div class="modal-btns">
-                <button class="btn-small" style="background: transparent; border: 1px solid white;" onclick="closeBudgetCalculator()">Cancel</button>
-                <button class="btn-small btn-primary" onclick="calculateAndSetBudget()">Calculate & Set Budget</button>
+            <div class="modal-btns" style="margin-top: 1.2rem;">
+                <button class="btn-small" style="background: transparent; border: 1px solid rgba(255,255,255,0.25); color:#cbd5e1;" onclick="closeBudgetCalculator()">Cancel</button>
+                <button class="btn-small btn-primary" onclick="calculateAndSetBudget()"><i class="fa-solid fa-calculator"></i> Calculate & Set Budget</button>
             </div>
         </div>
     </div>
 
-    <script src="script.js?v=32"></script>
+    <!-- Floating Global AI Chatbot Launcher Button -->
+    <div class="ai-bot-fab" id="ai-bot-fab" onclick="toggleGlobalAiChatbot()" title="TripoNext AI Travel Assistant">
+        <div class="ai-bot-fab-inner">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+        </div>
+        <span class="ai-bot-fab-label">AI Assistant</span>
+        <span class="ai-online-dot"></span>
+    </div>
+
+    <!-- Global AI Chatbot Drawer -->
+    <div id="global-ai-chat-drawer" class="ai-chat-drawer">
+        <div class="ai-chat-header">
+            <div class="ai-chat-header-info">
+                <div class="ai-bot-avatar"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                <div>
+                    <h4>TripoNext AI</h4>
+                    <span class="ai-status-indicator"><span class="dot"></span> Online (Gemini 3.8 Flash)</span>
+                </div>
+            </div>
+            <div class="ai-chat-header-actions">
+                <button class="ai-header-btn" onclick="openFeedbackModal()" title="Leave Feedback"><i class="fa-regular fa-comment-dots"></i> Feedback</button>
+                <button class="ai-header-btn" onclick="clearGlobalAiChat()" title="Clear Chat"><i class="fa-solid fa-trash-can"></i></button>
+                <button class="ai-header-btn close-btn" onclick="toggleGlobalAiChatbot()" title="Close"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+        <div class="ai-chat-body" id="global-ai-chat-body">
+            <div class="ai-chat-welcome" id="ai-chat-welcome">
+                <div class="welcome-icon">🌍</div>
+                <h5>Namaste! Main aapka AI Travel Buddy hoon.</h5>
+                <p>Destinations, budget tips, packing advice ya local food ke baare me poochhein!</p>
+                <div class="ai-quick-prompts">
+                    <button type="button" onclick="sendQuickAiPrompt('Plan a 3-day budget trip to Goa')">🏖️ 3 days in Goa</button>
+                    <button type="button" onclick="sendQuickAiPrompt('What to pack for Manali in winter?')">🎒 Manali packing tips</button>
+                    <button type="button" onclick="sendQuickAiPrompt('Best hidden places in Jaipur')">🏰 Hidden gems in Jaipur</button>
+                    <button type="button" onclick="sendQuickAiPrompt('How does TripoNext budget calculator work?')">💡 Budget calculator help</button>
+                </div>
+            </div>
+            <div id="global-ai-messages" class="global-ai-messages"></div>
+        </div>
+        <div class="ai-chat-footer">
+            <form id="global-ai-chat-form" onsubmit="handleGlobalAiChatSubmit(event)">
+                <input type="text" id="global-ai-input" placeholder="Ask anything about your trip..." autocomplete="off">
+                <button type="submit" id="global-ai-send-btn" title="Send Message"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js?v=33"></script>
 
     <script>
         if ('serviceWorker' in navigator) {
