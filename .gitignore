@@ -3,3 +3,7 @@ database.sqlite
 .env
 scratch/
 .DS_Store
+serviceAccountKey.json
+firebase-key.json
+*.serviceAccount.json
+

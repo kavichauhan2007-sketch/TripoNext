@@ -166,13 +166,25 @@ function logAuditEvent(db, { userId, event, status, req, details }) {
         const userAgent = req ? (req.headers['user-agent'] || 'unknown') : 'system';
         const detailsStr = typeof details === 'object' ? JSON.stringify(details) : (details || '');
 
-        db.run(
-            `INSERT INTO mfa_audit_logs (user_id, event, status, ip_address, user_agent, details) VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId || null, event, status, String(ip).slice(0, 100), String(userAgent).slice(0, 255), detailsStr],
-            (err) => {
-                if (err) console.error('Failed to write MFA audit log:', err.message);
-            }
-        );
+        if (typeof db.insert === 'function') {
+            db.insert('mfa_audit_logs', {
+                user_id: String(userId || ''),
+                event,
+                status,
+                ip_address: String(ip).slice(0, 100),
+                user_agent: String(userAgent).slice(0, 255),
+                details: detailsStr,
+                created_at: new Date().toISOString()
+            }).catch(err => console.error('Failed to write MFA audit log:', err.message));
+        } else if (typeof db.run === 'function') {
+            db.run(
+                `INSERT INTO mfa_audit_logs (user_id, event, status, ip_address, user_agent, details) VALUES (?, ?, ?, ?, ?, ?)`,
+                [userId || null, event, status, String(ip).slice(0, 100), String(userAgent).slice(0, 255), detailsStr],
+                (err) => {
+                    if (err) console.error('Failed to write MFA audit log:', err.message);
+                }
+            );
+        }
     } catch (e) {
         console.error('Audit log error:', e.message);
     }
