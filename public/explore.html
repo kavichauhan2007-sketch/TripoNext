@@ -6,10 +6,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Explore Hidden Gems - TripoNext</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>Modern Grid Web - Explore Hidden Gems & Destinations | TripoNext</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css?v=31">
+    <link rel="stylesheet" href="style.css?v=32">
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#f97316">
@@ -17,127 +17,192 @@
     <link rel="icon" type="image/png" href="/favicon.png">
 </head>
 <body class="explore-bg page-other">
-    <!-- Navbar -->
-    <nav class="navbar">
-        <a href="index.html" class="nav-back-home-pill" title="Back to Dashboard">
-            <i class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
-        </a>
-        <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
-            <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
+    <!-- Modern Top Navbar (Matches Sleek Capsule Dock Reference) -->
+    <nav class="navbar explore-modern-navbar">
+        <div class="nav-brand-group">
+            <a href="index.html" class="nav-back-home-pill" title="Back to Dashboard">
+                <i class="fa-solid fa-arrow-left"></i> <span>Dashboard</span>
+            </a>
+            <div class="logo" onclick="window.location.href='index.html'" style="cursor:pointer;">
+                <i class="fa-solid fa-plane-departure" style="color:var(--primary);"></i> TripoNext
+            </div>
         </div>
-        <div class="user-profile">
-            <!-- User name injected via script.js?v=23 -->
+
+        <!-- Center Capsule Navigation Dock (Explore, Book, Buddies, Moments, My Trips) -->
+        <div class="nav-capsule-dock">
+            <a href="explore.html" class="nav-dock-pill active">
+                <i class="fa-solid fa-compass"></i> <span>Explore</span>
+            </a>
+            <a href="javascript:void(0)" onclick="window.location.href='index.html#booking-hub'" class="nav-dock-pill">
+                <i class="fa-solid fa-hotel"></i> <span>Book</span>
+            </a>
+            <a href="buddies.html" class="nav-dock-pill">
+                <i class="fa-solid fa-users"></i> <span>Buddies</span>
+            </a>
+            <a href="community.html" class="nav-dock-pill">
+                <i class="fa-solid fa-camera-retro"></i> <span>Moments</span>
+            </a>
+            <a href="mytrips.html" class="nav-dock-pill">
+                <i class="fa-solid fa-suitcase-rolling"></i> <span>My Trips</span>
+            </a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="nav-dock-pill nav-lang-pill" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 700; color: #cbd5e1; background: rgba(255,255,255,0.06); border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);">
+                🌐 EN
+            </div>
+            <div class="user-profile">
+                <!-- User name injected via script.js -->
+            </div>
         </div>
     </nav>
 
-    <main class="page-container explore-page" style="padding-top: 2rem; max-width: 1280px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem;">
-        <!-- Hero & Search Header -->
-        <div class="explore-hero-card mb-4" style="margin-bottom: 2rem;">
-            <div style="margin-bottom: 12px; color: #fb923c; font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
-                Find Your Next Getaway
+    <!-- 2-Column Modern Grid Web Dashboard -->
+    <main class="page-container explore-modern-dashboard">
+        <!-- Left Sidebar Filter Panel (Matches "Modern Grid Web" in screenshot) -->
+        <aside class="explore-sidebar-panel">
+            <div class="sidebar-header">
+                <h1 class="sidebar-title">Modern Grid <span class="gradient-text">Web</span></h1>
+                <div class="sidebar-subtitle">Search Trips & Waypoints</div>
             </div>
-            <h1 style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.8rem; color: #f8fafc;">
-                Discover Hidden Places
-            </h1>
-            <p style="color: #94a3b8; font-size: 1.05rem; max-width: 600px; margin: 0 auto 1.8rem auto; line-height: 1.5;">
-                Explore handpicked, less-crowded destinations recommended by real travelers. See where the locals go.
-            </p>
 
-            <!-- Live Search Bar -->
-            <div class="search-input-wrapper">
-                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                <input type="text" id="search-input" placeholder="Search by place, city (e.g. Jaipur, Rome) or category..." onkeyup="handleSearchInput()">
+            <div class="sidebar-form-group">
+                <!-- 1. Search Destination / Place Input Pill -->
+                <div class="sidebar-input-pill">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="Search by place, city..." onkeyup="handleSearchInput()" autocomplete="off">
+                </div>
+
+                <!-- 2. Country Select Dropdown Pill -->
+                <div class="sidebar-input-pill" id="country-select-container">
+                    <i class="fa-solid fa-globe"></i>
+                    <select id="country-select" onchange="loadData()">
+                        <option value="All">All Countries</option>
+                        <option value="Argentina">Argentina</option>
+                        <option value="Australia">Australia</option>
+                        <option value="Austria">Austria</option>
+                        <option value="Belgium">Belgium</option>
+                        <option value="Brazil">Brazil</option>
+                        <option value="Canada">Canada</option>
+                        <option value="Chile">Chile</option>
+                        <option value="China">China</option>
+                        <option value="Colombia">Colombia</option>
+                        <option value="Costa Rica">Costa Rica</option>
+                        <option value="Croatia">Croatia</option>
+                        <option value="Czech Republic">Czech Republic</option>
+                        <option value="Denmark">Denmark</option>
+                        <option value="Egypt">Egypt</option>
+                        <option value="Finland">Finland</option>
+                        <option value="France">France</option>
+                        <option value="Germany">Germany</option>
+                        <option value="Greece">Greece</option>
+                        <option value="Hungary">Hungary</option>
+                        <option value="Iceland">Iceland</option>
+                        <option value="India">India</option>
+                        <option value="Indonesia">Indonesia</option>
+                        <option value="Ireland">Ireland</option>
+                        <option value="Israel">Israel</option>
+                        <option value="Italy">Italy</option>
+                        <option value="Japan">Japan</option>
+                        <option value="Malaysia">Malaysia</option>
+                        <option value="Maldives">Maldives</option>
+                        <option value="Mexico">Mexico</option>
+                        <option value="Morocco">Morocco</option>
+                        <option value="Netherlands">Netherlands</option>
+                        <option value="New Zealand">New Zealand</option>
+                        <option value="Norway">Norway</option>
+                        <option value="Peru">Peru</option>
+                        <option value="Philippines">Philippines</option>
+                        <option value="Poland">Poland</option>
+                        <option value="Portugal">Portugal</option>
+                        <option value="Qatar">Qatar</option>
+                        <option value="Saudi Arabia">Saudi Arabia</option>
+                        <option value="Singapore">Singapore</option>
+                        <option value="South Africa">South Africa</option>
+                        <option value="South Korea">South Korea</option>
+                        <option value="Spain">Spain</option>
+                        <option value="Sweden">Sweden</option>
+                        <option value="Switzerland">Switzerland</option>
+                        <option value="Taiwan">Taiwan</option>
+                        <option value="Thailand">Thailand</option>
+                        <option value="Turkey">Turkey</option>
+                        <option value="United Arab Emirates">United Arab Emirates</option>
+                        <option value="United Kingdom">United Kingdom</option>
+                        <option value="United States">United States</option>
+                        <option value="Vietnam">Vietnam</option>
+                    </select>
+                </div>
+
+                <!-- 3. Category Selector Pill -->
+                <div class="sidebar-input-pill" id="category-select-pill">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <select id="category-select" onchange="handleCategorySelect(this.value)">
+                        <option value="All Gems">All Categories</option>
+                        <option value="Secret Viewpoint">Secret Viewpoint</option>
+                        <option value="Local Cafés">Local Cafés</option>
+                        <option value="Nature & Waterfalls">Nature & Waterfalls</option>
+                        <option value="Hidden History">Hidden History</option>
+                        <option value="Instagram Photo Spot">Photography Spot</option>
+                        <option value="Offbeat Escapes">Offbeat Escapes</option>
+                    </select>
+                </div>
+
+                <!-- 4. Mode / Planner Switcher Pill -->
+                <div class="sidebar-input-pill">
+                    <i class="fa-solid fa-compass"></i>
+                    <select id="mode-select" onchange="switchMode(this.value)">
+                        <option value="gems">💎 Hidden Gems</option>
+                        <option value="all">🌍 Popular Destinations</option>
+                        <option value="saved">❤️ Saved Places</option>
+                    </select>
+                </div>
+
+                <!-- Action Button: Plan Trip (Vibrant Orange Button) -->
+                <button type="button" class="sidebar-plan-btn" id="sidebar-plan-trip-btn" onclick="triggerSidebarAction()">
+                    <i class="fa-solid fa-paper-plane"></i> <span>Plan Trip</span>
+                </button>
             </div>
-        </div>
 
-        <!-- Mode Navigation & Country Filter -->
-        <div style="display: flex; flex-direction: column; gap: 1.2rem; align-items: center; margin-bottom: 1.8rem;">
-            <div class="mode-tabs-container">
-                <button class="nav-tab active" id="tab-gems" onclick="switchMode('gems')">
-                    <i class="fa-solid fa-gem" style="color:var(--accent);"></i> Hidden Gems
-                </button>
-                <button class="nav-tab" id="tab-all" onclick="switchMode('all')">
-                    <i class="fa-solid fa-earth-americas" style="color:#60a5fa;"></i> Popular Destinations
-                </button>
-                <button class="nav-tab" id="tab-saved" onclick="switchMode('saved')">
-                    <i class="fa-solid fa-heart" style="color:#f43f5e;"></i> Saved (<span id="saved-count-badge">0</span>)
-                </button>
-                <button class="nav-tab" onclick="openSubmitGemModal()" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); color: #f8fafc; border: none; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.35);">
+            <!-- Quick Action Tabs & Add Gem -->
+            <div class="sidebar-quick-actions">
+                <div class="sidebar-mode-pills">
+                    <button class="s-mode-btn active" id="tab-gems" onclick="switchMode('gems')" title="Hidden Gems">
+                        <i class="fa-solid fa-gem" style="color:var(--accent);"></i> Gems
+                    </button>
+                    <button class="s-mode-btn" id="tab-all" onclick="switchMode('all')" title="Popular Destinations">
+                        <i class="fa-solid fa-earth-americas" style="color:#60a5fa;"></i> Popular
+                    </button>
+                    <button class="s-mode-btn" id="tab-saved" onclick="switchMode('saved')" title="Saved Places">
+                        <i class="fa-solid fa-heart" style="color:#f43f5e;"></i> Saved (<span id="saved-count-badge">0</span>)
+                    </button>
+                </div>
+
+                <button class="sidebar-add-gem-btn" onclick="openSubmitGemModal()">
                     <i class="fa-solid fa-plus"></i> Add Secret Spot
                 </button>
             </div>
+        </aside>
 
-            <!-- Country Filter Select -->
-            <div style="width: 100%; max-width: 320px;" id="country-select-container">
-                <select id="country-select" style="width: 100%; font-size: 0.95rem; font-weight: 500; padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.18); background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); color: white; appearance: none; cursor: pointer; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);" onchange="loadData()">
-<option value="All" style="background:#0f172a; color:white;">Famous Destinations</option>
-                    <option value="Argentina" style="background:#0f172a; color:white;">Argentina</option>
-                    <option value="Australia" style="background:#0f172a; color:white;">Australia</option>
-                    <option value="Austria" style="background:#0f172a; color:white;">Austria</option>
-                    <option value="Belgium" style="background:#0f172a; color:white;">Belgium</option>
-                    <option value="Brazil" style="background:#0f172a; color:white;">Brazil</option>
-                    <option value="Canada" style="background:#0f172a; color:white;">Canada</option>
-                    <option value="Chile" style="background:#0f172a; color:white;">Chile</option>
-                    <option value="China" style="background:#0f172a; color:white;">China</option>
-                    <option value="Colombia" style="background:#0f172a; color:white;">Colombia</option>
-                    <option value="Costa Rica" style="background:#0f172a; color:white;">Costa Rica</option>
-                    <option value="Croatia" style="background:#0f172a; color:white;">Croatia</option>
-                    <option value="Czech Republic" style="background:#0f172a; color:white;">Czech Republic</option>
-                    <option value="Denmark" style="background:#0f172a; color:white;">Denmark</option>
-                    <option value="Egypt" style="background:#0f172a; color:white;">Egypt</option>
-                    <option value="Finland" style="background:#0f172a; color:white;">Finland</option>
-                    <option value="France" style="background:#0f172a; color:white;">France</option>
-                    <option value="Germany" style="background:#0f172a; color:white;">Germany</option>
-                    <option value="Greece" style="background:#0f172a; color:white;">Greece</option>
-                    <option value="Hungary" style="background:#0f172a; color:white;">Hungary</option>
-                    <option value="Iceland" style="background:#0f172a; color:white;">Iceland</option>
-                    <option value="India" style="background:#0f172a; color:white;">India</option>
-                    <option value="Indonesia" style="background:#0f172a; color:white;">Indonesia</option>
-                    <option value="Ireland" style="background:#0f172a; color:white;">Ireland</option>
-                    <option value="Israel" style="background:#0f172a; color:white;">Israel</option>
-                    <option value="Italy" style="background:#0f172a; color:white;">Italy</option>
-                    <option value="Japan" style="background:#0f172a; color:white;">Japan</option>
-                    <option value="Malaysia" style="background:#0f172a; color:white;">Malaysia</option>
-                    <option value="Maldives" style="background:#0f172a; color:white;">Maldives</option>
-                    <option value="Mexico" style="background:#0f172a; color:white;">Mexico</option>
-                    <option value="Morocco" style="background:#0f172a; color:white;">Morocco</option>
-                    <option value="Netherlands" style="background:#0f172a; color:white;">Netherlands</option>
-                    <option value="New Zealand" style="background:#0f172a; color:white;">New Zealand</option>
-                    <option value="Norway" style="background:#0f172a; color:white;">Norway</option>
-                    <option value="Peru" style="background:#0f172a; color:white;">Peru</option>
-                    <option value="Philippines" style="background:#0f172a; color:white;">Philippines</option>
-                    <option value="Poland" style="background:#0f172a; color:white;">Poland</option>
-                    <option value="Portugal" style="background:#0f172a; color:white;">Portugal</option>
-                    <option value="Qatar" style="background:#0f172a; color:white;">Qatar</option>
-                    <option value="Saudi Arabia" style="background:#0f172a; color:white;">Saudi Arabia</option>
-                    <option value="Singapore" style="background:#0f172a; color:white;">Singapore</option>
-                    <option value="South Africa" style="background:#0f172a; color:white;">South Africa</option>
-                    <option value="South Korea" style="background:#0f172a; color:white;">South Korea</option>
-                    <option value="Spain" style="background:#0f172a; color:white;">Spain</option>
-                    <option value="Sweden" style="background:#0f172a; color:white;">Sweden</option>
-                    <option value="Switzerland" style="background:#0f172a; color:white;">Switzerland</option>
-                    <option value="Taiwan" style="background:#0f172a; color:white;">Taiwan</option>
-                    <option value="Thailand" style="background:#0f172a; color:white;">Thailand</option>
-                    <option value="Turkey" style="background:#0f172a; color:white;">Turkey</option>
-                    <option value="United Arab Emirates" style="background:#0f172a; color:white;">United Arab Emirates</option>
-                    <option value="United Kingdom" style="background:#0f172a; color:white;">United Kingdom</option>
-                    <option value="United States" style="background:#0f172a; color:white;">United States</option>
-                    <option value="Vietnam" style="background:#0f172a; color:white;">Vietnam</option>
-                </select>
+        <!-- Right Main Content Area: 3-Column Modern Grid Web Cards -->
+        <section class="explore-content-area">
+            <!-- Top Status Bar & Category Filter Chips -->
+            <div class="explore-top-bar">
+                <div class="explore-top-status" id="explore-status-text">
+                    <span class="status-indicator"></span> <span>Showing Handpicked Hidden Gems</span>
+                </div>
+                <!-- Dynamic Chips Container -->
+                <div class="categories" id="category-chips-container">
+                    <!-- Dynamic Chips injected via JS -->
+                </div>
             </div>
-        </div>
 
-        <!-- Category Chips -->
-        <div class="categories" style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 2rem;" id="category-chips-container">
-            <!-- Dynamic Chips injected via JS -->
-        </div>
-
-        <!-- Grid Container -->
-        <div class="destinations-grid" id="explore-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
-            <p style="text-align:center; grid-column: 1/-1; color:#94a3b8; padding: 3rem;">
-                <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i><br><br>Loading places...
-            </p>
-        </div>
+            <!-- 3-Column Modern Grid Web Container -->
+            <div class="modern-grid-web" id="explore-grid">
+                <p style="text-align:center; grid-column: 1/-1; color:#94a3b8; padding: 3rem;">
+                    <i class="fa-solid fa-spinner fa-spin fa-2x" style="color:var(--primary);"></i><br><br>Loading places...
+                </p>
+            </div>
+        </section>
     </main>
 
     <!-- Modal 1: Add Secret Spot Modal -->
@@ -149,27 +214,27 @@
                 </h3>
                 <button onclick="closeSubmitGemModal()" style="background:none; border:none; color:#94a3b8; font-size:1.5rem; cursor:pointer;">&times;</button>
             </div>
-            <p style="color: #475569; font-size: 0.88rem; margin-bottom: 1.2rem; line-height: 1.45;">
+            <p style="color: #94a3b8; font-size: 0.88rem; margin-bottom: 1.2rem; line-height: 1.45;">
                 Share an authentic local secret with fellow travelers. It will be added to the explorer directory for everyone to discover!
             </p>
             <form onsubmit="handleGemSubmission(event)" style="display: flex; flex-direction: column; gap: 1rem;">
                 <div>
-                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Place Name *</label>
-                    <input type="text" id="gem-name" placeholder="e.g. Nahargarh Secret Sunset Point" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                    <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Place Name *</label>
+                    <input type="text" id="gem-name" placeholder="e.g. Nahargarh Secret Sunset Point" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); color:white;" required>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">City *</label>
-                        <input type="text" id="gem-city" placeholder="e.g. Jaipur" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                        <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">City *</label>
+                        <input type="text" id="gem-city" placeholder="e.g. Jaipur" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); color:white;" required>
                     </div>
                     <div>
-                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Country *</label>
-                        <input type="text" id="gem-country" placeholder="e.g. India" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);" required>
+                        <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Country *</label>
+                        <input type="text" id="gem-country" placeholder="e.g. India" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); color:white;" required>
                     </div>
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                     <div>
-                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Category *</label>
+                        <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Category *</label>
                         <select id="gem-category" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.9); color: white; border:1px solid rgba(255,255,255,0.18);" required>
                             <option value="Secret Viewpoint">Secret Viewpoint</option>
                             <option value="Local Cafés">Local Café</option>
@@ -180,17 +245,17 @@
                         </select>
                     </div>
                     <div>
-                        <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Best Time to Visit</label>
-                        <input type="text" id="gem-time" placeholder="e.g. 5:00 PM - 7:00 PM" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);">
+                        <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Best Time to Visit</label>
+                        <input type="text" id="gem-time" placeholder="e.g. 5:00 PM - 7:00 PM" class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); color:white;">
                     </div>
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Description & Directions</label>
+                    <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Description & Directions</label>
                     <textarea id="gem-desc" rows="3" placeholder="Directions on how to reach and what makes it special..." class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); font-family:inherit; color: white;"></textarea>
                 </div>
                 <div>
-                    <label style="font-size: 0.8rem; color: #475569; font-weight: 600;">Photo URL (Optional)</label>
-                    <input type="url" id="gem-photo" placeholder="https://images.unsplash.com/..." class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18);">
+                    <label style="font-size: 0.8rem; color: #cbd5e1; font-weight: 600;">Photo URL (Optional)</label>
+                    <input type="url" id="gem-photo" placeholder="https://images.unsplash.com/..." class="glass-select" style="width:100%; margin-top:4px; border-radius:10px; background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.18); color:white;">
                 </div>
                 <button type="submit" id="gem-submit-btn" class="btn-primary" style="padding: 0.85rem; border-radius: 12px; margin-top: 0.5rem; font-weight: 600; display:flex; align-items:center; justify-content:center; gap:8px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none; box-shadow:0 4px 15px rgba(249,115,22,0.4);">
                     <i class="fa-solid fa-paper-plane"></i> Submit Place
@@ -259,8 +324,8 @@
         </div>
     </div>
 
-    <footer style="margin-top: 4rem; padding: 2.5rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); font-size: 0.88rem; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(10px);">
-        <p>&copy; 2026 TripoNext. Crafted for genuine travel explorers.</p>
+    <footer style="margin-top: 4rem; padding: 2.5rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); font-size: 0.88rem; background: rgba(11, 15, 23, 0.85); backdrop-filter: blur(10px);">
+        <p>&copy; 2026 TripoNext. Modern Grid Web explorer for genuine travelers.</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
 
@@ -295,17 +360,36 @@
         });
 
         function updateSavedBadge() {
-            document.getElementById('saved-count-badge').innerText = savedGems.length;
+            const badge = document.getElementById('saved-count-badge');
+            if (badge) badge.innerText = savedGems.length;
         }
 
         function switchMode(mode) {
             currentMode = mode;
-            document.getElementById('tab-gems').classList.toggle('active', mode === 'gems');
-            document.getElementById('tab-all').classList.toggle('active', mode === 'all');
-            document.getElementById('tab-saved').classList.toggle('active', mode === 'saved');
+            if (document.getElementById('tab-gems')) document.getElementById('tab-gems').classList.toggle('active', mode === 'gems');
+            if (document.getElementById('tab-all')) document.getElementById('tab-all').classList.toggle('active', mode === 'all');
+            if (document.getElementById('tab-saved')) document.getElementById('tab-saved').classList.toggle('active', mode === 'saved');
 
-            document.getElementById('country-select-container').style.display = (mode === 'saved' ? 'none' : 'block');
-            document.getElementById('category-chips-container').style.display = (mode === 'saved' ? 'none' : 'flex');
+            if (document.getElementById('mode-select')) {
+                document.getElementById('mode-select').value = mode;
+            }
+
+            const countryContainer = document.getElementById('country-select-container');
+            if (countryContainer) countryContainer.style.display = (mode === 'saved' ? 'none' : 'flex');
+            
+            const categorySelectPill = document.getElementById('category-select-pill');
+            if (categorySelectPill) categorySelectPill.style.display = (mode === 'saved' ? 'none' : 'flex');
+
+            const statusEl = document.getElementById('explore-status-text');
+            if (statusEl) {
+                if (mode === 'gems') {
+                    statusEl.innerHTML = '<span class="status-indicator"></span> <span>Showing Handpicked Hidden Gems</span>';
+                } else if (mode === 'all') {
+                    statusEl.innerHTML = '<span class="status-indicator" style="background:#38bdf8;box-shadow:0 0 10px #38bdf8;"></span> <span>Showing Famous Worldwide Destinations</span>';
+                } else {
+                    statusEl.innerHTML = '<span class="status-indicator" style="background:#f43f5e;box-shadow:0 0 10px #f43f5e;"></span> <span>Showing Your Saved Favorites</span>';
+                }
+            }
 
             currentCategory = mode === 'gems' ? 'All Gems' : 'All';
             renderCategoryChips();
@@ -314,6 +398,11 @@
 
         function renderCategoryChips() {
             const container = document.getElementById('category-chips-container');
+            if (!container) return;
+            if (currentMode === 'saved') {
+                container.innerHTML = '';
+                return;
+            }
             const list = currentMode === 'gems' ? gemCategories : normalCategories;
             
             container.innerHTML = list.map(cat => `
@@ -327,12 +416,44 @@
             document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
             if(el) el.classList.add('active');
             currentCategory = catName;
+
+            const catSelect = document.getElementById('category-select');
+            if (catSelect && catSelect.querySelector(`option[value="${catName}"]`)) {
+                catSelect.value = catName;
+            }
+
+            renderGrid();
+        }
+
+        function handleCategorySelect(catName) {
+            currentCategory = catName;
+            document.querySelectorAll('.category-chip').forEach(c => {
+                c.classList.toggle('active', c.innerText.trim().includes(catName));
+            });
             renderGrid();
         }
 
         function handleSearchInput() {
             searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
             renderGrid();
+        }
+
+        function triggerSidebarAction() {
+            const searchVal = (document.getElementById('search-input') || {}).value || '';
+            if (searchVal.trim()) {
+                planThis(searchVal.trim());
+                return;
+            }
+            const countryVal = (document.getElementById('country-select') || {}).value;
+            if (countryVal && countryVal !== 'All') {
+                planThis(countryVal);
+                return;
+            }
+            if (gemsData && gemsData.length > 0) {
+                planThis(gemsData[0].city || gemsData[0].name);
+            } else {
+                planThis('Jaipur');
+            }
         }
 
         async function loadData() {
@@ -369,16 +490,17 @@
 
         function renderGrid() {
             const grid = document.getElementById('explore-grid');
-            const country = document.getElementById('country-select').value;
+            const countrySelect = document.getElementById('country-select');
+            const country = countrySelect ? countrySelect.value : 'All';
 
             if (currentMode === 'saved') {
                 const savedList = gemsData.filter(g => savedGems.includes(String(g.id)));
                 if (savedList.length === 0) {
                     grid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.14); color: #94a3b8;">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: #141a26; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;">
                             <i class="fa-regular fa-heart fa-3x" style="color: #f43f5e; margin-bottom: 1rem;"></i>
                             <h3 style="color: white; font-size: 1.3rem;">No saved places yet</h3>
-                            <p style="margin-top:0.5rem;">Click the heart icon on any secret spot to save it here for quick access!</p>
+                            <p style="margin-top:0.5rem;">Click the heart icon on any card to save it here for quick access!</p>
                         </div>
                     `;
                     return;
@@ -408,11 +530,11 @@
 
                 if (!filtered || filtered.length === 0) {
                     grid.innerHTML = `
-                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(16px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.14); color: #94a3b8;">
+                        <div style="grid-column: 1/-1; text-align: center; padding: 4rem 2rem; background: #141a26; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); color: #94a3b8;">
                             <i class="fa-solid fa-compass fa-3x" style="color: #94a3b8; margin-bottom: 1rem;"></i>
-                            <h3 style="color: white; font-size: 1.3rem;">No secret spots match your search</h3>
+                            <h3 style="color: white; font-size: 1.3rem;">No spots match your search</h3>
                             <p style="margin-top:0.5rem;">Try adjusting your filter or search term.</p>
-                            <button onclick="openSubmitGemModal()" class="btn-primary" style="margin-top:1.2rem; padding: 0.65rem 1.4rem; border-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
+                            <button onclick="openSubmitGemModal()" class="btn-primary" style="margin-top:1.2rem; padding: 0.65rem 1.4rem; border-radius: 12px; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none; cursor:pointer;">
                                 <i class="fa-solid fa-plus"></i> Submit a Hidden Gem
                             </button>
                         </div>
@@ -432,9 +554,9 @@
                 const gemImg = gem.photo_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80';
                 
                 return `
-                    <div class="dest-card">
-                        <div style="position:relative; height: 210px; overflow: hidden;">
-                            <img src="${gemImg}" alt="${gem.name}" style="width:100%; height:100%; object-fit:cover;">
+                    <div class="modern-card">
+                        <div class="card-thumb-wrap">
+                            <img src="${gemImg}" alt="${gem.name}" class="card-thumb-img" loading="lazy">
                             
                             <!-- Wishlist Heart Button -->
                             <button class="wishlist-btn ${isSaved ? 'saved' : ''}" onclick="toggleSaveGem('${gem.id}', event)" title="${isSaved ? 'Remove from Saved' : 'Save to Favorites'}">
@@ -442,43 +564,37 @@
                             </button>
 
                             <!-- Rating Badge -->
-                            <div style="position:absolute; top: 12px; right: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); padding: 4px 10px; border-radius: 20px; font-size: 0.78rem; color: #facc15; font-weight: 700; border: 1px solid rgba(255,255,255,0.18); display:flex; align-items:center; gap:4px;">
+                            <div class="card-rating-badge">
                                 <i class="fa-solid fa-star"></i> ${gem.rating || '4.8'}
                             </div>
 
                             <!-- Location Tag -->
-                            <div style="position:absolute; bottom: 12px; left: 12px; background: rgba(15,23,42,0.85); backdrop-filter: blur(8px); padding: 5px 12px; border-radius: 10px; font-size: 0.78rem; color: #e2e8f0; font-weight: 600; border: 1px solid rgba(255,255,255,0.18); display:flex; align-items:center; gap:5px;">
+                            <div class="card-location-tag">
                                 <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${gem.city}, ${gem.country}
                             </div>
                         </div>
 
-                        <div style="padding: 1.25rem; display:flex; flex-direction:column; gap: 10px; flex:1; justify-content:space-between;">
+                        <div class="card-details">
                             <div>
-                                <span style="font-size: 0.74rem; color: var(--accent); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    ${gem.category}
+                                <span class="card-category-label">
+                                    ${gem.category || 'Secret Spot'}
                                 </span>
-                                <h3 style="margin-top: 3px; font-size: 1.15rem; font-weight: 700; color: white;">${gem.name}</h3>
-                                <p style="font-size: 0.88rem; color: #475569; line-height: 1.45; margin-top: 6px;">${gem.description}</p>
+                                <h3 class="card-title">${gem.name}</h3>
+                                <p class="card-desc">${gem.description || 'Authentic destination recommendation from local travelers.'}</p>
                             </div>
 
-                            <!-- Metadata Badges -->
-                            <div>
-                                <div style="display:flex; flex-wrap:wrap; gap: 6px; margin-bottom: 12px;">
-                                    <span class="meta-tag"><i class="fa-solid fa-users-slash" style="color:#34d399;"></i> ${gem.crowd_level || 'Low Crowd'}</span>
-                                    <span class="meta-tag"><i class="fa-solid fa-clock" style="color:#facc15;"></i> ${gem.best_time || 'Best Time'}</span>
-                                    <span class="meta-tag"><i class="fa-solid fa-wallet" style="color:#60a5fa;"></i> ${gem.budget || 'Free'}</span>
+                            <!-- Footer Row matching screenshot -->
+                            <div class="card-footer-row">
+                                <div class="card-price-badge">
+                                    <i class="fa-solid fa-tag"></i> <span>${gem.budget || 'Free'}</span>
                                 </div>
-
-                                <div style="display:flex; justify-content:space-between; align-items:center; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.08);">
-                                    <span style="font-size: 0.78rem; color: #94a3b8;"><i class="fa-regular fa-user" style="margin-right:4px;"></i> ${gem.submitted_by || 'Explorer'}</span>
-                                    <div style="display:flex; gap: 8px;">
-                                        <button class="btn-small" style="background: rgba(255,255,255,0.08); color: white; border:1px solid rgba(255,255,255,0.15); border-radius: 8px; padding:0.4rem 0.85rem; font-size:0.8rem; cursor:pointer;" onclick="showGemScoreBreakdown('${gem.id}')">
-                                            <i class="fa-solid fa-circle-info"></i> Details
-                                        </button>
-                                        <button class="btn-small btn-primary" onclick="planThis('${gem.city}')" style="border-radius: 8px; font-weight:600; padding:0.4rem 0.9rem; font-size:0.8rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
-                                            Plan Trip <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:2px;"></i>
-                                        </button>
-                                    </div>
+                                <div class="card-actions-group">
+                                    <button class="card-btn-details" onclick="showGemScoreBreakdown('${gem.id}')" title="Details">
+                                        <i class="fa-solid fa-circle-info"></i>
+                                    </button>
+                                    <button class="card-btn-plan" onclick="planThis('${gem.city}')">
+                                        Plan <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -490,17 +606,19 @@
         function renderStandardDestinations(country) {
             const destinationsDb = {
                 "India": [
-                    { name: "Goa", type: "Beaches", desc: "Famous for its beaches, nightlife, and great seafood.", img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=600&q=80" },
-                    { name: "Manali", type: "Mountains", desc: "A beautiful hill station surrounded by snow peaks and pine forests.", img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=600&q=80" },
-                    { name: "Jaipur", type: "Cities", desc: "The Pink City, known for its royal palaces and busy local markets.", img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=600&q=80" }
+                    { name: "Goa", type: "Beaches", desc: "Famous for its sunny beaches, vibrant nightlife, and seafood shacks.", img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=600&q=80", budget: "₹8,000", rating: "4.8" },
+                    { name: "Manali", type: "Mountains", desc: "A scenic hill station surrounded by snow peaks and pine forests.", img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=600&q=80", budget: "₹12,000", rating: "4.9" },
+                    { name: "Jaipur", type: "Cities", desc: "The Pink City, world-renowned for its palaces, forts, and markets.", img: "https://images.unsplash.com/photo-1599661046289-e31897846e41?auto=format&fit=crop&w=600&q=80", budget: "₹9,500", rating: "4.7" }
                 ],
                 "Japan": [
-                    { name: "Okinawa Island", type: "Beaches", desc: "Tropical beaches with clear water and great diving spots.", img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=600&q=80" },
-                    { name: "Tokyo", type: "Cities", desc: "A busy, modern city that still keeps its traditional culture alive.", img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80" }
+                    { name: "Okinawa Island", type: "Beaches", desc: "Tropical beaches with crystal turquoise water and coral reefs.", img: "https://images.unsplash.com/photo-1542051841857-5f90071e7989?auto=format&fit=crop&w=600&q=80", budget: "¥35,000", rating: "4.9" },
+                    { name: "Tokyo", type: "Cities", desc: "A bustling modern metropolis blending ancient shrines and future tech.", img: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=600&q=80", budget: "¥45,000", rating: "4.9" },
+                    { name: "Mount Fuji", type: "Mountains", desc: "Iconic volcanic peak and peaceful lakeside villages.", img: "https://images.unsplash.com/photo-1490806843957-31f4c9a91c65?auto=format&fit=crop&w=600&q=80", budget: "¥28,000", rating: "4.9" }
                 ],
                 "France": [
-                    { name: "Nice", type: "Beaches", desc: "A popular coastal city on the French Riviera with beautiful pebble beaches.", img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=600&q=80" },
-                    { name: "Paris", type: "Cities", desc: "The capital city, famous for art, food, fashion, and the Eiffel Tower.", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80" }
+                    { name: "Nice", type: "Beaches", desc: "A jewel of the French Riviera with sunlit pebble shores.", img: "https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=600&q=80", budget: "€320", rating: "4.7" },
+                    { name: "Paris", type: "Cities", desc: "World capital of art, fashion, cuisine, and romantic boulevards.", img: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=600&q=80", budget: "€450", rating: "4.8" },
+                    { name: "Chamonix", type: "Mountains", desc: "Epic alpine scenery under the shadows of Mont Blanc.", img: "https://images.unsplash.com/photo-1486870591958-9b9d0d1dda99?auto=format&fit=crop&w=600&q=80", budget: "€390", rating: "4.9" }
                 ]
             };
 
@@ -521,20 +639,31 @@
             }
 
             grid.innerHTML = data.map(dest => `
-                <div class="dest-card">
-                    <img src="${dest.img}" alt="${dest.name}" style="height: 200px; width:100%; object-fit: cover;">
-                    <div style="padding: 1.25rem; display:flex; flex-direction:column; justify-content:space-between; flex:1;">
-                        <div>
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3 style="margin:0; font-size:1.15rem; color: white;">${dest.name}</h3>
-                                <span class="meta-tag" style="font-size:0.75rem;">${dest.type}</span>
-                            </div>
-                            <p style="margin-top: 0.6rem; font-size: 0.88rem; color: #475569; line-height: 1.45;">${dest.desc}</p>
+                <div class="modern-card">
+                    <div class="card-thumb-wrap">
+                        <img src="${dest.img}" alt="${dest.name}" class="card-thumb-img" loading="lazy">
+                        <div class="card-rating-badge">
+                            <i class="fa-solid fa-star"></i> ${dest.rating || '4.8'}
                         </div>
-                        <div style="margin-top: 1.2rem; display:flex; justify-content:flex-end;">
-                            <button class="btn-small btn-primary" onclick="planThis('${dest.name}')" style="border-radius:8px; font-weight:600; padding:0.4rem 0.9rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%); border:none;">
-                                Plan Trip <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; margin-left:2px;"></i>
-                            </button>
+                        <div class="card-location-tag">
+                            <i class="fa-solid fa-location-dot" style="color:var(--primary);"></i> ${dest.name}
+                        </div>
+                    </div>
+                    <div class="card-details">
+                        <div>
+                            <span class="card-category-label">${dest.type}</span>
+                            <h3 class="card-title">${dest.name}</h3>
+                            <p class="card-desc">${dest.desc}</p>
+                        </div>
+                        <div class="card-footer-row">
+                            <div class="card-price-badge">
+                                <i class="fa-solid fa-tag"></i> <span>${dest.budget || 'Est. Budget'}</span>
+                            </div>
+                            <div class="card-actions-group">
+                                <button class="card-btn-plan" onclick="planThis('${dest.name}')">
+                                    Plan <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -642,7 +771,7 @@
             }
         }
     </script>
-    <script src="script.js?v=31"></script>
+    <script src="script.js?v=32"></script>
 
     <script>
         if ('serviceWorker' in navigator) {

@@ -1229,11 +1229,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             </div>
-            <div style="text-align: right;">
-                <span style="background: rgba(56,189,248,0.15); color: #38bdf8; border: 1px solid rgba(56,189,248,0.3); border-radius: 8px; padding: 4px 10px; font-size: 0.78rem; font-weight: 700;">
-                    <i class="fa-solid fa-circle-check"></i> Accurate Live Data
-                </span>
-            </div>
         </div>`;
     }
     
@@ -4926,6 +4921,301 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Helper: Build Dedicated Linear Route & Expedition Blueprint HTML (Distinct from Day-by-Day schedule)
+function renderLinearRoutePDFHTML(plan) {
+    const destName = plan.destination || "Trip Destination";
+    const numDays = plan.days || 3;
+    const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const weatherText = plan.weatherData ? `${plan.weatherData.temperature}°C • ${plan.weatherData.condition || 'Pleasant & Clear'}` : "24°C • Fair & Pleasant";
+    const feelsLikeText = (plan.weatherData && plan.weatherData.feelsLike) ? `${plan.weatherData.feelsLike}°C` : "25°C";
+    const windText = (plan.weatherData && plan.weatherData.windspeed) ? `${plan.weatherData.windspeed} km/h` : "12 km/h";
+    const humidityText = (plan.weatherData && plan.weatherData.humidity) ? `${plan.weatherData.humidity}%` : "55%";
+    const budgetVal = typeof plan.budget === 'number' ? `₹${plan.budget.toLocaleString('en-IN')}` : (plan.budget || '₹15,000');
+
+    // Transport & Distance
+    let distanceText = document.getElementById('trip-distance') ? document.getElementById('trip-distance').innerText : "";
+    let distanceNum = parseInt(distanceText);
+    let transportRec = "🚗 Recommended: Express Highway / Cab Drive";
+    if (!isNaN(distanceNum)) {
+        if (distanceNum < 200) transportRec = "🚗 Short Distance: Cab / Private Car (" + distanceText + ")";
+        else if (distanceNum < 800) transportRec = "🚆 Medium Distance: Express Rail / Intercity Bus (" + distanceText + ")";
+        else transportRec = "✈️ Long Distance: Direct Flight Connection (" + distanceText + ")";
+    }
+
+    // Milestones / Linear Waypoints
+    const attractions = (typeof famousAttractions !== 'undefined' && famousAttractions.length > 0) ? famousAttractions : [
+        { name: `${destName} Central Heritage Corridor`, img: '' },
+        { name: `${destName} Panoramic Viewpoint & Fort`, img: '' },
+        { name: `${destName} Royal Palace & Gardens`, img: '' },
+        { name: `${destName} Traditional Craft Bazaar`, img: '' }
+    ];
+    const restaurants = (typeof famousRestaurants !== 'undefined' && famousRestaurants.length > 0) ? famousRestaurants : [
+        { name: `${destName} Heritage Dhaba & Cafe`, img: '' },
+        { name: `Royal Treat Restaurant & Spice Lounge`, img: '' }
+    ];
+
+    const packing = (plan.packingList && plan.packingList.length > 0) ? plan.packingList : [
+        "Government ID Card / Passport & Travel Confirmations",
+        "Universal Fast Power Bank & Charging Cables",
+        "Comfortable Walking / Running Footwear",
+        "Emergency First-Aid, Prescription Medicines & ORS",
+        "Climate-Adaptive Clothing & Travel Layers"
+    ];
+
+    const insiderTips = (plan.insiderTips && plan.insiderTips.length > 0) ? plan.insiderTips : [
+        `Pre-download offline Google Maps for ${destName} route corridor before departure.`,
+        "Keep small cash denominations ready for highway tolls, state entry, and local transit.",
+        "Target early departure at 06:00 AM to avoid peak highway and city congestion.",
+        "Reserve key monument and attraction entry passes online to bypass physical counter queues."
+    ];
+
+    return `
+        <div id="linear-route-pdf-root" style="width: 660px; max-width: 660px; margin: 0 auto; padding: 0; background: #ffffff; color: #0f172a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-sizing: border-box; overflow: hidden;">
+            <style>
+                * { box-sizing: border-box !important; margin: 0; padding: 0; word-break: break-word; }
+                body { background: #ffffff !important; }
+            </style>
+
+            <!-- Linear Route Blueprint Cover Header -->
+            <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #0d9488 100%); border-radius: 12px; padding: 18px 20px; color: #ffffff; margin-bottom: 14px; box-shadow: 0 4px 15px rgba(15,23,42,0.15);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                    <div>
+                        <div style="display: inline-flex; align-items: center; gap: 5px; background: rgba(20,184,166,0.25); border: 1px solid rgba(45,212,191,0.5); padding: 3px 10px; border-radius: 16px; font-size: 9px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #5eead4; margin-bottom: 6px;">
+                            🧭 TRIPONEXT LINEAR ROUTE & EXPEDITION BLUEPRINT
+                        </div>
+                        <div style="font-size: 26px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.1; color: #ffffff;">
+                            ${destName.toUpperCase()} ROUTE BLUEPRINT
+                        </div>
+                        <div style="font-size: 11px; color: #ccfbf1; margin-top: 4px; font-weight: 500;">
+                            Corridor Route Plan &bull; ${numDays} Days &bull; Generated ${dateStr}
+                        </div>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; padding: 6px 14px; text-align: center;">
+                        <div style="font-size: 18px;">🛣️</div>
+                        <div style="font-size: 8px; font-weight: 800; color: #ffffff; margin-top: 2px; letter-spacing: 0.6px;">LINEAR PLAN</div>
+                    </div>
+                </div>
+
+                <!-- 4-Stat Corridor Strip -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; background: rgba(0,0,0,0.25); padding: 8px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.15);">
+                    <div style="text-align: center;">
+                        <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Expedition Mode</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #ffffff; margin-top: 2px;">${numDays} Days / ${destName}</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Allocated Budget</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #facc15; margin-top: 2px;">${budgetVal}</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Weather Advisory</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #ffffff; margin-top: 2px;">${weatherText.split('•')[0].trim()}</div>
+                    </div>
+                    <div style="text-align: center; border-left: 1px solid rgba(255,255,255,0.15);">
+                        <div style="font-size: 8px; color: #94a3b8; text-transform: uppercase; font-weight: 700;">Transit Logistics</div>
+                        <div style="font-size: 11px; font-weight: 800; color: #5eead4; margin-top: 2px;">${distanceText ? distanceText : 'Verified Route'}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Route & Transit Banner -->
+            <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-left: 4px solid #0d9488; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-size: 9px; font-weight: 800; text-transform: uppercase; color: #0f766e; letter-spacing: 0.6px;">Primary Transit Corridor & Recommendation</div>
+                    <div style="font-size: 12px; font-weight: 800; color: #134e4a; margin-top: 2px;">${transportRec}</div>
+                </div>
+                <div style="font-size: 10px; color: #0f766e; font-weight: 700; background: #ccfbf1; padding: 4px 10px; border-radius: 20px;">
+                    Express Route Corridor
+                </div>
+            </div>
+
+            <!-- Linear Route Timeline (CORRIDOR MILESTONES) -->
+            <div style="margin-bottom: 14px;">
+                <div style="font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0f172a; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                    🛣️ Linear Route Milestones & Waypoint Sequence
+                </div>
+
+                <!-- Waypoint 01: Departure -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; page-break-inside: avoid !important;">
+                    <div style="background: #0f766e; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(15,118,110,0.3);">
+                        01
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0f172a;">Departure & Route Initiation</div>
+                            <span style="font-size: 9px; font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 10px;">TRANSIT START</span>
+                        </div>
+                        <div style="font-size: 11px; color: #334155; margin-top: 3px;">
+                            Embark along the prime transit corridor towards ${destName}. Ensure vehicle fluids and tire pressures are inspected or check in at the departure terminal 90 minutes ahead.
+                        </div>
+                        <div style="font-size: 10px; color: #64748b; margin-top: 4px; display: flex; gap: 12px;">
+                            <span>⏱️ Early Morning Start Recommended</span>
+                            <span>⛽ Highway Rest Stops Available</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waypoint 02: Arrival & Base Setup -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; page-break-inside: avoid !important;">
+                    <div style="background: #2563eb; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37,99,235,0.3);">
+                        02
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0f172a;">Arrival at ${destName} & Base Camp Setup</div>
+                            <span style="font-size: 9px; font-weight: 700; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 10px;">CHECK-IN & HUB</span>
+                        </div>
+                        <div style="font-size: 11px; color: #334155; margin-top: 3px;">
+                            Check into accommodations, unpack essential gear, and calibrate local SIM/network connectivity. Confirm transport options for regional explorations.
+                        </div>
+                        <div style="font-size: 10px; color: #64748b; margin-top: 4px;">
+                            <span>📍 Central Location &bull; Check-in Window: 12:00 PM - 02:00 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waypoint 03: Primary Sightseeing Milestones -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; page-break-inside: avoid !important;">
+                    <div style="background: #ea580c; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(234,88,12,0.3);">
+                        03
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0f172a;">Primary Attraction Corridors & Landmarks</div>
+                            <span style="font-size: 9px; font-weight: 700; background: #ffedd5; color: #c2410c; padding: 2px 8px; border-radius: 10px;">HIGHLIGHTS</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                            ${attractions.slice(0, 4).map((att, idx) => `
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px;">
+                                    <div style="font-size: 10px; font-weight: 800; color: #0f172a;">📍 ${att.name || 'Key Landmark'}</div>
+                                    <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Waymark #${idx + 1} &bull; Sightseeing Corridor</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waypoint 04: Culinary Route & Dining -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; page-break-inside: avoid !important;">
+                    <div style="background: #16a34a; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(22,163,74,0.3);">
+                        04
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0f172a;">Regional Gastronomy & Dining Waypoints</div>
+                            <span style="font-size: 9px; font-weight: 700; background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 10px;">CULINARY STOPS</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px;">
+                            ${restaurants.slice(0, 2).map((rst) => `
+                                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 6px 8px;">
+                                    <div style="font-size: 10px; font-weight: 800; color: #0f172a;">🥘 ${rst.name || 'Local Specialty Restaurant'}</div>
+                                    <div style="font-size: 9px; color: #64748b; margin-top: 2px;">Authentic flavors & regional recipes</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Waypoint 05: Journey Wrap-up & Return -->
+                <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 9px; padding: 10px 14px; margin-bottom: 8px; display: flex; gap: 12px; align-items: flex-start; page-break-inside: avoid !important;">
+                    <div style="background: #7c3aed; color: #ffffff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(124,58,237,0.3);">
+                        05
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="font-size: 12px; font-weight: 800; color: #0f172a;">Expedition Conclusion & Return Transit Leg</div>
+                            <span style="font-size: 9px; font-weight: 700; background: #ede9fe; color: #6d28d9; padding: 2px 8px; border-radius: 10px;">RETURN LEG</span>
+                        </div>
+                        <div style="font-size: 11px; color: #334155; margin-top: 3px;">
+                            Souvenir shopping in local craft bazaars, hotel checkout settlement, and embarkation on return journey back to home base.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Allocation & Weather Summary 2-Column Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; page-break-inside: avoid !important;">
+                <!-- Financial Matrix -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #0f172a; margin-bottom: 6px;">
+                        📊 Budget Allocation Blueprint
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 9px; color: #64748b;">🏨 Lodging (40%)</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.stay || '40%'}</div>
+                        </div>
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 9px; color: #64748b;">🥘 Meals (25%)</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.food || '25%'}</div>
+                        </div>
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 9px; color: #64748b;">🎟️ Entry (20%)</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.activities || '20%'}</div>
+                        </div>
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; padding: 6px; border-radius: 6px; text-align: center;">
+                            <div style="font-size: 9px; color: #64748b;">🚕 Transit (15%)</div>
+                            <div style="font-size: 10px; font-weight: 800; color: #0f172a; margin-top: 2px;">${plan.budgetBreakdown?.transport || '15%'}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Weather Summary -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #0f172a; margin-bottom: 6px;">
+                        🌤️ Destination Climate & Attire Guide
+                    </div>
+                    <div style="font-size: 11px; color: #334155; line-height: 1.45;">
+                        <div><strong>Condition:</strong> ${weatherText}</div>
+                        <div><strong>Feels Like:</strong> ${feelsLikeText} &bull; <strong>Humidity:</strong> ${humidityText}</div>
+                        <div><strong>Wind:</strong> ${windText}</div>
+                        <div style="font-size: 9px; color: #0284c7; margin-top: 4px; font-weight: 600;">
+                            Tip: Dress in breathable, climate-adaptive layers suitable for all-day navigation.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Packing Checklist & Roadside Tips Row -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; page-break-inside: avoid !important;">
+                <!-- Packing -->
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #15803d; margin-bottom: 6px;">
+                        🎒 Route Packing Checklist
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 9.5px; color: #334155; display: flex; flex-direction: column; gap: 3px;">
+                        ${packing.map(item => `<li>✅ ${item}</li>`).join('')}
+                    </ul>
+                </div>
+
+                <!-- Route Hacks -->
+                <div style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 10px 12px;">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #0f766e; margin-bottom: 6px;">
+                        💡 Corridor & Navigation Hacks
+                    </div>
+                    <ul style="list-style: none; padding: 0; margin: 0; font-size: 9.5px; color: #334155; display: flex; flex-direction: column; gap: 3px;">
+                        ${insiderTips.map(tip => `<li>🔹 ${tip}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Emergency Helpline Banner -->
+            <div style="background: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; page-break-inside: avoid !important; display: flex; justify-content: space-between; align-items: center; font-size: 10px;">
+                <div>
+                    <strong style="color: #c2410c;">🚨 24/7 Universal Emergency & Highway SOS:</strong>
+                    <span style="color: #7c2d12; margin-left: 6px;">Police & Fire: 112 &bull; Tourist Helpline: 1363 &bull; Medical: 108 &bull; Highway: 1033</span>
+                </div>
+                <div style="color: #ea580c; font-weight: 700;">TripoNext SOS Ready</div>
+            </div>
+
+            <!-- Official Footer -->
+            <div style="padding-top: 8px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; font-size: 9px; color: #94a3b8; font-weight: 600;">
+                <div>TripoNext Linear Route Technologies &bull; www.triponext.com</div>
+                <div>Blueprint ID: RT-${Date.now().toString().slice(-6)} &bull; Official Traveler Route Blueprint</div>
+            </div>
+        </div>
+    `;
+}
+
 // Helper: Build Luxury Executive Travel Dossier HTML (Zero Side Clipping, 660px A4 Width)
 function renderExecutiveDossierHTML(plan) {
     const destName = plan.destination || "Trip Destination";
@@ -5212,20 +5502,23 @@ window.exportItineraryPDF = async function(explicitSource) {
     }
     const origBtnHTML = dlBtn ? dlBtn.innerHTML : '';
     if (dlBtn) {
-        dlBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating Dossier...';
+        dlBtn.innerHTML = mode === 'main' 
+            ? '<i class="fa-solid fa-spinner fa-spin"></i> Generating Route Blueprint...' 
+            : '<i class="fa-solid fa-spinner fa-spin"></i> Generating Dossier...';
         dlBtn.disabled = true;
     }
 
     let container = null;
 
     try {
-        const dossierHTML = renderExecutiveDossierHTML(planToExport);
+        const isLinear = (mode === 'main');
+        const pdfContentHTML = isLinear ? renderLinearRoutePDFHTML(planToExport) : renderExecutiveDossierHTML(planToExport);
 
         // Scratch isolated container with fixed width of 660px to strictly match A4 margins
         container = document.createElement('div');
         container.id = 'pdf-render-scratch-container';
         container.style.cssText = 'position:fixed;top:0;left:0;width:660px;z-index:-9999;pointer-events:none;background:#ffffff;overflow:visible;';
-        container.innerHTML = dossierHTML;
+        container.innerHTML = pdfContentHTML;
         document.body.appendChild(container);
 
         if (typeof html2pdf === 'undefined') {
@@ -5234,7 +5527,9 @@ window.exportItineraryPDF = async function(explicitSource) {
             return;
         }
 
-        const cleanFilename = `${destName.replace(/[^a-zA-Z0-9]/g, '_')}_TripoNext_Executive_Dossier.pdf`;
+        const cleanFilename = isLinear
+            ? `${destName.replace(/[^a-zA-Z0-9]/g, '_')}_TripoNext_Route_Blueprint.pdf`
+            : `${destName.replace(/[^a-zA-Z0-9]/g, '_')}_TripoNext_Executive_Dossier.pdf`;
 
         // Perfectly proportioned A4 margins (10mm left, right, top, bottom)
         const opt = {
@@ -5261,7 +5556,8 @@ window.exportItineraryPDF = async function(explicitSource) {
         // High-end success toast
         const t = document.createElement('div');
         t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#091a36;border:1px solid #3b82f6;color:white;padding:1rem 1.6rem;border-radius:14px;font-size:0.9rem;z-index:99999;box-shadow:0 8px 30px rgba(0,0,0,0.6);font-weight:bold;display:flex;align-items:center;gap:10px;';
-        t.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #60a5fa; font-size: 1.3rem;"></i> <div><div>${cleanFilename}</div><div style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">Executive Travel Dossier downloaded</div></div>`;
+        const docLabel = isLinear ? 'Linear Route & Expedition Blueprint downloaded' : 'Executive Travel Dossier downloaded';
+        t.innerHTML = `<i class="fa-solid fa-file-pdf" style="color: #60a5fa; font-size: 1.3rem;"></i> <div><div>${cleanFilename}</div><div style="font-size: 0.75rem; color: #94a3b8; font-weight: normal;">${docLabel}</div></div>`;
         document.body.appendChild(t);
         setTimeout(() => { if (t.parentNode) t.parentNode.removeChild(t); }, 4500);
 
