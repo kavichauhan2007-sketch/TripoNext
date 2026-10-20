@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Modern Grid Web - Explore Hidden Gems & Destinations | TripoNext</title>
+    <title>Explore World - Destinations & Hidden Gems | TripoNext</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css?v=32">
@@ -62,8 +62,8 @@
         <!-- Left Sidebar Filter Panel (Matches "Modern Grid Web" in screenshot) -->
         <aside class="explore-sidebar-panel">
             <div class="sidebar-header">
-                <h1 class="sidebar-title">Modern Grid <span class="gradient-text">Web</span></h1>
-                <div class="sidebar-subtitle">Search Trips & Waypoints</div>
+                <h1 class="sidebar-title">Explore <span class="gradient-text">World</span></h1>
+                <div class="sidebar-subtitle">Search Trips & Destinations</div>
             </div>
 
             <div class="sidebar-form-group">
@@ -188,7 +188,7 @@
             <!-- Top Status Bar & Category Filter Chips -->
             <div class="explore-top-bar">
                 <div class="explore-top-status" id="explore-status-text">
-                    <span class="status-indicator"></span> <span>Showing Handpicked Hidden Gems</span>
+                    <span>Showing Handpicked Hidden Gems</span>
                 </div>
                 <!-- Dynamic Chips Container -->
                 <div class="categories" id="category-chips-container">
@@ -325,7 +325,7 @@
     </div>
 
     <footer style="margin-top: 4rem; padding: 2.5rem 2rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.08); color: var(--text-muted); font-size: 0.88rem; background: rgba(11, 15, 23, 0.85); backdrop-filter: blur(10px);">
-        <p>&copy; 2026 TripoNext. Modern Grid Web explorer for genuine travelers.</p>
+        <p>&copy; 2026 TripoNext. Explore hidden gems and destinations worldwide.</p>
         <p style="font-size: 0.8rem; margin-top: 0.5rem;"><a href="javascript:void(0)" onclick="openPrivacyModal()" style="color:var(--primary); text-decoration:none;">Privacy Policy</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openTermsModal()" style="color:var(--primary); text-decoration:none;">Terms of Service</a> &nbsp;|&nbsp; <a href="javascript:void(0)" onclick="openHelpSupportModal()" style="color:var(--primary); text-decoration:none;">Contact Support</a></p>
     </footer>
 
@@ -353,11 +353,19 @@
             { name: "Cities", icon: "fa-solid fa-city" }
         ];
 
+        // Ensure bottom navigation panel is never present on explore page
+        const stripExploreBottomNav = () => {
+            const bNav = document.getElementById('mobile-bottom-nav');
+            if (bNav) bNav.remove();
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
+            stripExploreBottomNav();
             updateSavedBadge();
             renderCategoryChips();
             loadData();
         });
+        window.addEventListener('load', stripExploreBottomNav);
 
         function updateSavedBadge() {
             const badge = document.getElementById('saved-count-badge');
@@ -383,11 +391,11 @@
             const statusEl = document.getElementById('explore-status-text');
             if (statusEl) {
                 if (mode === 'gems') {
-                    statusEl.innerHTML = '<span class="status-indicator"></span> <span>Showing Handpicked Hidden Gems</span>';
+                    statusEl.innerHTML = '<span>Showing Handpicked Hidden Gems</span>';
                 } else if (mode === 'all') {
-                    statusEl.innerHTML = '<span class="status-indicator" style="background:#38bdf8;box-shadow:0 0 10px #38bdf8;"></span> <span>Showing Famous Worldwide Destinations</span>';
+                    statusEl.innerHTML = '<span>Showing Famous Worldwide Destinations</span>';
                 } else {
-                    statusEl.innerHTML = '<span class="status-indicator" style="background:#f43f5e;box-shadow:0 0 10px #f43f5e;"></span> <span>Showing Your Saved Favorites</span>';
+                    statusEl.innerHTML = '<span>Showing Your Saved Favorites</span>';
                 }
             }
 

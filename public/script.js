@@ -1572,7 +1572,12 @@ window.showAppToast = function(msg, type = 'info') {
 // ========================================================
 window.renderMobileBottomNav = function() {
     const currentPath = (window.location.pathname || '').toLowerCase();
-    const isExplore = currentPath.includes('explore');
+    const isExplore = currentPath.includes('explore') || (document.body && document.body.classList.contains('explore-bg')) || !!document.querySelector('.explore-modern-dashboard');
+    if (isExplore) {
+        const existingNav = document.getElementById('mobile-bottom-nav');
+        if (existingNav) existingNav.remove();
+        return;
+    }
     const isBuddies = currentPath.includes('buddies');
     const isCommunity = currentPath.includes('community');
     const isMyTrips = currentPath.includes('mytrips');
@@ -6065,6 +6070,10 @@ if (typeof window !== 'undefined') {
     window.addEventListener('resize', () => {
         const nav = document.getElementById('mobile-bottom-nav');
         if (!nav) return;
+        if (window.location.pathname.includes('explore') || (document.body && document.body.classList.contains('explore-bg'))) {
+            nav.style.setProperty('display', 'none', 'important');
+            return;
+        }
         const isMobile = window.innerWidth <= 868 || document.body.classList.contains('phone-mode-active');
         const isHome = window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/') || window.location.pathname.endsWith('/index');
         if (!isHome && !isMobile) {
