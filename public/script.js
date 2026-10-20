@@ -207,13 +207,55 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Auto-fill from URL parameters (e.g., coming from Explore page)
+    // Auto-fill from URL parameters (e.g., coming from Explore page or Trip Customizer)
     const urlParams = new URLSearchParams(window.location.search);
     const prefillDest = urlParams.get('dest');
-    if(prefillDest && document.getElementById('destination-input')) {
+    const prefillOrigin = urlParams.get('origin');
+    const prefillDays = parseInt(urlParams.get('days')) || 0;
+    const prefillTravelers = parseInt(urlParams.get('travelers') || urlParams.get('people')) || 0;
+    const prefillBudget = urlParams.get('budget');
+    const prefillCurrency = urlParams.get('currency');
+    const prefillTransport = urlParams.get('transport');
+    const isMagic = urlParams.get('magic');
+
+    if (prefillDest && document.getElementById('destination-input')) {
         document.getElementById('destination-input').value = prefillDest;
-        // Optionally auto-plan
-        setTimeout(() => planTrip(), 500);
+        
+        if (prefillOrigin && document.getElementById('calc-origin')) {
+            document.getElementById('calc-origin').value = prefillOrigin;
+        }
+        if (prefillDays > 0) {
+            window._selectedNumDays = prefillDays;
+            if (document.getElementById('calc-days')) document.getElementById('calc-days').value = prefillDays;
+            const datesInput = document.getElementById('dates-input');
+            if (datesInput) {
+                const today = new Date();
+                const startDate = new Date(today.getTime() + 2 * 86400000);
+                const endDate = new Date(startDate.getTime() + (prefillDays - 1) * 86400000);
+                const opt = { month: 'short', day: 'numeric' };
+                datesInput.value = `${startDate.toLocaleDateString('en-US', opt)} - ${endDate.toLocaleDateString('en-US', opt)} (${prefillDays} Days)`;
+            }
+        }
+        if (prefillTravelers > 0 && document.getElementById('people-input')) {
+            document.getElementById('people-input').value = prefillTravelers;
+        }
+        if (prefillBudget && document.getElementById('budget-input')) {
+            document.getElementById('budget-input').value = prefillBudget;
+        }
+        if (prefillCurrency && document.getElementById('budget-currency')) {
+            document.getElementById('budget-currency').value = prefillCurrency;
+        }
+        if (prefillTransport && document.getElementById('calc-transport')) {
+            document.getElementById('calc-transport').value = prefillTransport;
+        }
+
+        if (isMagic === '1' && typeof window.openMagicPlanner === 'function') {
+            setTimeout(() => {
+                window.openMagicPlanner(prefillDest, prefillDays || 3, prefillBudget || 15000, prefillCurrency || 'INR');
+            }, 600);
+        } else {
+            setTimeout(() => planTrip(), 500);
+        }
     }
 });
 
@@ -307,7 +349,12 @@ async function planTrip() {
     dashboard.style.display = 'block';
     
     // Update Title
-    document.getElementById('trip-title').innerText = `Trip to ${dest.charAt(0).toUpperCase() + dest.slice(1)}`;
+    const explicitOrigin = (document.getElementById('calc-origin')?.value || '').trim();
+    if (explicitOrigin) {
+        document.getElementById('trip-title').innerText = `Trip to ${dest.charAt(0).toUpperCase() + dest.slice(1)} (From ${explicitOrigin})`;
+    } else {
+        document.getElementById('trip-title').innerText = `Trip to ${dest.charAt(0).toUpperCase() + dest.slice(1)}`;
+    }
     updateCurrency();
     
     // Smooth scroll
@@ -338,8 +385,37 @@ async function planTrip() {
         L.marker([lat, lon]).addTo(map)
             .bindPopup(`<b>${dest}</b><br>Destination Center.`).openPopup();
             
-        // Calculate Distance from User
-        if (navigator.geolocation) {
+        // Calculate Distance and Route (from explicit origin or user location)
+        let routeDrawn = false;
+        if (explicitOrigin) {
+            try {
+                const origRes = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(explicitOrigin)}&format=json&limit=1`);
+                const origData = await origRes.json();
+                if (origData.length > 0) {
+                    const oLat = parseFloat(origData[0].lat);
+                    const oLon = parseFloat(origData[0].lon);
+                    const R = 6371;
+                    const dLat = (lat - oLat) * (Math.PI/180);
+                    const dLon = (lon - oLon) * (Math.PI/180);
+                    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(oLat * (Math.PI/180)) * Math.cos(lat * (Math.PI/180)) * Math.sin(dLon/2) * Math.sin(dLon/2);
+                    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                    const distance = Math.round(R * c);
+
+                    document.getElementById('distance-badge').style.display = 'inline-block';
+                    document.getElementById('trip-distance').innerText = `${distance} km from ${explicitOrigin}`;
+
+                    const latlngs = [[oLat, oLon], [lat, lon]];
+                    L.polyline(latlngs, {color: 'var(--accent)', weight: 3, dashArray: '5, 10'}).addTo(map);
+                    L.circleMarker([oLat, oLon], {color: 'var(--accent)', radius: 6}).addTo(map).bindPopup(`<b>Start:</b> ${explicitOrigin}`);
+                    map.fitBounds(L.polyline(latlngs).getBounds(), {padding: [50, 50]});
+                    routeDrawn = true;
+                }
+            } catch (err) {
+                console.log("Origin geocode failed, falling back to geolocation", err);
+            }
+        }
+
+        if (!routeDrawn && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((position) => {
                 const userLat = position.coords.latitude;
                 const userLon = position.coords.longitude;
