@@ -27,6 +27,16 @@ app.use(express.static(path.join(__dirname, 'public'), {
     }
 }));
 
+// Health check endpoint for Render and uptime monitoring
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        service: 'TripoNext API',
+        timestamp: new Date().toISOString(),
+        uptime: Math.floor(process.uptime())
+    });
+});
+
 // In-memory cache for API catalog responses
 const _travelCatalogCache = new Map();
 
@@ -1661,8 +1671,9 @@ app.use((req, res) => {
 });
 
 if (!process.env.VERCEL) {
-    const mainServer = app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
+    const HOST = '0.0.0.0';
+    const mainServer = app.listen(PORT, HOST, () => {
+        console.log(`[Server] Running on http://${HOST}:${PORT} (environment: ${process.env.NODE_ENV || 'development'})`);
     });
     mainServer.on('error', (err) => {
         if (err.code === 'EADDRINUSE') {
@@ -1672,11 +1683,11 @@ if (!process.env.VERCEL) {
         }
     });
 
-    // Also listen on port 3000 if PORT is 3001
-    if (Number(PORT) !== 3000) {
+    // In local development, also attempt port 3000 if PORT is 3001
+    if (process.env.NODE_ENV !== 'production' && Number(PORT) !== 3000) {
         try {
             const altServer = app.listen(3000, () => {
-                console.log(`Also accessible on http://localhost:3000`);
+                console.log(`[Server] Also accessible on http://localhost:3000`);
             });
             altServer.on('error', () => { /* port 3000 in use, ignore gracefully */ });
         } catch(e) {}
